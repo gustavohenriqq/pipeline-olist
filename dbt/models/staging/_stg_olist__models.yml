@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: stg_olist__orders
+    description: Um pedido por linha, com tipos ja convertidos.
+    columns:
+      - name: order_id
+        description: Chave do pedido.
+        data_tests: [unique, not_null]
+      - name: customer_id
+        description: Liga ao cliente (grao de pedido, nao de pessoa).
+        data_tests: [not_null]
+      - name: order_status
+        description: Situacao do pedido.
+        data_tests:
+          - accepted_values:
+              values: ["delivered", "shipped", "canceled", "unavailable", "invoiced", "processing", "created", "approved"]
+
+  - name: stg_olist__order_items
+    description: Um item por linha (um pedido pode ter varios itens).
+    columns:
+      - name: order_id
+        data_tests: [not_null]
+      - name: price
+        data_tests:
+          - valor_minimo:
+              min_value: 0
+    data_tests:
+      - combinacao_unica:
+          combination_of_columns: [order_id, order_item_id]
+
+  - name: stg_olist__customers
+    description: Um cliente por pedido. customer_unique_id agrupa a mesma pessoa.
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: customer_unique_id
+        data_tests: [not_null]
+
+  - name: stg_olist__sellers
+    description: Vendedores.
+    columns:
+      - name: seller_id
+        data_tests: [unique, not_null]
+
+  - name: stg_olist__products
+    description: Produtos com categoria traduzida para ingles.
+    columns:
+      - name: product_id
+        data_tests: [unique, not_null]
+
+  - name: stg_olist__category_translation
+    description: De/para de categorias PT -> EN.
+    columns:
+      - name: category_name_pt
+        data_tests: [unique, not_null]
+
+  - name: stg_olist__order_payments
+    description: Pagamentos por pedido. Um pedido pode ter mais de um pagamento.
+    columns:
+      - name: order_id
+        data_tests: [not_null]
+      - name: payment_type
+        data_tests:
+          - accepted_values:
+              values: ["credit_card", "boleto", "voucher", "debit_card", "not_defined"]
+    data_tests:
+      - combinacao_unica:
+          combination_of_columns: [order_id, payment_sequential]
+
+  - name: stg_olist__order_reviews
+    description: >
+      Avaliacoes. Atencao: review_id NAO e unico na base original (o mesmo
+      review_id pode aparecer ligado a mais de um pedido). Por isso nao ha
+      teste de unicidade aqui.
+    columns:
+      - name: order_id
+        data_tests: [not_null]
+      - name: review_score
+        data_tests:
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+
+  - name: stg_olist__geolocation
+    description: Um ponto medio (lat/lng) por prefixo de CEP.
+    columns:
+      - name: zip_code_prefix
+        data_tests: [unique, not_null]

@@ -1,0 +1,33 @@
+name: "olist"
+version: "1.0.0"
+config-version: 2
+
+# Perfil de conexao (definido em profiles.yml).
+profile: "olist"
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Convencao de materializacao por camada:
+#   staging      -> views  (leves, so renomeiam/limpam a raw)
+#   intermediate -> views  (juntam e agregam antes das marts)
+#   marts        -> tables (o que o BI e o agente consomem; precisa ser rapido)
+models:
+  olist:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts

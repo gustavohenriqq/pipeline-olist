@@ -1,0 +1,32 @@
+# ---- Dados brutos (nao versionar CSV pesado) ----
+data/raw/*.csv
+data/processed/
+!data/raw/.gitkeep
+
+# ---- Segredos ----
+.env
+*.env
+!.env.example
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.ipynb_checkpoints/
+
+# ---- dbt ----
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+logs/
+
+# ---- Sistema / IDE ----
+.DS_Store
+.vscode/
+.idea/
+
+# ---- Docker ----
+pgdata/

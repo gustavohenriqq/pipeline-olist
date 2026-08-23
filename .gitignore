@@ -33,3 +33,7 @@ pgdata/
 
 # ---- Pasta de descarte local (nao versionar) ----
 _to_delete/
+
+# ---- Arquivos gerados/internos que nao devem ser versionados ----
+dbt/.user.yml
+BRIEF.md

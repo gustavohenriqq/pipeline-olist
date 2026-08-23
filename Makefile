@@ -1,7 +1,13 @@
 # Atalhos do projeto. Use "make <alvo>".
 # No Windows, rode os comandos direto (veja o README) ou use "make" via Git Bash / WSL.
+#
+# Se voce usa um ambiente virtual, aponte o interpretador:
+#   make ingest PYTHON=.venv/Scripts/python.exe     (Windows)
+#   make ingest PYTHON=.venv/bin/python             (Linux/Mac)
+PYTHON ?= python
+DBT = $(PYTHON) -m dbt.cli.main
 
-.PHONY: help up down logs ingest dbt-run dbt-test dbt-docs pipeline clean
+.PHONY: help up down logs ingest dbt-run dbt-test dbt-docs publicar pipeline clean
 
 help:
 	@echo "Alvos disponiveis:"
@@ -11,7 +17,9 @@ help:
 	@echo "  dbt-run    - roda os modelos dbt (staging -> intermediate -> marts)"
 	@echo "  dbt-test   - roda os testes de qualidade dbt"
 	@echo "  dbt-docs   - gera e serve a documentacao dbt em http://localhost:8081"
-	@echo "  pipeline   - up + ingest + dbt-deps + dbt-run + dbt-test (fim a fim)"
+	@echo "  publicar   - espelha as marts no Neon (camada de servico do BI)"
+	@echo "  pipeline   - up + ingest + dbt build (fim a fim, local)"
+	@echo "  publish    - pipeline + publicar (fim a fim ate o dashboard)"
 
 up:
 	docker compose up -d
@@ -23,22 +31,29 @@ logs:
 	docker compose logs -f postgres
 
 ingest:
-	python ingestion/ingest.py
+	$(PYTHON) ingestion/ingest.py
 
 dbt-run:
-	cd dbt && dbt run --profiles-dir .
+	cd dbt && $(DBT) run --profiles-dir .
 
 dbt-test:
-	cd dbt && dbt test --profiles-dir .
+	cd dbt && $(DBT) test --profiles-dir .
 
 dbt-docs:
-	cd dbt && dbt docs generate --profiles-dir . && dbt docs serve --profiles-dir . --port 8081
+	cd dbt && $(DBT) docs generate --profiles-dir . && $(DBT) docs serve --profiles-dir . --port 8081
+
+# Publica so a camada marts no Neon. Roda depois do dbt, nunca antes:
+# o que vai para o BI e sempre o que ja passou nos testes de qualidade.
+publicar:
+	$(PYTHON) scripts/publicar_marts.py
 
 pipeline: up
 	@echo "Aguardando o Postgres ficar pronto..."
 	@sleep 8
-	python ingestion/ingest.py
-	cd dbt && dbt run --profiles-dir . && dbt test --profiles-dir .
+	$(PYTHON) ingestion/ingest.py
+	cd dbt && $(DBT) build --profiles-dir .
+
+publish: pipeline publicar
 
 clean:
 	docker compose down -v

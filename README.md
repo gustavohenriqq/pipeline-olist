@@ -28,7 +28,7 @@ Este pipeline organiza esses dados em um **modelo dimensional (star schema)** pa
 | Ticket medio por pedido | R$ 159,33 |
 | Tempo medio de entrega | 12,5 dias |
 | Pedidos entregues no prazo | 93,2% |
-| Nota media de avaliacao | 4,07 de 5 |
+| Nota media de avaliacao | 4,09 de 5 |
 | Estado lider em receita | Sao Paulo (R$ 5,9 mi) |
 | Categoria lider em receita | health_beauty (R$ 1,44 mi) |
 
@@ -43,8 +43,10 @@ flowchart TD
     C --> D["dbt staging<br/>limpeza e casting (views)"]
     D --> E["dbt intermediate<br/>joins e agregacoes (views)"]
     E --> F["dbt marts<br/>star schema (tables)"]
+    F --> P["publicar_marts.py<br/>espelha so as marts"]
+    P --> N["Neon<br/>Postgres serverless"]
+    N --> H["Looker Studio<br/>publico 24/7"]
     F --> G["Power BI<br/>DAX + RLS"]
-    F --> H["Looker Studio<br/>publico"]
     F --> I["Agente IA<br/>LangChain + Streamlit"]
 ```
 
@@ -62,6 +64,8 @@ Dois fatos, porque existem dois graos diferentes:
 - **fato_itens_pedido** (um por item): e onde produto e vendedor se conectam, ja que um pedido pode ter varios produtos e vendedores.
 
 Dimensoes: `dim_clientes`, `dim_produtos`, `dim_vendedores`, `dim_tempo`, `dim_geolocalizacao`.
+
+Alem do star schema, a camada marts tem duas **tabelas largas (OBT, One Big Table)** derivadas dele: `obt_pedidos` (grao de pedido) e `obt_itens` (grao de item). Elas existem porque o Looker Studio trata cada tabela como fonte separada e so junta por "blend", que e limitado. A tabela larga elimina esse atrito no BI. O star schema continua sendo a fonte da verdade: e nele que os testes de integridade referencial rodam e e nele que o Power BI (Fase 4) e o agente de IA (Fase 6) vao ligar, porque tanto o VertiPaq quanto o texto-para-SQL trabalham melhor com modelo dimensional.
 
 ```mermaid
 erDiagram
@@ -107,15 +111,26 @@ cp .env.example .env
 # 3. Baixar o dataset do Kaggle e colocar os 9 CSVs em data/raw/
 #    (Brazilian E-Commerce Public Dataset by Olist)
 
-# 4. Instalar as dependencias Python
+# 4. Instalar as dependencias Python (recomendado num ambiente virtual)
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scriptsctivate
 pip install -r requirements.txt
 
 # 5. Subir o Postgres (e o pgAdmin em http://localhost:8080)
 docker compose up -d
 
-# 6. Rodar tudo de uma vez: ingestao + dbt run + dbt test
+# 6. Rodar tudo de uma vez: ingestao + dbt build (models + testes)
 make pipeline
+
+# 7. Opcional: publicar as marts no Neon para o Looker Studio ler
+#    (preencha antes o bloco NEON_* do .env)
+make publicar
 ```
+
+> **Windows.** Se o `dbt` na linha de comando for bloqueado pela politica de
+> Controle de Aplicativo, chame o modulo em vez do executavel:
+> `python -m dbt.cli.main build --profiles-dir .`. E o mesmo programa, sem o
+> atalho `.exe` que a politica barra.
 
 ### Rodar rapido, sem baixar o Kaggle (amostra)
 
@@ -139,6 +154,8 @@ python ingestion/ingest.py
 cd dbt
 dbt run  --profiles-dir .
 dbt test --profiles-dir .
+cd ..
+python scripts/publicar_marts.py   # opcional: espelha as marts no Neon
 ```
 
 Para ver a documentacao e a linhagem do dbt no navegador:
@@ -153,8 +170,9 @@ dbt docs serve    --profiles-dir . --port 8081
 
 - Schema `raw`: 9 tabelas cruas.
 - Schema `staging` e `intermediate`: views de limpeza e agregacao.
-- Schema `marts`: 5 dimensoes + 2 fatos, prontos para BI.
-- 57 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
+- Schema `marts`: 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
+- 68 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
+- Camada de servico no Neon com as marts publicadas, para o Looker Studio ler 24/7.
 
 ---
 
@@ -175,7 +193,8 @@ pipeline-olist/
 │   ├── tests/                # testes singulares
 │   ├── dbt_project.yml
 │   └── profiles.yml
-├── dashboards/               # notas de Power BI e Looker Studio
+├── scripts/                  # gerar_amostra.py, publicar_marts.py
+├── dashboards/               # guia do Looker Studio e notas de Power BI
 ├── docs/                     # diagramas e decisoes
 ├── docker-compose.yml        # Postgres + pgAdmin
 ├── Makefile                  # atalhos (make pipeline, make dbt-run, ...)
@@ -210,8 +229,19 @@ pipeline-olist/
 
 ## 7. Dashboards
 
-- **Looker Studio (publico):** link sera adicionado ao final da Fase 1. Conecta direto no Postgres (ou no Neon, Postgres serverless na nuvem, para ficar online 24/7).
-- **Power BI (Fase 4):** dashboard executivo com DAX avancado, RLS por regiao e vendedor e OLS para metricas sensiveis.
+O Looker Studio precisa alcancar o banco pela internet, e um Postgres em `localhost` so responde enquanto a maquina esta ligada. Por isso as marts sao espelhadas no **Neon**, um Postgres serverless gratuito, que funciona como camada de servico do BI:
+
+```bash
+cd dbt && dbt build --profiles-dir . && cd ..   # constroi e testa local
+python scripts/publicar_marts.py                # espelha as marts no Neon
+```
+
+**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos 68 testes do dbt.
+
+O passo a passo completo de conexao, as paginas sugeridas e os numeros de conferencia estao em [dashboards/README.md](dashboards/README.md).
+
+- **Looker Studio (publico):** link sera adicionado assim que o relatorio for publicado.
+- **Power BI (Fase 4):** dashboard executivo com DAX avancado, RLS por regiao e vendedor e OLS para metricas sensiveis. Ali o consumo e do star schema, nao das OBTs.
 
 Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.
 

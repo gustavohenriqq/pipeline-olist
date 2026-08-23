@@ -13,3 +13,29 @@ olist:
       dbname: "{{ env_var('POSTGRES_DB', 'olist') }}"
       schema: analytics
       threads: 4
+
+# ---------------------------------------------------------------------------
+# Alternativa: rodar o dbt direto contra o Neon (target "prod").
+#
+# Nao e o caminho adotado neste projeto, e esta comentado de proposito.
+# Para funcionar, a camada raw inteira precisaria estar no Neon tambem (o
+# staging le de raw), e so a tabela geolocation tem 1 milhao de linhas: o free
+# tier de 0,5 GB nao aguenta com folga, e cada "dbt build" viraria trafego de
+# rede.
+#
+# O caminho adotado e: dbt roda no Postgres local (rapido, sem limite de
+# storage, testes rodam antes de publicar) e o script scripts/publicar_marts.py
+# espelha so as marts no Neon. O BI le a camada de servico, nunca a crua.
+#
+# Descomente se um dia o warehouse for grande o suficiente para viver na nuvem:
+#
+#    prod:
+#      type: postgres
+#      host: "{{ env_var('NEON_HOST') }}"
+#      port: "{{ env_var('NEON_PORT', '5432') | int }}"
+#      user: "{{ env_var('NEON_USER') }}"
+#      password: "{{ env_var('NEON_PASSWORD') }}"
+#      dbname: "{{ env_var('NEON_DB') }}"
+#      schema: analytics
+#      sslmode: require
+#      threads: 4

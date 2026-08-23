@@ -104,3 +104,49 @@ models:
               field: vendedor_sk
               config:
                 severity: warn
+
+  - name: obt_pedidos
+    description: >
+      Tabela larga (One Big Table) no grao de pedido, com cliente, tempo e
+      geolocalizacao ja resolvidos. Existe para o BI conectado via SQL direto
+      (Looker Studio) nao depender de blend entre fontes. Derivada do star
+      schema, que continua sendo a fonte da verdade.
+    columns:
+      - name: pedido_sk
+        description: Chave substituta do pedido. Mesmo grao de fato_pedidos.
+        data_tests: [unique, not_null]
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: cliente_regiao
+        description: Regiao do Brasil do cliente, derivada da UF.
+        data_tests:
+          - accepted_values:
+              values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
+      - name: valor_total
+        description: Valor de itens mais frete. Nunca negativo.
+        data_tests:
+          - valor_minimo:
+              min_value: 0
+
+  - name: obt_itens
+    description: >
+      Tabela larga (One Big Table) no grao de item do pedido, com produto,
+      vendedor, cliente e tempo resolvidos. Serve as analises de categoria e de
+      performance de vendedor no BI. Complementa obt_pedidos, que e o grao de
+      pedido. Nunca somar metricas das duas na mesma visao.
+    columns:
+      - name: item_sk
+        description: Chave substituta do item. Mesmo grao de fato_itens_pedido.
+        data_tests: [unique, not_null]
+      - name: order_id
+        data_tests: [not_null]
+      - name: vendedor_regiao
+        description: Regiao do Brasil do vendedor, derivada da UF.
+        data_tests:
+          - accepted_values:
+              values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
+      - name: valor_item
+        description: Valor do produto mais o frete rateado do item. Nunca negativo.
+        data_tests:
+          - valor_minimo:
+              min_value: 0

@@ -1,0 +1,53 @@
+name: pipeline-ci
+
+# Roda a cada push e pull request. Usa a amostra versionada (data/sample),
+# entao nao precisa do dataset do Kaggle. Prova que o pipeline compila e que
+# todos os testes de qualidade do dbt passam.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: olist
+          POSTGRES_USER: olist
+          POSTGRES_PASSWORD: olist
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U olist"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: olist
+      POSTGRES_USER: olist
+      POSTGRES_PASSWORD: olist
+      OLIST_DATA_DIR: data/sample
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Ingestao da amostra
+        run: python ingestion/ingest.py
+
+      - name: dbt build (run + test)
+        working-directory: dbt
+        run: dbt build --profiles-dir .

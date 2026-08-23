@@ -37,3 +37,4 @@ _to_delete/
 # ---- Arquivos gerados/internos que nao devem ser versionados ----
 dbt/.user.yml
 BRIEF.md
+CLAUDE.md

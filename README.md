@@ -89,7 +89,7 @@ erDiagram
 | Transformacao | dbt (dbt-core) | Padrao de mercado para analytics engineering: SQL versionado, testes de qualidade, documentacao e linhagem automatica. |
 | Armazenamento | PostgreSQL (Azure SQL na fase cloud) | Banco relacional solido, gratuito e o que a maioria das vagas pede. |
 | Orquestracao | Apache Airflow (Docker) | Agendar e monitorar o pipeline diario (fase 3). |
-| BI principal | Power BI (DAX, RLS, OLS) | Ferramenta usada no dia a dia da Ambev e muito pedida nas vagas. |
+| BI principal | Power BI (DAX, RLS, OLS) | Padrao de mercado em BI corporativo no Brasil. |
 | BI publico | Looker Studio | Dashboard online e gratuito, para portfolio 24/7. |
 | IA | LangChain + Streamlit | Perguntas em linguagem natural viram SQL sobre o warehouse. |
 | Container | Docker + Docker Compose | Sobe o ambiente inteiro com um comando, em qualquer maquina. |

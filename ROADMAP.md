@@ -2,7 +2,7 @@
 
 Este documento detalha o plano completo. Cada fase termina com um commit e o README atualizado. Para cada fase: o objetivo, as entregas, as decisoes com alternativas, e o que pode dar problema em producao real.
 
-Regra que guia tudo: **priorizar o que mais aparece nas vagas** (Ambev / Ze Delivery, Radix, dti digital): dbt, SQL, Python, PySpark, Airflow, Azure/AWS, Power BI e modelagem dimensional.
+Regra que guia tudo: **priorizar o que mais aparece no mercado de dados**: dbt, SQL, Python, PySpark, Airflow, Azure/AWS, Power BI e modelagem dimensional.
 
 ---
 
@@ -83,7 +83,7 @@ Meio termo: o data lake fica no Blob Storage (barato), mas o Spark roda local ap
 
 ## Fase 4 — Power BI avancado
 
-**Objetivo:** dashboard executivo com os recursos que a Ambev usa.
+**Objetivo:** dashboard executivo com os recursos que o mercado corporativo cobra de um relatorio serio.
 
 **Entregas planejadas:**
 - Dashboard executivo conectado ao DW.

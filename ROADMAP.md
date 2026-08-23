@@ -13,15 +13,19 @@ Regra que guia tudo: **priorizar o que mais aparece nas vagas** (Ambev / Ze Deli
 **Entregas:**
 - Ingestao Python + pandas dos 9 CSVs para o schema `raw` do Postgres (via COPY).
 - Projeto dbt: staging, intermediate e marts (star schema).
-- 5 dimensoes + 2 fatos, 57 testes de qualidade passando.
+- 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), 68 testes de qualidade passando.
 - Docker Compose com Postgres e pgAdmin.
+- Camada de servico no Neon (Postgres serverless) com as marts publicadas.
+- Dashboard publico no Looker Studio lendo do Neon.
 - README com problema de negocio, arquitetura e decisoes.
 
 **Decisoes e alternativas:**
 - **dbt-core (CLI) vs dbt Cloud.** Escolhido o core, gratuito e local. O dbt Cloud tem agendador e IDE web, mas custa e nao agrega para portfolio.
 - **PostgreSQL vs DuckDB.** Postgres, porque e o que as vagas pedem e serve BI e agente ao mesmo tempo. DuckDB seria mais rapido para analise local, mas nao e um servidor multiusuario.
+- **Publicar so as marts no Neon vs rodar o dbt direto na nuvem.** Escolhido publicar so as marts. O free tier do Neon da 0,5 GB e a raw `geolocation` tem 1 milhao de linhas; alem disso, cada `dbt build` na nuvem viraria trafego de rede. Construir e testar local e publicar so o resultado aprovado e mais rapido, mais barato e espelha o padrao de producao, onde o BI nunca le a camada crua. O target `prod` apontando para o Neon fica documentado no `profiles.yml` como alternativa.
+- **Tabela larga (OBT) ao lado do star schema.** O Looker Studio so junta fontes por "blend", que e limitado. Em vez de degradar o modelo, o projeto deriva duas OBTs (`obt_pedidos`, `obt_itens`) a partir do star, que continua sendo a fonte da verdade. Cada OBT respeita um grao, para nao inflar receita.
 
-**Riscos em producao:** schemas fixos, carga full (nao incremental) e geolocalizacao incompleta. Detalhes no README, secao 6.
+**Riscos em producao:** schemas fixos, carga full (nao incremental) e geolocalizacao incompleta. Detalhes no README, secao 6. Some-se a isso a duplicacao de dado entre o warehouse local e o Neon: sao dois bancos que podem divergir se alguem publicar sem rodar os testes antes. Por isso a publicacao e sempre full e transacional, e o alvo `make publish` encadeia build e publicacao na ordem certa.
 
 ---
 

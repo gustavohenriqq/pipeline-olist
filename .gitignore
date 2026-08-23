@@ -30,3 +30,6 @@ logs/
 
 # ---- Docker ----
 pgdata/
+
+# ---- Pasta de descarte local (nao versionar) ----
+_to_delete/

@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Tabelas cruas carregadas pela ingestao Python (COPY dos CSVs do Olist).
+      Todas as colunas chegam como TEXT. O casting acontece no staging.
+    schema: raw
+    tables:
+      - name: customers
+        description: Clientes (um id por pedido; customer_unique_id agrupa a pessoa).
+      - name: geolocation
+        description: Latitude/longitude por prefixo de CEP.
+      - name: order_items
+        description: Itens de cada pedido (produto, vendedor, preco, frete).
+      - name: order_payments
+        description: Pagamentos por pedido (tipo, parcelas, valor).
+      - name: order_reviews
+        description: Avaliacoes dos clientes (nota de 1 a 5 e comentario).
+      - name: orders
+        description: Pedidos e seus carimbos de tempo (compra, entrega, etc.).
+      - name: products
+        description: Produtos e atributos (categoria, dimensoes, peso).
+      - name: sellers
+        description: Vendedores e sua localizacao.
+      - name: product_category_name_translation
+        description: Traducao das categorias de produto (PT -> EN).

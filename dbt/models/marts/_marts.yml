@@ -1,0 +1,106 @@
+version: 2
+
+models:
+  - name: dim_clientes
+    description: Dimensao de clientes no grao de pessoa (customer_unique_id).
+    columns:
+      - name: cliente_sk
+        description: Chave substituta (surrogate key) do cliente.
+        data_tests: [unique, not_null]
+      - name: customer_unique_id
+        data_tests: [unique, not_null]
+      - name: regiao
+        description: Regiao do Brasil derivada da UF.
+        data_tests:
+          - accepted_values:
+              values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
+
+  - name: dim_vendedores
+    description: Dimensao de vendedores.
+    columns:
+      - name: vendedor_sk
+        data_tests: [unique, not_null]
+      - name: seller_id
+        data_tests: [unique, not_null]
+
+  - name: dim_produtos
+    description: Dimensao de produtos com categoria PT/EN.
+    columns:
+      - name: produto_sk
+        data_tests: [unique, not_null]
+      - name: product_id
+        data_tests: [unique, not_null]
+
+  - name: dim_geolocalizacao
+    description: Dimensao de geolocalizacao por prefixo de CEP.
+    columns:
+      - name: geo_sk
+        data_tests: [unique, not_null]
+      - name: zip_code_prefix
+        data_tests: [unique, not_null]
+
+  - name: dim_tempo
+    description: Dimensao de calendario diario.
+    columns:
+      - name: tempo_sk
+        data_tests: [unique, not_null]
+      - name: data
+        data_tests: [unique, not_null]
+
+  - name: fato_pedidos
+    description: Fato no grao de pedido, com metricas de valor, pagamento, nota e entrega.
+    columns:
+      - name: pedido_sk
+        data_tests: [unique, not_null]
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: cliente_sk
+        description: FK para dim_clientes.
+        data_tests:
+          - relationships:
+              to: ref('dim_clientes')
+              field: cliente_sk
+      - name: tempo_sk_compra
+        description: FK para dim_tempo (data da compra).
+        data_tests:
+          - relationships:
+              to: ref('dim_tempo')
+              field: tempo_sk
+              config:
+                severity: warn
+      - name: geo_sk
+        description: FK para dim_geolocalizacao (CEP do cliente). Alguns CEPs de cliente nao existem na base de geolocalizacao, por isso o teste e apenas aviso.
+        data_tests:
+          - relationships:
+              to: ref('dim_geolocalizacao')
+              field: geo_sk
+              config:
+                severity: warn
+      - name: nota_avaliacao
+        data_tests:
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+              config:
+                severity: warn
+
+  - name: fato_itens_pedido
+    description: Fato no grao de item do pedido; conecta produto e vendedor.
+    columns:
+      - name: item_sk
+        data_tests: [unique, not_null]
+      - name: produto_sk
+        description: FK para dim_produtos.
+        data_tests:
+          - relationships:
+              to: ref('dim_produtos')
+              field: produto_sk
+              config:
+                severity: warn
+      - name: vendedor_sk
+        description: FK para dim_vendedores.
+        data_tests:
+          - relationships:
+              to: ref('dim_vendedores')
+              field: vendedor_sk
+              config:
+                severity: warn

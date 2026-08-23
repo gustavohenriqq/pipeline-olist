@@ -1,0 +1,10 @@
+# Dependencias da Fase 1 (ingestao + dbt). E o que o CI usa.
+# As fases 5 (ML) e 6 (agente IA) tem dependencias proprias em
+# requirements-extra.txt, para nao pesar o ambiente base.
+
+pandas>=2.0,<3.1
+psycopg2-binary>=2.9
+python-dotenv>=1.0
+
+dbt-core>=1.7,<1.13
+dbt-postgres>=1.7,<1.13

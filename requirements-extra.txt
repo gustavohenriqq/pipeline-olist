@@ -1,0 +1,13 @@
+# Dependencias das fases 5 (ML) e 6 (agente IA).
+# Instale so quando chegar nessas fases: pip install -r requirements-extra.txt
+
+# ---- Fase 5: ML basico ----
+scikit-learn>=1.4
+numpy>=1.26
+matplotlib>=3.8
+
+# ---- Fase 6: Agente IA ----
+langchain>=0.2
+langchain-community>=0.2
+langchain-openai>=0.1
+streamlit>=1.36

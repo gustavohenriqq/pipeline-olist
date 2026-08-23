@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olist — Visão Geral Comercial (mockup)</title>
+
+<!--
+  MOCKUP de referencia da pagina inicial do dashboard.
+  Nao le o banco: todos os valores estao fixos no codigo, copiados das marts
+  em 23/08/2026. Serve para validar layout e hierarquia visual antes de montar
+  no Looker Studio, que ai sim le o Neon ao vivo.
+
+  Base de todos os numeros: marts.obt_pedidos e marts.obt_itens,
+  janela de 01/01/2017 a 31/08/2018, todos os status de pedido.
+  A unica excecao esta rotulada no proprio card (entrega no prazo).
+-->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0;
+     font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif; }
+
+  body{ background:#F1F3F4; color:#202124; display:flex; justify-content:center;
+        align-items:flex-start; min-height:100vh; padding:16px; }
+
+  .dashboard{ width:100%; max-width:1600px; background:#F8F9FA; display:flex;
+              flex-direction:column; gap:12px; padding:16px;
+              box-shadow:0 4px 20px rgba(0,0,0,.08); border-radius:8px; }
+
+  header{ display:flex; justify-content:space-between; align-items:flex-start;
+          padding-bottom:8px; border-bottom:1px solid #E0E0E0; }
+  .header-title h1{ font-size:20px; font-weight:700; color:#1A365D;
+                    display:flex; align-items:center; gap:8px; }
+  .header-title h1::before{ content:''; width:10px; height:20px;
+                            background:#0F52BA; border-radius:2px; }
+  .header-title p{ font-size:12px; color:#5F6368; margin-top:3px; margin-left:18px; }
+  .brand-tag{ font-size:11px; font-weight:600; color:#5F6368; background:#E8EAED;
+              padding:4px 8px; border-radius:4px; white-space:nowrap; }
+
+  .filter-bar{ background:#fff; padding:8px 12px; border-radius:6px; display:flex;
+               gap:16px; border:1px solid #E0E0E0; }
+  .filter-item{ display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+  .filter-item label{ font-size:10px; font-weight:700; color:#5F6368;
+                      text-transform:uppercase; letter-spacing:.5px; }
+  .filter-item select,.filter-item input{ padding:5px 8px; border:1px solid #DADCE0;
+      border-radius:4px; font-size:12px; color:#3C4043; background:#FAFAFA; width:100%; }
+
+  .scorecards{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+  .scorecard{ background:#fff; padding:10px 14px; border-radius:6px;
+              border:1px solid #E0E0E0; }
+  .scorecard-title{ font-size:11px; font-weight:600; color:#5F6368; text-transform:uppercase; }
+  .scorecard-value{ font-size:22px; font-weight:700; color:#0F52BA; margin:3px 0; }
+  .scorecard-sub{ font-size:10px; color:#80868B; }
+
+  .grid-main{ display:grid; grid-template-columns:2fr 1fr; gap:12px; }
+  .row-bottom{ display:grid; grid-template-columns:1fr 1fr 1.3fr; gap:12px; }
+
+  .card{ background:#fff; border-radius:6px; border:1px solid #E0E0E0;
+         padding:10px 12px; display:flex; flex-direction:column; min-width:0; }
+  .card-header{ margin-bottom:8px; }
+  .card-title{ font-size:13px; font-weight:700; color:#202124; display:block; }
+  .card-sub{ font-size:10px; color:#70757A; display:block; margin-top:1px; }
+
+  /* Altura fixa por linha. Sem isso o Chart.js cresce sem limite e os rotulos
+     colidem, que foi exatamente o defeito da primeira versao do mock. */
+  .chart-box{ position:relative; width:100%; height:230px; }
+  .row-bottom .chart-box{ height:200px; }
+  #map{ width:100%; height:200px; border-radius:4px; background:#F1F3F4; }
+  .leaflet-container{ background:#F8F9FA !important; }
+  .leaflet-control-attribution{ font-size:8px !important; }
+
+  footer{ font-size:10px; color:#80868B; border-top:1px solid #E0E0E0;
+          padding-top:8px; line-height:1.6; }
+  footer strong{ color:#5F6368; }
+  footer code{ font-family:Consolas,Monaco,monospace; background:#EFEFEF;
+               padding:1px 4px; border-radius:3px; }
+
+  @media (max-width:1100px){
+    .scorecards{ grid-template-columns:repeat(2,1fr); }
+    .grid-main,.row-bottom{ grid-template-columns:1fr; }
+    .filter-bar{ flex-wrap:wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+
+  <header>
+    <div class="header-title">
+      <h1>Olist — Visão Geral Comercial</h1>
+      <p>jan/2017 a ago/2018 · 99.092 pedidos · PostgreSQL star schema via dbt</p>
+    </div>
+    <div class="brand-tag">MOCKUP · dados estáticos</div>
+  </header>
+
+  <div class="filter-bar">
+    <div class="filter-item">
+      <label>Intervalo de datas</label>
+      <input type="text" value="01/01/2017 a 31/08/2018" readonly>
+    </div>
+    <div class="filter-item">
+      <label>Região</label>
+      <select><option>Todas as regiões (5)</option><option>Sudeste</option>
+      <option>Sul</option><option>Nordeste</option><option>Centro-Oeste</option>
+      <option>Norte</option></select>
+    </div>
+    <div class="filter-item">
+      <label>Status do pedido</label>
+      <select><option>Todos os status</option><option>Entregue</option>
+      <option>Em trânsito</option><option>Cancelado</option></select>
+    </div>
+    <div class="filter-item">
+      <label>Categoria</label>
+      <select><option>Todas as categorias</option><option>beleza_saude</option>
+      <option>relogios_presentes</option><option>cama_mesa_banho</option>
+      <option>esporte_lazer</option><option>informatica_acessorios</option></select>
+    </div>
+  </div>
+
+  <div class="scorecards">
+    <div class="scorecard">
+      <div class="scorecard-title">Receita total</div>
+      <div class="scorecard-value">R$ 15.786.204</div>
+      <div class="scorecard-sub">itens + frete</div>
+    </div>
+    <div class="scorecard">
+      <div class="scorecard-title">Pedidos</div>
+      <div class="scorecard-value">99.092</div>
+      <div class="scorecard-sub">todos os status</div>
+    </div>
+    <div class="scorecard">
+      <div class="scorecard-title">Ticket médio</div>
+      <div class="scorecard-value">R$ 159,31</div>
+      <div class="scorecard-sub">por pedido</div>
+    </div>
+    <div class="scorecard">
+      <div class="scorecard-title">Entregue no prazo</div>
+      <div class="scorecard-value" style="color:#137333">93,2%</div>
+      <div class="scorecard-sub">base: 96.211 pedidos entregues</div>
+    </div>
+    <div class="scorecard">
+      <div class="scorecard-title">Nota média</div>
+      <div class="scorecard-value">4,09 <span style="font-size:14px;font-weight:400;color:#5F6368">/ 5</span></div>
+      <div class="scorecard-sub">pedidos com avaliação</div>
+    </div>
+  </div>
+
+  <div class="grid-main">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Receita por mês</span>
+        <span class="card-sub">Em R$ milhões · pico de Black Friday em nov/2017</span>
+      </div>
+      <div class="chart-box"><canvas id="cReceitaMes"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Receita por região</span>
+        <span class="card-sub">Sudeste concentra 65% do total</span>
+      </div>
+      <div class="chart-box"><canvas id="cRegiao"></canvas></div>
+    </div>
+  </div>
+
+  <div class="row-bottom">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Top 5 categorias</span>
+        <span class="card-sub">Em R$ milhões · mercado pulverizado</span>
+      </div>
+      <div class="chart-box"><canvas id="cCategorias"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Distribuição das notas</span>
+        <span class="card-sub">Formato em J: 5 estrelas domina, 1 estrela é o segundo maior</span>
+      </div>
+      <div class="chart-box"><canvas id="cNotas"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Concentração de receita por estado</span>
+        <span class="card-sub">Área da bolha proporcional à receita · top 9 UFs</span>
+      </div>
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <footer>
+    <strong>Como ler.</strong> Todos os cards usam a mesma base: janela de 01/01/2017 a 31/08/2018, todos os status de pedido.
+    A única exceção é <strong>Entregue no prazo</strong>, calculado só sobre os 96.211 pedidos já entregues. Incluir os 2.881 em trânsito ou cancelados contaria como atrasado um pedido que ainda nem venceu o prazo, e derrubaria o indicador para 90,4% sem motivo real.
+    <br>
+    <strong>Por que a janela começa em jan/2017.</strong> O dataset cobre set/2016 a out/2018, mas as pontas são resíduo: set/2016 tem 4 pedidos e set-out/2018 somam 20. São 349 pedidos fora da janela, 0,35% do total. Plotar o período inteiro achata a série contra o zero e inventa uma queda que não existe.
+    <br>
+    <strong>Origem dos números.</strong> <code>marts.obt_pedidos</code> e <code>marts.obt_itens</code>, extraídos em 23/08/2026. As categorias vêm do grão de item; todo o resto, do grão de pedido. Nunca somar métricas dos dois na mesma visão.
+  </footer>
+</div>
+
+<script>
+const AZUL = '#0F52BA', AZUL_ESCURO = '#1A365D';
+const brl = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' mi';
+
+Chart.defaults.font.family = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+Chart.defaults.animation = false;
+
+// ---- Receita por mes ----
+const meses = ['jan/17','fev/17','mar/17','abr/17','mai/17','jun/17','jul/17','ago/17',
+               'set/17','out/17','nov/17','dez/17','jan/18','fev/18','mar/18','abr/18',
+               'mai/18','jun/18','jul/18','ago/18'];
+const receita = [0.14,0.29,0.43,0.41,0.59,0.50,0.58,0.67,0.72,0.77,1.18,0.86,
+                 1.11,0.99,1.16,1.16,1.15,1.02,1.06,1.00];
+const iBF = 10; // nov/17
+
+new Chart(document.getElementById('cReceitaMes'), {
+  type:'line',
+  data:{ labels:meses, datasets:[{
+    data:receita, borderColor:AZUL, backgroundColor:'rgba(15,82,186,.08)',
+    borderWidth:2.5, fill:true,
+    // Tensao baixa de proposito: dado mensal e discreto. Curva muito suave
+    // sugere continuidade que nao existe entre um mes e o seguinte.
+    tension:0.15,
+    pointRadius:receita.map((_,i)=> i===iBF ? 6 : 2.5),
+    pointBackgroundColor:receita.map((_,i)=> i===iBF ? '#C5221F' : AZUL),
+    pointBorderColor:'#fff',
+    pointBorderWidth:receita.map((_,i)=> i===iBF ? 2 : 1)
+  }]},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    layout:{ padding:{ top:26 } },   // espaco para o rotulo do pico nao ser cortado
+    plugins:{
+      legend:{ display:false },
+      tooltip:{ callbacks:{ label:c => brl(c.raw) + (c.dataIndex===iBF ? ' · Black Friday' : '') } }
+    },
+    scales:{
+      y:{ beginAtZero:true,
+          ticks:{ callback:v => 'R$ '+v.toFixed(1)+' mi', font:{size:10} },
+          grid:{ color:'#F0F0F0' } },
+      // maxRotation 0 + autoSkip: o Chart.js esconde rotulos em vez de sobrepor.
+      // Foi a sobreposicao no eixo X que estragou a primeira versao do mock.
+      x:{ ticks:{ font:{size:9}, maxRotation:0, autoSkip:true, maxTicksLimit:8 },
+          grid:{ display:false } }
+    }
+  },
+  plugins:[{
+    id:'rotuloBlackFriday',
+    afterDatasetsDraw(chart){
+      const pt = chart.getDatasetMeta(0).data[iBF];
+      if(!pt) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.font = 'bold 10px Segoe UI';
+      ctx.fillStyle = '#C5221F';
+      ctx.textAlign = 'center';
+      ctx.fillText('Black Friday · R$ 1,18 mi', pt.x, pt.y - 14);
+      ctx.restore();
+    }
+  }]
+});
+
+// ---- Receita por regiao ----
+new Chart(document.getElementById('cRegiao'), {
+  type:'bar',
+  data:{ labels:['Sudeste','Sul','Nordeste','Centro-Oeste','Norte'],
+    datasets:[{ data:[10.20,2.29,1.87,1.02,0.41],
+      backgroundColor:[AZUL,'#4285F4','#76A7FA','#AECBFA','#D2E3FC'], borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c => brl(c.raw) } } },
+    scales:{ x:{ beginAtZero:true, ticks:{ callback:v => 'R$ '+v+' mi', font:{size:9} },
+                 grid:{ color:'#F0F0F0' } },
+             y:{ ticks:{ font:{size:11, weight:'600'} }, grid:{ display:false } } } }
+});
+
+// ---- Top 5 categorias ----
+new Chart(document.getElementById('cCategorias'), {
+  type:'bar',
+  data:{ labels:['beleza_saude','relogios_presentes','cama_mesa_banho','esporte_lazer','informatica_acess.'],
+    datasets:[{ data:[1.44,1.30,1.24,1.15,1.06], backgroundColor:AZUL_ESCURO, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c => brl(c.raw) } } },
+    scales:{ x:{ beginAtZero:true, ticks:{ callback:v => 'R$ '+v+' mi', font:{size:8} },
+                 grid:{ color:'#F0F0F0' } },
+             y:{ ticks:{ font:{size:9} }, grid:{ display:false } } } }
+});
+
+// ---- Distribuicao das notas ----
+new Chart(document.getElementById('cNotas'), {
+  type:'bar',
+  data:{ labels:['1 estrela','2','3','4','5 estrelas'],
+    datasets:[{ data:[11266,3118,8111,18990,56845],
+      backgroundColor:['#EA4335','#EA4335','#BDC1C6','#34A853','#137333'], borderRadius:3 }]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false},
+      tooltip:{ callbacks:{ label:c => c.raw.toLocaleString('pt-BR')+' avaliações' } } },
+    scales:{ y:{ beginAtZero:true, ticks:{ callback:v => (v/1000)+'k', font:{size:9} },
+                 grid:{ color:'#F0F0F0' } },
+             x:{ ticks:{ font:{size:10, weight:'600'} }, grid:{ display:false } } } }
+});
+
+// ---- Mapa: top 9 UFs ----
+const map = L.map('map',{ center:[-15.5,-52.0], zoom:3, zoomControl:false,
+  dragging:false, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:false,
+  keyboard:false });
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  { attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19 }).addTo(map);
+
+// Valores reais das marts. A versao anterior do mock inflou RS, PR, BA e DF
+// em cerca de 25% e citou PE e PA, que nem estao no top 9. Quem ocupa os
+// lugares certos e SC e GO.
+const ufs = [
+  { uf:'SP', nome:'São Paulo',         coords:[-23.55,-46.63], mi:5.91 },
+  { uf:'RJ', nome:'Rio de Janeiro',    coords:[-22.91,-43.17], mi:2.12 },
+  { uf:'MG', nome:'Minas Gerais',      coords:[-19.92,-43.93], mi:1.85 },
+  { uf:'RS', nome:'Rio Grande do Sul', coords:[-30.03,-51.22], mi:0.88 },
+  { uf:'PR', nome:'Paraná',            coords:[-25.43,-49.27], mi:0.80 },
+  { uf:'BA', nome:'Bahia',             coords:[-12.97,-38.51], mi:0.61 },
+  { uf:'SC', nome:'Santa Catarina',    coords:[-27.60,-48.55], mi:0.61 },
+  { uf:'DF', nome:'Distrito Federal',  coords:[-15.78,-47.93], mi:0.35 },
+  { uf:'GO', nome:'Goiás',             coords:[-16.69,-49.26], mi:0.35 }
+];
+
+// Raio pela raiz quadrada do valor: quem le um circulo compara AREA, nao raio.
+// Com raio linear, SP (5,91) apareceria com area 45x a de RS (0,88), quando a
+// diferenca real e de 6,7x. A raiz corrige essa distorcao.
+const RAIO_MAX = 24, MAIOR = Math.max(...ufs.map(u => u.mi));
+ufs.forEach(u => {
+  L.circleMarker(u.coords, {
+    color:AZUL, fillColor:AZUL, fillOpacity:.45, weight:1.5,
+    radius: RAIO_MAX * Math.sqrt(u.mi / MAIOR)
+  }).addTo(map).bindTooltip(
+    '<b>' + u.nome + ' (' + u.uf + ')</b><br>' + brl(u.mi),
+    { direction:'top', offset:[0,-4] }
+  );
+});
+</script>
+</body>
+</html>

@@ -1,170 +1,228 @@
-# Roadmap do projeto (6 fases)
+# Roadmap do projeto
 
-Este documento detalha o plano completo. Cada fase termina com um commit e o README atualizado. Para cada fase: o objetivo, as entregas, as decisoes com alternativas, e o que pode dar problema em producao real.
-
-Regra que guia tudo: **priorizar o que mais aparece no mercado de dados**: dbt, SQL, Python, PySpark, Airflow, Azure/AWS, Power BI e modelagem dimensional.
+Este documento explica o que o projeto quer responder, como as frentes se
+encaixam, e o que foi descartado com a justificativa. Cada etapa termina com um
+commit e o README atualizado.
 
 ---
 
-## Fase 1 — Base local (concluida)
+## A pergunta que conduz tudo
 
-**Objetivo:** ter o pipeline rodando fim a fim na maquina, com qualidade testada.
+> **O atraso na entrega destrói a satisfação do cliente. Quanto isso custa, onde
+> se concentra, e dá para prever antes de despachar o pedido?**
+
+Não é uma pergunta escolhida por conveniência. Ela saiu dos próprios dados:
+
+| Situação da entrega | Pedidos | Nota média |
+|---|---|---|
+| No prazo | 89.936 | **4,29** |
+| Atraso de 1 a 7 dias | 3.672 | 2,72 |
+| Atraso de 8 a 30 dias | 2.517 | **1,65** |
+| Atraso acima de 30 dias | 345 | 2,06 |
+
+Atrasar uma semana custa 1,6 ponto de nota. Há **R$ 1,15 milhão em pedidos
+atrasados, 7,3% da receita**.
+
+Três frentes atacam a mesma pergunta, e é a conexão entre elas que dá sentido ao
+projeto:
+
+| Frente | Papel | Entrega |
+|---|---|---|
+| **Análise** | Descobrir e quantificar o problema | Documento com recomendação e número |
+| **Engenharia** | Entregar o dado com confiabilidade | Pipeline incremental, orquestrado, monitorado |
+| **ML** | Agir antes do fato acontecer | Previsão de atraso escrita de volta no warehouse |
+
+O ciclo fecha quando a previsão do modelo aparece no mesmo dashboard que a
+análise usou para achar o problema.
+
+---
+
+## Etapa 1 — Fundação (concluída)
+
+**Objetivo:** ter o pipeline rodando fim a fim, com qualidade testada.
 
 **Entregas:**
-- Ingestao Python + pandas dos 9 CSVs para o schema `raw` do Postgres (via COPY).
+- Ingestão Python + pandas dos 9 CSVs para o schema `raw` do Postgres (via COPY).
 - Projeto dbt: staging, intermediate e marts (star schema).
-- 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), 68 testes de qualidade passando.
+- 5 dimensões + 2 fatos + 2 tabelas largas (OBT), 68 testes de qualidade passando.
 - Docker Compose com Postgres e pgAdmin.
-- Camada de servico no Neon (Postgres serverless) com as marts publicadas.
-- Dashboard publico no Looker Studio lendo do Neon.
-- README com problema de negocio, arquitetura e decisoes.
+- Camada de serviço no Neon (Postgres serverless) com as marts publicadas.
+- Dashboard público no Looker Studio lendo do Neon.
+- CI no GitHub Actions rodando o pipeline inteiro sobre uma amostra versionada.
 
-**Decisoes e alternativas:**
-- **dbt-core (CLI) vs dbt Cloud.** Escolhido o core, gratuito e local. O dbt Cloud tem agendador e IDE web, mas custa e nao agrega para portfolio.
-- **PostgreSQL vs DuckDB.** Postgres, porque e o que as vagas pedem e serve BI e agente ao mesmo tempo. DuckDB seria mais rapido para analise local, mas nao e um servidor multiusuario.
-- **Publicar so as marts no Neon vs rodar o dbt direto na nuvem.** Escolhido publicar so as marts. O free tier do Neon da 0,5 GB e a raw `geolocation` tem 1 milhao de linhas; alem disso, cada `dbt build` na nuvem viraria trafego de rede. Construir e testar local e publicar so o resultado aprovado e mais rapido, mais barato e espelha o padrao de producao, onde o BI nunca le a camada crua. O target `prod` apontando para o Neon fica documentado no `profiles.yml` como alternativa.
-- **Tabela larga (OBT) ao lado do star schema.** O Looker Studio so junta fontes por "blend", que e limitado. Em vez de degradar o modelo, o projeto deriva duas OBTs (`obt_pedidos`, `obt_itens`) a partir do star, que continua sendo a fonte da verdade. Cada OBT respeita um grao, para nao inflar receita.
+**Decisões e alternativas:**
+- **dbt-core (CLI) vs dbt Cloud.** Escolhido o core, gratuito e local. O dbt Cloud tem agendador e IDE web, mas custa e não agrega para portfólio.
+- **PostgreSQL vs DuckDB.** Postgres, porque é o que as vagas pedem e serve BI e agente ao mesmo tempo. DuckDB seria mais rápido para análise local, mas não é um servidor multiusuário.
+- **Publicar só as marts no Neon vs rodar o dbt direto na nuvem.** Escolhido publicar só as marts. O free tier do Neon dá 0,5 GB e a raw `geolocation` tem 1 milhão de linhas; além disso, cada `dbt build` na nuvem viraria tráfego de rede. Construir e testar local e publicar só o resultado aprovado é mais rápido, mais barato e espelha o padrão de produção, onde o BI nunca lê a camada crua. O target `prod` apontando para o Neon fica documentado no `profiles.yml` como alternativa.
+- **Tabela larga (OBT) ao lado do star schema.** O Looker Studio só junta fontes por "blend", que é limitado. Em vez de degradar o modelo, o projeto deriva duas OBTs (`obt_pedidos`, `obt_itens`) a partir do star, que continua sendo a fonte da verdade. Cada OBT respeita um grão, para não inflar receita.
 
-**Riscos em producao:** schemas fixos, carga full (nao incremental) e geolocalizacao incompleta. Detalhes no README, secao 6. Some-se a isso a duplicacao de dado entre o warehouse local e o Neon: sao dois bancos que podem divergir se alguem publicar sem rodar os testes antes. Por isso a publicacao e sempre full e transacional, e o alvo `make publish` encadeia build e publicacao na ordem certa.
+**Riscos em produção:** schemas fixos, carga full (não incremental) e geolocalização incompleta. Detalhes no README, seção 6. Some-se a isso a duplicação de dado entre o warehouse local e o Neon: são dois bancos que podem divergir se alguém publicar sem rodar os testes antes. Por isso a publicação é sempre full e transacional, e o alvo `make publish` encadeia build e publicação na ordem certa.
 
 ---
 
-## Fase 2 — Cloud na Azure (Data Lake + PySpark)
+## Etapa 2 — Análise do atraso (frente de análise)
 
-**Objetivo:** levar o mesmo pipeline para a nuvem, mostrando PySpark e arquitetura Medallion.
+**Objetivo:** transformar o achado em recomendação defensável, com número.
 
 **Entregas planejadas:**
-- Camada raw (Bronze) no **Azure Blob Storage**.
-- Transformacao em **PySpark** (Bronze -> Silver -> Gold).
-- dbt com destino no **Azure SQL**.
+- Documento de análise em `docs/analise-atraso.md`, com conclusão e recomendação.
+- Quantificação da receita em risco e da queda de nota por faixa de atraso.
+- Recorte geográfico: onde o atraso se concentra e o quanto isso destoa da média.
+- Investigação da anomalia da cauda (ver abaixo).
+- Página de entregas no dashboard, ligada ao documento.
 
-### Atencao: o Databricks Community Edition tem limites serios
+**A anomalia que vale investigar.** A curva de nota por atraso não é monótona:
+pedidos com mais de 30 dias de atraso têm nota **2,06**, melhor que a faixa de 8
+a 30 dias (**1,65**). Hipóteses a testar: compensação ao cliente, expectativa já
+ajustada, ou viés de seleção em quem ainda responde à pesquisa depois de 82 dias
+de espera. Chegar a uma resposta sustentada é o que separa análise de gráfico.
 
-O **Databricks Community Edition (CE)** e gratuito, mas:
-- **Nao tem cluster persistente:** o cluster morre depois de um tempo de inatividade e voce perde o estado.
-- **Nao tem job scheduler nem API completa:** nao da para orquestrar de fora.
-- **Montar o Azure Blob (mount) e chato ou bloqueado:** o CE limita `dbutils.fs.mount` e credenciais.
+**O que foi testado e não é viável.** Análise de coorte e retenção, o reflexo
+automático em e-commerce: apenas **3,1% dos clientes compraram mais de uma vez**
+(93.099 clientes com um único pedido). O dataset não sustenta a análise, e
+registrar isso vale mais do que produzir uma coorte sem significado.
 
-Ou seja, da para aprender PySpark no CE, mas **nao da para montar uma arquitetura cloud de verdade so com ele.**
-
-### Plano B (recomendado): tres caminhos gratuitos
-
-**Opcao A — PySpark local (mais simples e 100% reproduzivel).**
-Rodar PySpark na propria maquina (ou num container Docker), lendo os CSVs e escrevendo Parquet particionado numa pasta que simula o data lake (`data/lake/bronze`, `silver`, `gold`). Vantagem: aprende PySpark e Medallion sem depender de nuvem instavel. Desvantagem: nao mostra o servico Azure em si.
-
-**Opcao B — Microsoft Fabric via Azure for Students (mostra a nuvem de verdade).**
-O credito de estudante permite usar **Microsoft Fabric** (Lakehouse + notebooks Spark + OneLake) ou um **Azure Databricks** de avaliacao. Aqui da para ter Blob/OneLake real, Spark gerenciado e integracao com Power BI. Vantagem: e o cenario que as vagas descrevem. Desvantagem: consome credito e exige cuidado para nao estourar.
-
-**Opcao C — Azure Blob real + PySpark local lendo do Blob.**
-Meio termo: o data lake fica no Blob Storage (barato), mas o Spark roda local apontando para o Blob via `abfss`. Mostra o servico de storage da nuvem sem depender do cluster do CE.
-
-**Recomendacao de mentoria:** comecar pela **Opcao A** (garante a entrega e o aprendizado de PySpark), e depois, com tempo e credito, subir para a **Opcao B** para ter o print da nuvem no portfolio. Documentar no README qual caminho foi usado e por que.
-
-**Riscos em producao:** custo de cluster ligado sem uso (sempre configurar auto-terminate), e mistura de engines (Spark para volume, dbt para modelagem) que precisa de fronteira clara de responsabilidade.
+**Riscos:** confundir correlação com causa. O atraso acompanha a nota baixa, mas
+parte do efeito pode vir de outra coisa (categoria, vendedor, distância). A
+análise precisa controlar por esses fatores antes de afirmar causalidade.
 
 ---
 
-## Fase 3 — Orquestracao com Airflow
+## Etapa 3 — Confiabilidade do pipeline (frente de engenharia)
 
-**Objetivo:** transformar os passos manuais num pipeline agendado e monitorado.
+**Objetivo:** sair de "roda na minha máquina" para "roda sozinho, todo dia, e avisa quando quebra".
 
 **Entregas planejadas:**
-- Airflow via **Docker Compose**.
-- DAG de ingestao diaria -> transformacao dbt -> atualizacao do DW.
-- Alertas de falha (email ou webhook) e retries.
+- **Models incrementais** nos fatos, com estratégia de merge por chave.
+- **Idempotência comprovada:** rodar duas vezes o mesmo dia não duplica dado, e reprocessar uma janela específica é um comando.
+- **Airflow via Docker Compose**, com DAG de ingestão, transformação e publicação.
+- **Backfill e dado que chega atrasado:** a DAG precisa reprocessar uma janela sem quebrar o que já estava certo.
+- **Freshness e observabilidade:** `dbt source freshness`, metadados de execução persistidos e alerta na falha.
+- **CI enxuto:** rodar só o que mudou (`state:modified`), em vez do projeto inteiro a cada push.
 
-**Decisoes e alternativas:**
-- **Airflow vs Dagster vs Prefect.** Airflow, porque domina as vagas. Dagster e mais moderno e integra melhor com dbt, vale citar como alternativa. Prefect e mais leve.
-- **`BashOperator` chamando dbt vs `astronomer-cosmos`.** Comecar simples com Bash/DockerOperator. O Cosmos renderiza cada model dbt como task no Airflow, otimo, mas adiciona complexidade.
+**Decisões e alternativas:**
+- **Airflow vs Dagster vs Prefect.** Airflow, porque domina as vagas. Dagster é mais moderno e integra melhor com dbt, vale citar como alternativa. Prefect é mais leve.
+- **`BashOperator` chamando dbt vs `astronomer-cosmos`.** Começar simples com Bash/DockerOperator. O Cosmos renderiza cada model dbt como task no Airflow, ótimo, mas adiciona complexidade.
 
-**Riscos em producao:** Airflow local no Docker nao e HA (alta disponibilidade). Em producao usa-se Airflow gerenciado (MWAA na AWS, Composer no GCP) ou Kubernetes. Cuidar tambem de idempotencia: rodar a DAG duas vezes nao pode duplicar dado.
+**Por que esta etapa importa mais que ferramenta nova.** Carga full e ausência de
+orquestração são as duas fraquezas que o próprio README já admite. Corrigi-las
+demonstra mais maturidade do que somar mais uma tecnologia à lista. Idempotência
+e backfill são o assunto que mais aparece em entrevista de engenharia de dados, e
+quase nenhum projeto de portfólio os trata.
+
+**Riscos em produção:** Airflow local no Docker não é HA. Em produção usa-se
+gerenciado (MWAA, Composer) ou Kubernetes.
 
 ---
 
-## Fase 4 — Power BI avancado
+## Etapa 4 — Previsão de atraso (frente de ML)
 
-**Objetivo:** dashboard executivo com os recursos que o mercado corporativo cobra de um relatorio serio.
+**Objetivo:** prever, no momento do pedido, se ele vai atrasar, e devolver isso ao warehouse.
+
+**Entregas planejadas:**
+- Classificador binário de atraso, treinado só com informação disponível no ato da compra.
+- Baseline ingênua antes do modelo (ex: taxa histórica de atraso por região).
+- Split **temporal**, nunca aleatório.
+- Limiar de decisão escolhido por custo de negócio, não por 0,5 padrão.
+- **Inferência em lote escrita de volta nas marts**, como tabela que o dashboard lê.
+- Monitoramento de drift entre treino e produção.
+
+**Por que o alvo mudou.** O plano original era previsão de demanda. Os dados não
+sustentam: a série tem **20 meses utilizáveis, ou 1,7 ciclo anual**. Sazonalidade
+não se valida com menos de dois ciclos completos, então qualquer padrão que o
+modelo encontrasse em novembro seria uma observação isolada, não um padrão. Um
+modelo mal fundamentado vale menos que nenhum modelo.
+
+**Por que previsão de atraso funciona aqui:**
+- Classe minoritária em **6,8%** dos pedidos entregues: desbalanceado de forma realista, não trivial.
+- Há sinal geográfico real: Nordeste **12,7%** de atraso contra Sul **5,9%**.
+- Há sinal logístico: venda entre regiões diferentes atrasa **7,5%** contra **6,0%** dentro da mesma região.
+- Conecta diretamente com a análise da Etapa 2 e com o dashboard.
+
+**O vazamento que define a qualidade do trabalho.** `tempo_entrega_dias`,
+`atraso_dias`, `delivered_customer_at` e `entregue_no_prazo` são informação do
+futuro. Um modelo que os usa chega a quase 1,0 de AUC e não serve para nada,
+porque no momento do pedido esses campos não existem. O conjunto de features
+precisa ser auditado campo a campo, e essa auditoria vai documentada.
+
+**Riscos em produção:** além do vazamento, o retreino. Modelo envelhece e precisa
+de reavaliação periódica, senão degrada em silêncio.
+
+---
+
+## Etapa 5 — Power BI avançado
+
+**Objetivo:** dashboard executivo com os recursos que o mercado corporativo cobra de um relatório sério.
 
 **Entregas planejadas:**
 - Dashboard executivo conectado ao DW.
-- **DAX avancado:** medidas de receita, ticket medio, % no prazo, NPS aproximado, variacao mes a mes.
-- **RLS (Row Level Security)** por regiao e por vendedor.
-- **OLS (Object Level Security)** para metricas sensiveis.
-- Relatorios: vendas por regiao, performance de vendedores, atrasos, ticket medio, satisfacao.
+- **DAX avançado:** medidas de receita, ticket médio, % no prazo, variação mês a mês.
+- **RLS (Row Level Security)** por região e por vendedor.
+- **OLS (Object Level Security)** para métricas sensíveis.
 
-**Decisoes e alternativas:**
-- **Import vs DirectQuery.** Import (dado em memoria) e mais rapido para dashboard; DirectQuery consulta o banco ao vivo, bom para dado que muda toda hora. Para portfolio, Import.
-- Como o star schema ja esta pronto no dbt, o Power BI so precisa ligar os relacionamentos. Modelo estrela e exatamente o que o motor VertiPaq do Power BI gosta.
+**Decisões e alternativas:**
+- **Import vs DirectQuery.** Import (dado em memória) é mais rápido para dashboard; DirectQuery consulta o banco ao vivo, bom para dado que muda toda hora. Para portfólio, Import.
+- Aqui o consumo é do **star schema**, não das OBTs: o motor VertiPaq foi feito para modelo dimensional.
 
-**Riscos em producao:** RLS mal configurado vaza dado entre regioes; sempre testar com "View as role". Modelo sem star schema deixa o Power BI lento.
-
----
-
-## Fase 5 — ML basico (previsao de demanda)
-
-**Objetivo:** um modelo simples e honesto, bem avaliado.
-
-**Entregas planejadas:**
-- Previsao de demanda (pedidos por periodo/categoria) com **scikit-learn (regressao)**.
-- Feature engineering com pandas (sazonalidade, mes, regiao, feriado).
-- Avaliacao com **RMSE e MAE**, comparando com uma baseline ingenua.
-- Resultado levado de volta ao dashboard.
-
-**Decisoes e alternativas:**
-- **Regressao simples vs series temporais (Prophet/ARIMA).** Comecar com regressao (scikit-learn basico, honesto no curriculo). Citar Prophet como alternativa para sazonalidade.
-- Sempre comparar com baseline (ex: media do mes anterior). Um modelo que nao vence a baseline nao serve.
-
-**Riscos em producao:** vazamento de dado (usar no treino informacao que so existe no futuro), e retreino: modelo envelhece, precisa de reavaliacao periodica.
+**Riscos em produção:** RLS mal configurado vaza dado entre regiões; sempre testar com "View as role".
 
 ---
 
-## Fase 6 — Agente de IA (LangChain)
+## Etapa 6 — Agente de IA (opcional)
 
-**Objetivo:** responder perguntas de negocio em linguagem natural sobre o DW.
+**Objetivo:** responder perguntas de negócio em linguagem natural sobre as marts.
 
-**Entregas planejadas:**
-- Agente **LangChain** que traduz pergunta em SQL e responde.
-- Interface em **Streamlit** (ou FastAPI).
-- Conectado ao PostgreSQL (marts).
+Fica por último e é explicitamente opcional. Só faz sentido depois que as três
+frentes principais estiverem profundas. Um agente sobre um pipeline raso
+impressiona menos que um pipeline sólido sem agente.
 
-### Atencao: dois cuidados que o mentor destacou
+**Entregas planejadas:** agente LangChain traduzindo pergunta em SQL, interface
+Streamlit, conectado só às marts.
 
-**1. SQL injection e seguranca do banco.**
-Um agente que gera e executa SQL a partir de texto livre e um risco real. Um usuario pode pedir "apague a tabela de pedidos" e o modelo tentar `DROP TABLE`. Como proteger:
+**Dois cuidados obrigatórios:**
 
-- **Usuario de banco somente leitura.** Criar um role no Postgres com `SELECT` apenas nos schemas `marts`. Mesmo que o modelo gere um `DROP` ou `DELETE`, o banco recusa. Essa e a defesa mais importante.
-- **Somente a camada marts.** O agente nao enxerga `raw` nem `staging`.
-- **Lista de comandos permitidos.** Bloquear tudo que nao comeca com `SELECT` antes de executar.
-- **Limite de linhas e timeout.** Forcar `LIMIT` e um `statement_timeout` curto, para uma pergunta ampla nao travar o banco.
-- **Nunca concatenar texto do usuario em SQL na mao.** Deixar o LangChain montar via a toolkit de SQL, com a validacao acima por cima.
+**1. Segurança do banco.** Um agente que gera e executa SQL a partir de texto
+livre é risco real. Defesas, em ordem de importância:
+- **Usuário de banco somente leitura**, com `SELECT` apenas nos schemas `marts`. Mesmo que o modelo gere `DROP`, o banco recusa. Esta é a defesa que importa.
+- O agente não enxerga `raw` nem `staging`.
+- Bloquear tudo que não começa com `SELECT` antes de executar.
+- Forçar `LIMIT` e `statement_timeout` curto.
+- Nunca concatenar texto do usuário em SQL na mão.
 
-**2. Custo de token.**
-Cada pergunta manda o schema das tabelas + a pergunta + exemplos para o LLM. Isso custa. Como controlar:
+**2. Custo de token.** Modelo barato por padrão, enviar só o schema das marts,
+cache de perguntas frequentes e limite de tentativas.
 
-- **Modelo barato por padrao** (ex: `gpt-4o-mini`), subindo de modelo so se precisar.
-- **Enviar so o schema das marts**, nao do banco inteiro. Menos tabela no prompt, menos token.
-- **Cache de perguntas frequentes**, para nao pagar duas vezes pela mesma coisa.
-- **Limite de tentativas.** Se o agente erra o SQL, ele tenta de novo, e cada tentativa custa. Limitar o numero de retries.
-
-**Decisoes e alternativas:**
-- **Text-to-SQL (LangChain SQL agent) vs RAG sobre metricas.** Text-to-SQL e mais direto para dado tabular. RAG serviria mais para documentacao. Da para combinar: RAG para explicar as metricas, SQL para calcular.
-- **Streamlit vs FastAPI.** Streamlit entrega interface pronta rapido (bom para demo). FastAPI e melhor se virar uma API para outro sistema consumir.
-
-**Riscos em producao:** alem de injection e custo, ha o risco de resposta errada com cara de certa (o modelo inventa numero). Mitigar mostrando o SQL gerado junto da resposta, para a pessoa conferir.
+**Risco principal:** resposta errada com cara de certa. Mitigar mostrando o SQL
+gerado junto da resposta. Este projeto já tem evidência do problema: ao gerar o
+mockup do dashboard, um modelo inventou os valores de 6 das 9 UFs do mapa e citou
+dois estados que nem estão no top 9, acertando apenas os três que receberam
+explicitamente no prompt. Modelo de linguagem preenche lacuna com o que parece
+razoável. O agente precisa de guarda contra exatamente isso.
 
 ---
 
-## Resumo por prioridade de vaga
+## Decisões descartadas, e por quê
 
-| Habilidade da vaga | Fase que cobre |
-|---|---|
-| dbt / modelagem dimensional | 1 |
-| SQL analitico | 1, 4, 6 |
-| Python / pandas | 1, 5 |
-| PySpark / Databricks | 2 |
-| Cloud (Azure / AWS) | 2 |
-| Airflow / orquestracao | 3 |
-| Power BI (DAX, RLS) | 4 |
-| Machine learning | 5 |
-| IA / LLM aplicado | 6 |
-| Docker | 1, 2, 3 |
+Registrar o que não foi feito, e a evidência por trás, vale tanto quanto
+registrar o que foi.
+
+| Descartado | Evidência | Decisão |
+|---|---|---|
+| **PySpark / Medallion em Spark** | 99.441 pedidos, 1,5 milhão de linhas na raw. O pipeline inteiro roda em 23s num Postgres em container | Volume não justifica computação distribuída. Usar Spark aqui seria demonstração vazia, e a pergunta "por que Spark?" não teria boa resposta |
+| **Previsão de demanda** | 20 meses utilizáveis, 1,7 ciclo anual | Impossível validar sazonalidade com menos de 2 ciclos. Alvo trocado por previsão de atraso |
+| **Análise de coorte e retenção** | 3,1% de clientes com mais de um pedido | Dataset não sustenta. Registrado como achado, não produzido como análise vazia |
+| **dbt Cloud** | Custa, e o valor é agendador e IDE web | dbt-core cobre o que o projeto precisa |
+| **Databricks Community Edition** | Sem cluster persistente, sem scheduler, mount de Blob limitado | Não permite arquitetura cloud de verdade |
+
+---
+
+## O que este projeto não demonstra
+
+Honestidade sobre limite é parte do trabalho. Este projeto **não** cobre:
+
+- **Ingestão de fonte viva.** É um dump estático de CSV. Sem API, sem schema que muda, sem rate limit, sem fonte que cai.
+- **Escala.** 1,5 milhão de linhas cabe na memória de um notebook.
+- **Streaming e CDC.** Tudo é batch.
+
+Essas competências pedem um projeto de forma diferente, com dado coletado ao
+longo do tempo de uma fonte real. É a lacuna consciente deste repositório.

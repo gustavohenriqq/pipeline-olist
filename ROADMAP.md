@@ -37,7 +37,7 @@ análise usou para achar o problema.
 
 ---
 
-## Etapa 1 — Fundação (concluída)
+## Etapa 1 — Fundação (concluída, exceto a publicação do dashboard)
 
 **Objetivo:** ter o pipeline rodando fim a fim, com qualidade testada.
 
@@ -47,8 +47,13 @@ análise usou para achar o problema.
 - 5 dimensões + 2 fatos + 2 tabelas largas (OBT), 70 testes de qualidade passando.
 - Docker Compose com Postgres e pgAdmin.
 - Camada de serviço no Neon (Postgres serverless) com as marts publicadas.
-- Dashboard público no Looker Studio lendo do Neon.
 - CI no GitHub Actions rodando o pipeline inteiro sobre uma amostra versionada.
+
+**Pendente:** publicar o relatório no Looker Studio e colar o link aqui e no
+README. A conexão está pronta e testada, o guia de montagem e os números de
+conferência estão em [dashboards/README.md](dashboards/README.md), e existe um
+mockup da página inicial em [dashboards/mockup/](dashboards/mockup/). Falta o
+passo manual de montar e publicar.
 
 **Decisões e alternativas:**
 - **dbt-core (CLI) vs dbt Cloud.** Escolhido o core, gratuito e local. O dbt Cloud tem agendador e IDE web, mas custa e não agrega para portfólio.

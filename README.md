@@ -24,8 +24,15 @@ em volume porque vende mais, nao porque opera pior. Corrigindo pelo tamanho,
 **o Nordeste sozinho responde por 537 dos 569 atrasos em excesso do pais**, ou
 94% do total. Trazer a regiao para a media nacional vale cerca de R$ 112 mil.
 
-> Analise completa, com o controle por regiao, a investigacao da anomalia da
-> cauda e as queries de reproducao: **[docs/analise-atraso.md](docs/analise-atraso.md)**.
+E a acao intuitiva tambem esta errada. Decompondo o tempo de entrega, **87% do
+atraso nasce no transporte e so 13% no vendedor**. Nos pedidos atrasados do
+Nordeste, o vendedor e o **mais rapido do pais** (4,8 dias contra 6,5 do
+Sudeste). Cobrar SLA desses vendedores atacaria a parte que ja funciona melhor
+que a media. A acao e logistica, nao comercial.
+
+> Analise completa, com o controle por regiao, a decomposicao vendedor contra
+> transportadora, a investigacao da anomalia da cauda e as queries de
+> reproducao: **[docs/analise-atraso.md](docs/analise-atraso.md)**.
 
 ## O que o projeto faz com isso
 
@@ -43,7 +50,7 @@ analise usou para achar o problema. O plano completo, incluindo o que foi
 descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
 
 > Status: **Etapa 1 (fundacao) concluida e testada** no dataset completo.
-> 68 testes de qualidade, 88 PASS e 0 ERROR, rodando no CI a cada push.
+> 70 testes de qualidade, 88 PASS e 0 ERROR, rodando no CI a cada push.
 
 Stack: **Python, SQL, dbt, PostgreSQL, Docker, Airflow, scikit-learn e Power BI.**
 
@@ -220,7 +227,7 @@ dbt docs serve    --profiles-dir . --port 8081
 - Schema `raw`: 9 tabelas cruas.
 - Schema `staging` e `intermediate`: views de limpeza e agregacao.
 - Schema `marts`: 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
-- 68 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
+- 70 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
 - Camada de servico no Neon com as marts publicadas, para o Looker Studio ler 24/7.
 
 ---
@@ -285,7 +292,7 @@ cd dbt && dbt build --profiles-dir . && cd ..   # constroi e testa local
 python scripts/publicar_marts.py                # espelha as marts no Neon
 ```
 
-**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos 68 testes do dbt.
+**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos 70 testes do dbt.
 
 O passo a passo completo de conexao, as paginas sugeridas e os numeros de conferencia estao em [dashboards/README.md](dashboards/README.md).
 
@@ -301,7 +308,7 @@ Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.
 O plano completo, com as decisoes descartadas e a evidencia por tras de cada
 uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 
-1. **Fundacao** (concluida): ingestao, Postgres, dbt, 68 testes, camada de servico e dashboard.
+1. **Fundacao** (concluida): ingestao, Postgres, dbt, 70 testes, camada de servico e dashboard.
 2. **Analise do atraso:** documento com recomendacao e numero, investigando por que a curva de nota nao e monotona.
 3. **Confiabilidade:** models incrementais, idempotencia, Airflow com backfill, freshness e CI enxuto.
 4. **Previsao de atraso:** classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts.

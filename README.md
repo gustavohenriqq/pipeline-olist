@@ -16,10 +16,16 @@ Atrasar entre 8 e 30 dias derruba para **1,65**.
 | Atraso de 8 a 30 dias | 2.517 | **1,65** |
 | Atraso acima de 30 dias | 345 | 2,06 |
 
-Sao **6.534 pedidos atrasados, R$ 1.150.892 em receita, 7,3% do total**. O atraso
-nao se distribui por igual: o Nordeste atrasa **12,7%** dos pedidos contra
-**5,9%** do Sul, e venda entre regioes diferentes atrasa 25% mais que venda
-dentro da mesma regiao.
+Sao **6.534 pedidos atrasados, R$ 1.150.892 em receita, 7,3% do total**.
+
+E a leitura obvia sobre onde agir esta errada. O Sudeste concentra 62% dos
+atrasos, mas tem taxa de **6,1% contra 6,8% da media nacional**: ele atrasa mais
+em volume porque vende mais, nao porque opera pior. Corrigindo pelo tamanho,
+**o Nordeste sozinho responde por 537 dos 569 atrasos em excesso do pais**, ou
+94% do total. Trazer a regiao para a media nacional vale cerca de R$ 112 mil.
+
+> Analise completa, com o controle por regiao, a investigacao da anomalia da
+> cauda e as queries de reproducao: **[docs/analise-atraso.md](docs/analise-atraso.md)**.
 
 ## O que o projeto faz com isso
 

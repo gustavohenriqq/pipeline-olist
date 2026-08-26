@@ -55,12 +55,25 @@ select
 
     -- Carimbos de tempo (uteis para o BI recalcular se precisar)
     o.purchased_at,
+    o.approved_at,
+    o.delivered_carrier_at,
     o.delivered_customer_at,
     o.estimated_delivery_at,
 
     -- Metricas de logistica (em dias)
     (o.delivered_customer_at::date - o.purchased_at::date)      as tempo_entrega_dias,
     (o.delivered_customer_at::date - o.estimated_delivery_at::date) as atraso_dias,
+
+    -- Decomposicao do tempo de entrega em duas responsabilidades.
+    -- Existe porque a pergunta "de quem e o atraso?" nao tem resposta olhando
+    -- so o tempo total: vendedor que demora a despachar e transportadora lenta
+    -- produzem o mesmo numero no fim, mas exigem acoes opostas (SLA de
+    -- despacho contra malha logistica).
+    --
+    -- Foi a analise que pediu estes campos, nao o contrario. Ver
+    -- docs/analise-atraso.md, secao "de quem e o atraso".
+    (o.delivered_carrier_at::date  - o.purchased_at::date)      as dias_ate_transportadora,
+    (o.delivered_customer_at::date - o.delivered_carrier_at::date) as dias_em_transporte,
 
     -- Flags
     (o.order_status = 'delivered')                    as foi_entregue,

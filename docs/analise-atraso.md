@@ -21,10 +21,22 @@ volume, o Sudeste tem **434 atrasos a menos** do que se esperaria.
 O problema real está no **Nordeste**, que sozinho responde por **537 dos 569
 atrasos em excesso** do país.
 
-**Recomendação.** Priorizar a operação logística do Nordeste. Trazer a região
-para a média nacional eliminaria cerca de 537 atrasos por ano, associados a
-**R$ 112 mil** em receita, e evitaria a queda de 2,6 pontos de nota nesses
-pedidos. Nenhuma outra região apresenta atraso em excesso relevante.
+**De quem é o atraso.** Decompondo o tempo de entrega, **87% do atraso nasce no
+transporte e apenas 13% no vendedor**. E nos pedidos atrasados do Nordeste, o
+vendedor é o mais rápido do país (4,8 dias contra 6,5 do Sudeste). Os vendedores
+que atendem a região despacham acima da média e mesmo assim o pedido chega
+atrasado.
+
+**Recomendação.** Priorizar **malha logística** para Nordeste e Norte, não
+cobrança de SLA de vendedor. Trazer o Nordeste para a média nacional eliminaria
+cerca de 537 atrasos por ano, associados a **R$ 112 mil** em receita, e evitaria
+a queda de 2,6 pontos de nota nesses pedidos. Nenhuma outra região apresenta
+atraso em excesso relevante.
+
+Vale notar o que essa conclusão evita: a ação intuitiva seria cobrar os
+vendedores da região com pior indicador. Os dados mostram que isso atacaria
+justamente a parte que já funciona melhor que a média, gastando esforço sem mover
+o resultado.
 
 ---
 
@@ -162,18 +174,82 @@ inventando.
 
 ---
 
-## 5. Limitações e próximo passo
+## 5. De quem é o atraso: do vendedor ou da transportadora
 
-**O que esta análise ainda não responde: de quem é o atraso.** O tempo entre a
-compra e a entrega tem duas partes: o tempo que o vendedor leva para despachar, e
-o tempo que a transportadora leva para entregar. A recomendação muda
-completamente conforme a resposta. Se o gargalo é o vendedor, a ação é
-onboarding e SLA de despacho. Se é a transportadora, a ação é malha logística.
+A pergunta anterior deixava a recomendação incompleta. Saber **onde** o atraso
+acontece não diz **quem** o causa, e a ação muda por completo: se o gargalo é o
+vendedor, a resposta é SLA de despacho e onboarding; se é a transportadora, é
+malha logística.
 
-Os campos existem no staging (`approved_at`, `delivered_carrier_at`) mas ainda
-não foram promovidos ao `fato_pedidos`. Promover esses dois campos e decompor o
-tempo de entrega é o próximo passo desta análise, e é um caso em que a pergunta
-de negócio dirige a mudança de modelagem, não o contrário.
+O tempo total de entrega se decompõe em duas partes:
+
+- **Tempo do vendedor:** da compra até a entrega do pacote à transportadora.
+- **Tempo do transporte:** da coleta até a entrega ao cliente.
+
+| Situação | Pedidos | Tempo do vendedor | Tempo de transporte | Total |
+|---|---|---|---|---|
+| No prazo | 89.936 | 3,0 dias | 7,9 dias | 10,9 dias |
+| Atrasado | 6.533 | 6,0 dias | **27,9 dias** | 33,9 dias |
+| **Diferença** | | **+3,0 dias** | **+19,9 dias** | +23,0 dias |
+
+**87% do atraso nasce no transporte, 13% no vendedor.**
+
+### O corte por região elimina a hipótese do vendedor
+
+O dado mais claro é a estabilidade do tempo do vendedor. Entre pedidos entregues
+no prazo, ele é praticamente idêntico em todo o país:
+
+| Região | Vendedor (no prazo) | Transporte (no prazo) | Vendedor (atrasado) | Transporte (atrasado) |
+|---|---|---|---|---|
+| Sudeste | 3,0 dias | 6,4 dias | 6,5 dias | 24,6 dias |
+| Sul | 3,1 dias | 9,6 dias | 5,9 dias | 29,1 dias |
+| Centro-Oeste | 3,0 dias | 10,6 dias | 5,6 dias | 28,6 dias |
+| Nordeste | 3,1 dias | 13,8 dias | **4,8 dias** | **36,1 dias** |
+| Norte | 3,2 dias | 16,9 dias | 4,9 dias | **43,3 dias** |
+
+O vendedor despacha em cerca de 3 dias em qualquer região. O transporte varia de
+**6,4 dias no Sudeste a 16,9 dias no Norte**, quase o triplo, e o mesmo padrão se
+amplifica nos pedidos atrasados.
+
+E o detalhe que fecha o caso: nos pedidos atrasados do **Nordeste**, a região com
+todo o excesso de atraso do país, o vendedor é o **mais rápido de todos** (4,8
+dias, contra 6,5 do Sudeste). Os vendedores que atendem o Nordeste despacham mais
+rápido que a média e ainda assim os pedidos chegam atrasados. O problema não está
+neles.
+
+### Recomendação revisada
+
+A ação é **logística, não comercial**. Cobrar SLA de despacho dos vendedores do
+Nordeste atacaria a parte que já funciona melhor que a média e não moveria o
+indicador. O investimento precisa ir para malha de distribuição e prazo de
+transporte nas rotas para Nordeste e Norte.
+
+Isso também corrige a leitura do prazo prometido: se o transporte para o Norte
+leva 16,9 dias mesmo quando dá certo, parte do "atraso" pode ser prazo estimado
+mal calibrado para a região, e não falha de execução. Separar essas duas causas é
+o próximo recorte natural.
+
+> **Nota de método.** Esta seção é um caso de pergunta de negócio dirigindo a
+> modelagem, e não o contrário. Os campos `approved_at` e `delivered_carrier_at`
+> existiam no staging desde o início, mas não haviam sido promovidos ao
+> `fato_pedidos` porque nenhuma pergunta os exigia. A análise pediu, o modelo
+> mudou: `dias_ate_transportadora` e `dias_em_transporte` agora são colunas
+> testadas da mart.
+
+### Qualidade de dado encontrada no caminho
+
+Ao promover os campos, 22 pedidos se revelaram impossíveis: 2 com a
+transportadora recebendo o pacote **antes** da compra e 20 com o cliente
+recebendo **antes** da transportadora coletar. O extremo chega a -171 dias.
+
+São 0,02% da base e não afetam as conclusões acima, mas foram registrados como
+teste em **aviso** no `_marts.yml`, junto do gap de geolocalização. Esconder o
+problema seria mais fácil; documentá-lo é o que permite decidir depois se vale
+tratar na origem.
+
+---
+
+## 6. Limitações
 
 **Outras limitações:**
 

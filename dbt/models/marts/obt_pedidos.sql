@@ -82,10 +82,17 @@ select
     -- Satisfacao e entrega
     p.nota_avaliacao,
     p.purchased_at,
+    p.delivered_carrier_at,
     p.delivered_customer_at,
     p.estimated_delivery_at,
     p.tempo_entrega_dias,
     p.atraso_dias,
+
+    -- Decomposicao do tempo: quanto foi do vendedor, quanto foi do transporte.
+    -- 87% do atraso nasce no transporte. Ver docs/analise-atraso.md.
+    p.dias_ate_transportadora,
+    p.dias_em_transporte,
+
     p.foi_entregue,
     p.entregue_no_prazo
 

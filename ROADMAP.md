@@ -44,7 +44,7 @@ análise usou para achar o problema.
 **Entregas:**
 - Ingestão Python + pandas dos 9 CSVs para o schema `raw` do Postgres (via COPY).
 - Projeto dbt: staging, intermediate e marts (star schema).
-- 5 dimensões + 2 fatos + 2 tabelas largas (OBT), 68 testes de qualidade passando.
+- 5 dimensões + 2 fatos + 2 tabelas largas (OBT), 70 testes de qualidade passando.
 - Docker Compose com Postgres e pgAdmin.
 - Camada de serviço no Neon (Postgres serverless) com as marts publicadas.
 - Dashboard público no Looker Studio lendo do Neon.
@@ -60,22 +60,30 @@ análise usou para achar o problema.
 
 ---
 
-## Etapa 2 — Análise do atraso (frente de análise)
+## Etapa 2 — Análise do atraso (concluída)
 
 **Objetivo:** transformar o achado em recomendação defensável, com número.
 
-**Entregas planejadas:**
-- Documento de análise em `docs/analise-atraso.md`, com conclusão e recomendação.
-- Quantificação da receita em risco e da queda de nota por faixa de atraso.
-- Recorte geográfico: onde o atraso se concentra e o quanto isso destoa da média.
-- Investigação da anomalia da cauda (ver abaixo).
-- Página de entregas no dashboard, ligada ao documento.
+**Entregue:** [docs/analise-atraso.md](docs/analise-atraso.md).
 
-**A anomalia que vale investigar.** A curva de nota por atraso não é monótona:
-pedidos com mais de 30 dias de atraso têm nota **2,06**, melhor que a faixa de 8
-a 30 dias (**1,65**). Hipóteses a testar: compensação ao cliente, expectativa já
-ajustada, ou viés de seleção em quem ainda responde à pesquisa depois de 82 dias
-de espera. Chegar a uma resposta sustentada é o que separa análise de gráfico.
+**Conclusões:**
+- O Sudeste concentra 62% dos atrasos mas opera **abaixo** da média nacional (6,1% contra 6,8%). Corrigindo pelo volume, o **Nordeste responde por 537 dos 569 atrasos em excesso do país**, 94% do total.
+- **87% do atraso nasce no transporte, 13% no vendedor.** Nos pedidos atrasados do Nordeste o vendedor é o mais rápido do país (4,8 dias contra 6,5 do Sudeste). A ação é logística, não cobrança de SLA de vendedor.
+- O efeito do atraso sobre a nota persiste dentro das cinco regiões (queda de 2,55 a 2,74 pontos): não é composição regional.
+
+**A anomalia da cauda, investigada.** A curva não é monótona: acima de 30 dias a
+nota sobe para 2,06 contra 1,65 da faixa de 8 a 30. Viés de resposta foi
+descartado com número (a taxa de resposta cai apenas 2 pontos). A causa é o dobro
+de notas 5 (13,7% contra 6,1%), com z = 5,04 e p = 4,6e-07. A hipótese de
+resolução do caso ficou registrada como **não testável**, porque o dataset não
+tem atendimento nem reembolso.
+
+**Mudança de modelagem que a análise forçou.** `approved_at` e
+`delivered_carrier_at` existiam no staging desde o início, mas nenhuma pergunta
+os exigia. Para responder "de quem é o atraso" foram promovidos ao
+`fato_pedidos` como `dias_ate_transportadora` e `dias_em_transporte`. Ao
+promovê-los, 22 pedidos impossíveis apareceram (transportadora recebendo antes da
+compra, cliente antes da transportadora), agora cobertos por teste em aviso.
 
 **O que foi testado e não é viável.** Análise de coorte e retenção, o reflexo
 automático em e-commerce: apenas **3,1% dos clientes compraram mais de uma vez**

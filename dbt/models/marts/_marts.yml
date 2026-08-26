@@ -82,6 +82,27 @@ models:
               values: [1, 2, 3, 4, 5]
               config:
                 severity: warn
+      - name: dias_ate_transportadora
+        description: >
+          Dias entre a compra e a entrega do pacote a transportadora. E a parte
+          do tempo sob responsabilidade do vendedor. Teste em aviso: 2 pedidos
+          tem valor negativo na base do Olist (transportadora recebendo antes da
+          compra), o que e impossivel e indica erro de origem.
+        data_tests:
+          - valor_minimo:
+              min_value: 0
+              config:
+                severity: warn
+      - name: dias_em_transporte
+        description: >
+          Dias entre a coleta pela transportadora e a entrega ao cliente. E a
+          parte do tempo sob responsabilidade da logistica. Teste em aviso: 20
+          pedidos tem valor negativo (cliente recebendo antes da coleta).
+        data_tests:
+          - valor_minimo:
+              min_value: 0
+              config:
+                severity: warn
 
   - name: fato_itens_pedido
     description: Fato no grao de item do pedido; conecta produto e vendedor.
@@ -127,6 +148,12 @@ models:
         data_tests:
           - valor_minimo:
               min_value: 0
+      - name: dias_ate_transportadora
+        description: Parte do tempo de entrega sob responsabilidade do vendedor.
+      - name: dias_em_transporte
+        description: >
+          Parte do tempo de entrega sob responsabilidade da transportadora.
+          Concentra 87% do atraso. Ver docs/analise-atraso.md.
 
   - name: obt_itens
     description: >

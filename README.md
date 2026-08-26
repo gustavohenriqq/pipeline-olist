@@ -1,25 +1,64 @@
-# Pipeline de Dados Operacionais do Varejo Brasileiro (Olist)
+# Atraso na entrega custa R$ 1,15 milhao ao ano
 
-Pipeline de dados de ponta a ponta sobre o e-commerce brasileiro, usando o dataset publico da Olist (~100 mil pedidos reais). O projeto vai da ingestao dos CSVs ate um modelo dimensional testado, servindo BI (Power BI e Looker Studio) e um agente de IA que responde perguntas em linguagem natural.
+Pipeline de dados de ponta a ponta sobre o e-commerce brasileiro (dataset publico
+da Olist, 99.441 pedidos reais), construido para responder uma pergunta de
+negocio especifica e agir sobre ela.
 
-O objetivo e mostrar, na pratica, a stack de engenharia e analytics engineering mais pedida no mercado brasileiro: **Python, SQL, dbt, PostgreSQL, Docker, PySpark, Airflow e Power BI**.
+## O achado
 
-> Status atual: **Fase 1 (base local) concluida e testada.** As fases 2 a 6 estao detalhadas no [ROADMAP.md](ROADMAP.md) e serao entregues uma por commit.
+Atrasar a entrega em uma semana derruba a nota do cliente de **4,29 para 2,72**.
+Atrasar entre 8 e 30 dias derruba para **1,65**.
+
+| Situacao da entrega | Pedidos | Nota media |
+|---|---|---|
+| No prazo | 89.936 | **4,29** |
+| Atraso de 1 a 7 dias | 3.672 | 2,72 |
+| Atraso de 8 a 30 dias | 2.517 | **1,65** |
+| Atraso acima de 30 dias | 345 | 2,06 |
+
+Sao **6.534 pedidos atrasados, R$ 1.150.892 em receita, 7,3% do total**. O atraso
+nao se distribui por igual: o Nordeste atrasa **12,7%** dos pedidos contra
+**5,9%** do Sul, e venda entre regioes diferentes atrasa 25% mais que venda
+dentro da mesma regiao.
+
+## O que o projeto faz com isso
+
+Tres frentes atacam a mesma pergunta, e a conexao entre elas e o ponto do
+projeto:
+
+| Frente | Papel | Estado |
+|---|---|---|
+| **Analise** | Quantificar o problema e recomendar acao | Etapa 2 |
+| **Engenharia** | Entregar o dado com confiabilidade, todo dia | Etapas 1 e 3 |
+| **ML** | Prever o atraso no momento do pedido | Etapa 4 |
+
+O ciclo fecha quando a previsao do modelo aparece no mesmo dashboard que a
+analise usou para achar o problema. O plano completo, incluindo o que foi
+descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
+
+> Status: **Etapa 1 (fundacao) concluida e testada** no dataset completo.
+> 68 testes de qualidade, 88 PASS e 0 ERROR, rodando no CI a cada push.
+
+Stack: **Python, SQL, dbt, PostgreSQL, Docker, Airflow, scikit-learn e Power BI.**
 
 ---
 
 ## 1. Problema de negocio
 
-A Olist conecta pequenos lojistas aos grandes marketplaces do Brasil. Cada venda gera dados espalhados em varias tabelas (pedidos, itens, pagamentos, avaliacoes, clientes, vendedores, geolocalizacao). Sem um modelo central, cada pergunta de negocio vira um SQL manual e demorado.
+A Olist conecta pequenos lojistas aos grandes marketplaces do Brasil. Cada venda
+gera dados espalhados em varias tabelas (pedidos, itens, pagamentos, avaliacoes,
+clientes, vendedores, geolocalizacao). Sem um modelo central, cada pergunta de
+negocio vira um SQL manual e demorado.
 
-Este pipeline organiza esses dados em um **modelo dimensional (star schema)** para responder rapido perguntas como:
+Este pipeline organiza esses dados em um **modelo dimensional (star schema)** que
+sustenta tanto o diagnostico quanto a acao:
 
+- Onde o atraso se concentra, e quanto ele custa em receita e em satisfacao?
 - Qual regiao e estado mais vende? Qual o ticket medio por regiao?
 - Quais vendedores e categorias tem melhor desempenho?
-- Quanto tempo leva a entrega e qual o percentual de atraso?
-- A nota de avaliacao cai quando o pedido atrasa?
+- Da para prever, no ato da compra, que um pedido vai atrasar?
 
-### Alguns numeros ja extraidos do modelo
+### Numeros do modelo
 
 | Indicador | Valor |
 |---|---|
@@ -31,6 +70,10 @@ Este pipeline organiza esses dados em um **modelo dimensional (star schema)** pa
 | Nota media de avaliacao | 4,09 de 5 |
 | Estado lider em receita | Sao Paulo (R$ 5,9 mi) |
 | Categoria lider em receita | health_beauty (R$ 1,44 mi) |
+
+Base: dataset completo. O tempo de entrega e o percentual no prazo consideram so
+os pedidos ja entregues, porque incluir os 2.963 em transito contaria como
+atrasado um pedido que ainda nem venceu o prazo.
 
 ---
 
@@ -249,14 +292,27 @@ Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.
 
 ## 8. Proximos passos
 
-O plano completo esta no [ROADMAP.md](ROADMAP.md). Resumo:
+O plano completo, com as decisoes descartadas e a evidencia por tras de cada
+uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 
-1. Base local (concluida): ingestao, Postgres, dbt, testes.
-2. Cloud Azure: Blob Storage + PySpark no Databricks + Azure SQL.
-3. Orquestracao com Airflow (Docker Compose).
-4. Power BI avancado (DAX, RLS, OLS).
-5. ML basico: previsao de demanda com scikit-learn.
-6. Agente de IA com LangChain respondendo em linguagem natural.
+1. **Fundacao** (concluida): ingestao, Postgres, dbt, 68 testes, camada de servico e dashboard.
+2. **Analise do atraso:** documento com recomendacao e numero, investigando por que a curva de nota nao e monotona.
+3. **Confiabilidade:** models incrementais, idempotencia, Airflow com backfill, freshness e CI enxuto.
+4. **Previsao de atraso:** classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts.
+5. **Power BI avancado:** DAX, RLS por regiao e vendedor, OLS.
+6. **Agente de IA** (opcional): LangChain sobre as marts, com usuario somente leitura.
+
+Duas mudancas de rota, ambas por evidencia nos dados:
+
+- **PySpark foi cortado.** 1,5 milhao de linhas roda em 23 segundos num Postgres em container. Volume nao justifica computacao distribuida.
+- **Previsao de demanda virou previsao de atraso.** A serie tem 20 meses uteis, 1,7 ciclo anual. Nao da para validar sazonalidade com menos de dois ciclos.
+
+### O que este projeto nao demonstra
+
+Nao ha ingestao de fonte viva (e um dump estatico de CSV), nem escala real, nem
+streaming. Essas competencias pedem um projeto de forma diferente, com dado
+coletado ao longo do tempo de uma fonte que muda. E a lacuna consciente deste
+repositorio.
 
 ---
 

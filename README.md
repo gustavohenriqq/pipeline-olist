@@ -49,8 +49,10 @@ O ciclo fecha quando a previsao do modelo aparece no mesmo dashboard que a
 analise usou para achar o problema. O plano completo, incluindo o que foi
 descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
 
-> Status: **Etapa 1 (fundacao) concluida e testada** no dataset completo.
-> 70 testes de qualidade, 88 PASS e 0 ERROR, rodando no CI a cada push.
+> Status: **Etapa 1 (fundacao) e Etapa 2 (analise) concluidas** no dataset
+> completo. 70 testes de qualidade, 88 PASS e 0 ERROR, rodando no CI a cada
+> push. O dashboard do Looker Studio ainda nao foi publicado: a conexao esta
+> pronta, falta o passo manual de montagem.
 
 Stack: **Python, SQL, dbt, PostgreSQL, Docker, Airflow, scikit-learn e Power BI.**
 
@@ -308,7 +310,7 @@ Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.
 O plano completo, com as decisoes descartadas e a evidencia por tras de cada
 uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 
-1. **Fundacao** (concluida): ingestao, Postgres, dbt, 70 testes, camada de servico e dashboard.
+1. **Fundacao** (concluida, menos a publicacao do dashboard): ingestao, Postgres, dbt, 70 testes e camada de servico no Neon.
 2. **Analise do atraso:** documento com recomendacao e numero, investigando por que a curva de nota nao e monotona.
 3. **Confiabilidade:** models incrementais, idempotencia, Airflow com backfill, freshness e CI enxuto.
 4. **Previsao de atraso:** classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts.

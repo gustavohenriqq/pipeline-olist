@@ -54,7 +54,7 @@ descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
 > push. O dashboard do Looker Studio ainda nao foi publicado: a conexao esta
 > pronta, falta o passo manual de montagem.
 
-Stack: **Python, SQL, dbt, PostgreSQL, Docker, Airflow, scikit-learn e Power BI.**
+Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn e Power BI.**
 
 ---
 
@@ -143,10 +143,10 @@ erDiagram
 | Camada | Ferramenta | Por que |
 |---|---|---|
 | Ingestao | Python + pandas | Le CSV bagunçado (virgulas e quebras de linha nas avaliacoes) e carrega em massa com `COPY`, muito mais rapido que INSERT. |
-| Data lake / raw | PostgreSQL schema `raw` | Na fase local, o proprio Postgres guarda o bruto. Na fase cloud, vira Azure Blob Storage. |
+| Camada raw | PostgreSQL schema `raw` | O proprio Postgres guarda o bruto, tudo em texto. Volume de 1,5 milhao de linhas nao justifica data lake separado. |
 | Transformacao | dbt (dbt-core) | Padrao de mercado para analytics engineering: SQL versionado, testes de qualidade, documentacao e linhagem automatica. |
-| Armazenamento | PostgreSQL (Azure SQL na fase cloud) | Banco relacional solido, gratuito e o que a maioria das vagas pede. |
-| Orquestracao | Apache Airflow (Docker) | Agendar e monitorar o pipeline diario (fase 3). |
+| Armazenamento | PostgreSQL | Banco relacional solido, gratuito e o que a maioria das vagas pede. |
+| Camada de servico | Neon (Postgres serverless) | Recebe so as marts testadas, para o BI ler 24/7 sem depender da maquina local. |
 | BI principal | Power BI (DAX, RLS, OLS) | Padrao de mercado em BI corporativo no Brasil. |
 | BI publico | Looker Studio | Dashboard online e gratuito, para portfolio 24/7. |
 | IA | LangChain + Streamlit | Perguntas em linguagem natural viram SQL sobre o warehouse. |
@@ -312,7 +312,7 @@ uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 
 1. **Fundacao** (concluida, menos a publicacao do dashboard): ingestao, Postgres, dbt, 70 testes e camada de servico no Neon.
 2. **Analise do atraso:** documento com recomendacao e numero, investigando por que a curva de nota nao e monotona.
-3. **Confiabilidade:** models incrementais, idempotencia, Airflow com backfill, freshness e CI enxuto.
+3. **Confiabilidade no dbt:** models incrementais, idempotencia, reprocessamento por janela, freshness e CI enxuto.
 4. **Previsao de atraso:** classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts.
 5. **Power BI avancado:** DAX, RLS por regiao e vendedor, OLS.
 6. **Agente de IA** (opcional): LangChain sobre as marts, com usuario somente leitura.
@@ -320,6 +320,7 @@ uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 Duas mudancas de rota, ambas por evidencia nos dados:
 
 - **PySpark foi cortado.** 1,5 milhao de linhas roda em 23 segundos num Postgres em container. Volume nao justifica computacao distribuida.
+- **Airflow saiu deste projeto.** Fonte estatica nao tem o que agendar. Orquestracao fica no projeto irmao de transporte em tempo real, onde a coleta continua de API a justifica.
 - **Previsao de demanda virou previsao de atraso.** A serie tem 20 meses uteis, 1,7 ciclo anual. Nao da para validar sazonalidade com menos de dois ciclos.
 
 ### O que este projeto nao demonstra

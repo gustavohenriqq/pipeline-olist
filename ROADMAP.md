@@ -29,7 +29,7 @@ projeto:
 | Frente | Papel | Entrega |
 |---|---|---|
 | **Análise** | Descobrir e quantificar o problema | Documento com recomendação e número |
-| **Engenharia** | Entregar o dado com confiabilidade | Pipeline incremental, orquestrado, monitorado |
+| **Engenharia** | Entregar o dado com confiabilidade | Models incrementais, idempotência, freshness e CI enxuto |
 | **ML** | Agir antes do fato acontecer | Previsão de atraso escrita de volta no warehouse |
 
 O ciclo fecha quando a previsão do modelo aparece no mesmo dashboard que a
@@ -101,30 +101,34 @@ análise precisa controlar por esses fatores antes de afirmar causalidade.
 
 ---
 
-## Etapa 3 — Confiabilidade do pipeline (frente de engenharia)
+## Etapa 3 — Confiabilidade do lado do dbt (frente de engenharia)
 
-**Objetivo:** sair de "roda na minha máquina" para "roda sozinho, todo dia, e avisa quando quebra".
+**Objetivo:** tornar a transformação segura de rodar de novo, barata de testar e
+honesta sobre a idade do dado.
 
 **Entregas planejadas:**
 - **Models incrementais** nos fatos, com estratégia de merge por chave.
-- **Idempotência comprovada:** rodar duas vezes o mesmo dia não duplica dado, e reprocessar uma janela específica é um comando.
-- **Airflow via Docker Compose**, com DAG de ingestão, transformação e publicação.
-- **Backfill e dado que chega atrasado:** a DAG precisa reprocessar uma janela sem quebrar o que já estava certo.
-- **Freshness e observabilidade:** `dbt source freshness`, metadados de execução persistidos e alerta na falha.
-- **CI enxuto:** rodar só o que mudou (`state:modified`), em vez do projeto inteiro a cada push.
+- **Idempotência comprovada:** rodar o build duas vezes não duplica dado, e reprocessar uma janela de datas é um comando (`--vars` com início e fim).
+- **Freshness:** `dbt source freshness` com limite de aviso e de erro sobre a camada raw.
+- **Metadados de execução persistidos:** resultado de cada build e de cada teste gravado numa tabela, para responder "quando esse número foi atualizado pela última vez?".
+- **CI enxuto:** rodar só o que mudou (`state:modified+`), em vez do projeto inteiro a cada push.
 
-**Decisões e alternativas:**
-- **Airflow vs Dagster vs Prefect.** Airflow, porque domina as vagas. Dagster é mais moderno e integra melhor com dbt, vale citar como alternativa. Prefect é mais leve.
-- **`BashOperator` chamando dbt vs `astronomer-cosmos`.** Começar simples com Bash/DockerOperator. O Cosmos renderiza cada model dbt como task no Airflow, ótimo, mas adiciona complexidade.
+**Por que esta etapa importa.** Carga full é a fraqueza que o próprio README já
+admite. Idempotência e reprocessamento por janela são o assunto que mais aparece
+em entrevista de engenharia de dados, e dá para demonstrá-los inteiramente dentro
+do dbt, sem ferramenta nova.
 
-**Por que esta etapa importa mais que ferramenta nova.** Carga full e ausência de
-orquestração são as duas fraquezas que o próprio README já admite. Corrigi-las
-demonstra mais maturidade do que somar mais uma tecnologia à lista. Idempotência
-e backfill são o assunto que mais aparece em entrevista de engenharia de dados, e
-quase nenhum projeto de portfólio os trata.
+**Decisão: sem Airflow neste projeto.** Orquestração foi retirada daqui de
+propósito, e está registrada na tabela de decisões descartadas. O dataset é um
+arquivo estático que nunca muda: uma DAG agendada rodaria todo dia sobre o mesmo
+dado, e a pergunta "orquestrar o quê?" não teria boa resposta. É o mesmo
+raciocínio que tirou o PySpark. Airflow, backfill de fonte viva, data lake
+particionado e monitoramento ficam no projeto irmão de transporte público em
+tempo real, onde a coleta contínua de uma API cria a necessidade real de cada um.
 
-**Riscos em produção:** Airflow local no Docker não é HA. Em produção usa-se
-gerenciado (MWAA, Composer) ou Kubernetes.
+**Riscos em produção:** model incremental com lógica de janela errada perde ou
+duplica dado em silêncio. Por isso o teste de idempotência (build duplo, contagem
+igual) entra no CI, e não só na documentação.
 
 ---
 
@@ -226,6 +230,7 @@ registrar o que foi.
 | **Análise de coorte e retenção** | 3,1% de clientes com mais de um pedido | Dataset não sustenta. Registrado como achado, não produzido como análise vazia |
 | **dbt Cloud** | Custa, e o valor é agendador e IDE web | dbt-core cobre o que o projeto precisa |
 | **Databricks Community Edition** | Sem cluster persistente, sem scheduler, mount de Blob limitado | Não permite arquitetura cloud de verdade |
+| **Airflow** | Fonte é um arquivo estático, sem atualização. Não há evento, agenda nem janela nova para processar | Orquestração sem necessidade real vira enfeite. Coberta no projeto irmão, onde a coleta contínua de API a justifica |
 
 ---
 
@@ -236,6 +241,18 @@ Honestidade sobre limite é parte do trabalho. Este projeto **não** cobre:
 - **Ingestão de fonte viva.** É um dump estático de CSV. Sem API, sem schema que muda, sem rate limit, sem fonte que cai.
 - **Escala.** 1,5 milhão de linhas cabe na memória de um notebook.
 - **Streaming e CDC.** Tudo é batch.
+- **Orquestração.** Sem fonte que muda, não há o que agendar.
 
 Essas competências pedem um projeto de forma diferente, com dado coletado ao
-longo do tempo de uma fonte real. É a lacuna consciente deste repositório.
+longo do tempo de uma fonte real. É a lacuna consciente deste repositório, e é
+coberta por um projeto irmão de transporte público em tempo real.
+
+### Divisão de papéis entre os dois projetos
+
+| Projeto | Papel | Competências centrais |
+|---|---|---|
+| **Este (Olist)** | Analytics engineering, análise e ML | dbt, star schema, testes de qualidade, análise com recomendação, estatística, classificação |
+| **Transporte em tempo real** | Engenharia de dados | Ingestão de API, data lake medallion particionado, PySpark, Airflow, monitoramento |
+
+A divisão evita que os dois repitam a mesma demonstração, e cada ferramenta
+aparece onde o problema de fato a exige.

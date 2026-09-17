@@ -15,7 +15,7 @@ Abra `olist_visao_geral.html` no navegador (basta dar dois cliques no arquivo ou
    - Codigos hexadecimais da paleta de cores para copiar e colar no Looker Studio.
    - Tabela de mapeamento 1-para-1 de cada grafico (tipo de componente no Looker, campos de dimensao, metrica e agregacao).
    - Lembretes criticos de configuracao (upload do certificado SSL `isrgrootx1.pem` no conector Postgres do Neon e regra do filtro de pedidos entregues).
-4. **Scorecards com Indicadores de Contexto:** Icones vetoriais dedicados, valores em destaque com tipografia tabular, micro-badges de variacao/meta e barra de progresso no card de SLA de entrega.
+4. **Scorecards com Indicadores de Contexto:** Icones vetoriais dedicados, valores em destaque com tipografia tabular, micro-badges com fatos medidos (crescimento jan-ago a/a, frete sobre a receita, taxa de atraso, CSAT) e barra de progresso no card de entrega no prazo. Nenhum badge usa meta, porque o projeto nao tem meta definida.
 5. **Graficos com Gradientes e Anotacao:** 
    - Serie temporal com area sombreada suave e destaque especial anotado para o pico da Black Friday em nov/2017 (R$ 1,18 mi).
    - Grafico de barras horizontais arredondadas para receita regional com percentuais em tooltip.

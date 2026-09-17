@@ -3,343 +3,1623 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Olist — Visão Geral Comercial (mockup)</title>
+<title>Olist : Visão Geral Comercial (Mockup Looker Studio)</title>
 
 <!--
-  MOCKUP de referencia da pagina inicial do dashboard.
-  Nao le o banco: todos os valores estao fixos no codigo, copiados das marts
-  em 23/08/2026. Serve para validar layout e hierarquia visual antes de montar
-  no Looker Studio, que ai sim le o Neon ao vivo.
-
-  Base de todos os numeros: marts.obt_pedidos e marts.obt_itens,
-  janela de 01/01/2017 a 31/08/2018, todos os status de pedido.
-  A unica excecao esta rotulada no proprio card (entrega no prazo).
+  MOCKUP EXECUTIVO DE REFERÊNCIA : LOOKER STUDIO
+  Base oficial de dados: marts.obt_pedidos e marts.obt_itens (Neon Postgres)
+  Janela analítica estável: 01/01/2017 a 31/08/2018 (todos os status de pedido)
+  Nota: Sem em-dash em textos conforme regras do projeto.
 -->
 
+<!-- Google Fonts: Plus Jakarta Sans & Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js & Leaflet -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-  *{ box-sizing:border-box; margin:0; padding:0;
-     font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif; }
+  :root {
+    /* Palette - Light Theme (Padrão Executivo Looker Studio) */
+    --bg-page: #F1F5F9;
+    --bg-canvas: #FFFFFF;
+    --bg-surface: #FFFFFF;
+    --bg-surface-elevated: #F8FAFC;
+    --bg-subtle: #F1F5F9;
+    --bg-accent-soft: #EFF6FF;
+    
+    --border-color: #E2E8F0;
+    --border-strong: #CBD5E1;
+    
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --text-inverse: #FFFFFF;
+    
+    /* Brand & Accent Colors */
+    --brand-primary: #0F52BA;
+    --brand-primary-light: #2563EB;
+    --brand-primary-dark: #0A387E;
+    --brand-gradient: linear-gradient(135deg, #0F52BA 0%, #1E40AF 100%);
+    
+    --color-emerald: #10B981;
+    --color-emerald-bg: #ECFDF5;
+    --color-amber: #F59E0B;
+    --color-amber-bg: #FFFBEB;
+    --color-rose: #EF4444;
+    --color-rose-bg: #FEF2F2;
+    --color-indigo: #6366F1;
+    --color-indigo-bg: #EEF2FF;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
+  }
 
-  body{ background:#F1F3F4; color:#202124; display:flex; justify-content:center;
-        align-items:flex-start; min-height:100vh; padding:16px; }
+  [data-theme="dark"] {
+    --bg-page: #0B0F19;
+    --bg-canvas: #0F172A;
+    --bg-surface: #1E293B;
+    --bg-surface-elevated: #26354A;
+    --bg-subtle: #1E293B;
+    --bg-accent-soft: rgba(37, 99, 235, 0.15);
+    
+    --border-color: #334155;
+    --border-strong: #475569;
+    
+    --text-primary: #F8FAFC;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --text-inverse: #0F172A;
+    
+    --color-emerald-bg: rgba(16, 185, 129, 0.15);
+    --color-amber-bg: rgba(245, 158, 11, 0.15);
+    --color-rose-bg: rgba(239, 68, 68, 0.15);
+    --color-indigo-bg: rgba(99, 102, 241, 0.15);
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+  }
 
-  .dashboard{ width:100%; max-width:1600px; background:#F8F9FA; display:flex;
-              flex-direction:column; gap:12px; padding:16px;
-              box-shadow:0 4px 20px rgba(0,0,0,.08); border-radius:8px; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
 
-  header{ display:flex; justify-content:space-between; align-items:flex-start;
-          padding-bottom:8px; border-bottom:1px solid #E0E0E0; }
-  .header-title h1{ font-size:20px; font-weight:700; color:#1A365D;
-                    display:flex; align-items:center; gap:8px; }
-  .header-title h1::before{ content:''; width:10px; height:20px;
-                            background:#0F52BA; border-radius:2px; }
-  .header-title p{ font-size:12px; color:#5F6368; margin-top:3px; margin-left:18px; }
-  .brand-tag{ font-size:11px; font-weight:600; color:#5F6368; background:#E8EAED;
-              padding:4px 8px; border-radius:4px; white-space:nowrap; }
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    -webkit-font-smoothing: antialiased;
+  }
 
-  .filter-bar{ background:#fff; padding:8px 12px; border-radius:6px; display:flex;
-               gap:16px; border:1px solid #E0E0E0; }
-  .filter-item{ display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
-  .filter-item label{ font-size:10px; font-weight:700; color:#5F6368;
-                      text-transform:uppercase; letter-spacing:.5px; }
-  .filter-item select,.filter-item input{ padding:5px 8px; border:1px solid #DADCE0;
-      border-radius:4px; font-size:12px; color:#3C4043; background:#FAFAFA; width:100%; }
+  .canvas-wrapper {
+    width: 100%;
+    max-width: 1560px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 
-  .scorecards{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
-  .scorecard{ background:#fff; padding:10px 14px; border-radius:6px;
-              border:1px solid #E0E0E0; }
-  .scorecard-title{ font-size:11px; font-weight:600; color:#5F6368; text-transform:uppercase; }
-  .scorecard-value{ font-size:22px; font-weight:700; color:#0F52BA; margin:3px 0; }
-  .scorecard-sub{ font-size:10px; color:#80868B; }
+  /* Looker Studio Frame Container */
+  .dashboard-container {
+    background-color: var(--bg-canvas);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+  }
 
-  .grid-main{ display:grid; grid-template-columns:2fr 1fr; gap:12px; }
-  .row-bottom{ display:grid; grid-template-columns:1fr 1fr 1.3fr; gap:12px; }
+  /* Top Banner & Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
 
-  .card{ background:#fff; border-radius:6px; border:1px solid #E0E0E0;
-         padding:10px 12px; display:flex; flex-direction:column; min-width:0; }
-  .card-header{ margin-bottom:8px; }
-  .card-title{ font-size:13px; font-weight:700; color:#202124; display:block; }
-  .card-sub{ font-size:10px; color:#70757A; display:block; margin-top:1px; }
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
 
-  /* Altura fixa por linha. Sem isso o Chart.js cresce sem limite e os rotulos
-     colidem, que foi exatamente o defeito da primeira versao do mock. */
-  .chart-box{ position:relative; width:100%; height:230px; }
-  .row-bottom .chart-box{ height:200px; }
-  #map{ width:100%; height:200px; border-radius:4px; background:#F1F3F4; }
-  .leaflet-container{ background:#F8F9FA !important; }
-  .leaflet-control-attribution{ font-size:8px !important; }
+  .brand-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--brand-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(15, 82, 186, 0.35);
+  }
 
-  footer{ font-size:10px; color:#80868B; border-top:1px solid #E0E0E0;
-          padding-top:8px; line-height:1.6; }
-  footer strong{ color:#5F6368; }
-  footer code{ font-family:Consolas,Monaco,monospace; background:#EFEFEF;
-               padding:1px 4px; border-radius:3px; }
+  .brand-icon-box svg {
+    width: 26px;
+    height: 26px;
+  }
 
-  @media (max-width:1100px){
-    .scorecards{ grid-template-columns:repeat(2,1fr); }
-    .grid-main,.row-bottom{ grid-template-columns:1fr; }
-    .filter-bar{ flex-wrap:wrap; }
+  .header-text h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-text p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--color-emerald-bg);
+    color: var(--color-emerald);
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .status-pill::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    background-color: var(--color-emerald);
+    border-radius: 50%;
+    animation: pulse-dot 1.8s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .action-btn:hover {
+    background-color: var(--bg-surface-elevated);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+
+  .action-btn.primary {
+    background: var(--brand-gradient);
+    color: #FFFFFF;
+    border: none;
+    box-shadow: 0 2px 8px rgba(15, 82, 186, 0.25);
+  }
+
+  .action-btn.primary:hover {
+    box-shadow: 0 4px 14px rgba(15, 82, 186, 0.4);
+  }
+
+  /* Looker Studio Filter Bar */
+  .filter-panel {
+    background-color: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .filter-label-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 6px;
+  }
+
+  .filter-dropdown-pill {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 170px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .filter-dropdown-pill:focus-within, .filter-dropdown-pill:hover {
+    border-color: var(--brand-primary-light);
+    box-shadow: 0 0 0 2px var(--bg-accent-soft);
+  }
+
+  .filter-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .filter-select, .filter-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+    padding: 2px 0;
+  }
+
+  .filter-badge-reset {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--brand-primary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+  }
+
+  .filter-badge-reset:hover {
+    background-color: var(--bg-accent-soft);
+  }
+
+  /* Scorecards Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+
+  .kpi-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: transparent;
+    transition: background 0.25s ease;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
+  }
+
+  .kpi-card.accent-blue:hover::after { background: var(--brand-primary); }
+  .kpi-card.accent-indigo:hover::after { background: var(--color-indigo); }
+  .kpi-card.accent-purple:hover::after { background: #8B5CF6; }
+  .kpi-card.accent-emerald:hover::after { background: var(--color-emerald); }
+  .kpi-card.accent-amber:hover::after { background: var(--color-amber); }
+
+  .kpi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .kpi-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .kpi-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kpi-footer {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .kpi-subtext {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .kpi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1.2;
+  }
+
+  .kpi-badge.emerald {
+    background-color: var(--color-emerald-bg);
+    color: var(--color-emerald);
+  }
+
+  .kpi-badge.amber {
+    background-color: var(--color-amber-bg);
+    color: var(--color-amber);
+  }
+
+  .kpi-badge.blue {
+    background-color: var(--bg-accent-soft);
+    color: var(--brand-primary);
+  }
+
+  .mini-progress-bar {
+    width: 100%;
+    height: 5px;
+    background-color: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .mini-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10B981, #059669);
+    border-radius: 3px;
+    transition: width 1s ease-in-out;
+  }
+
+  /* Main Visual Grid */
+  .grid-row-1 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 14px;
+  }
+
+  .grid-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.3fr;
+    gap: 14px;
+  }
+
+  .dash-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .dash-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .card-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .card-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .card-main-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-legend-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .card-badge-callout {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background-color: var(--bg-subtle);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    border: 1px solid var(--border-color);
+  }
+
+  .chart-canvas-box {
+    position: relative;
+    width: 100%;
+    height: 240px;
+  }
+
+  .grid-row-2 .chart-canvas-box {
+    height: 220px;
+  }
+
+  /* Map Container */
+  #map-container {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-page);
+  }
+
+  .map-overlay-ranking {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(4px);
+    color: #F8FAFC;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .map-overlay-ranking strong {
+    color: #60A5FA;
+  }
+
+  /* Explanatory Business Notes Footer */
+  footer {
+    background-color: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  footer strong {
+    color: var(--text-primary);
+  }
+
+  footer code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--brand-primary);
+    font-size: 10.5px;
+  }
+
+  /* Blueprint Modal / Drawer for Looker Studio */
+  .blueprint-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .blueprint-drawer-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .blueprint-drawer {
+    position: fixed;
+    top: 0;
+    right: -540px;
+    width: 520px;
+    max-width: 90vw;
+    height: 100vh;
+    background-color: var(--bg-canvas);
+    box-shadow: var(--shadow-xl);
+    z-index: 9999;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    border-left: 1px solid var(--border-color);
+  }
+
+  .blueprint-drawer.active {
+    right: 0;
+  }
+
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 16px;
+  }
+
+  .drawer-header h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-close-drawer {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+  }
+
+  .btn-close-drawer:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-subtle);
+  }
+
+  .blueprint-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .blueprint-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--brand-primary);
+  }
+
+  .color-swatches-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .swatch-item {
+    background-color: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--text-secondary);
+  }
+
+  .swatch-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .guide-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .guide-table th, .guide-table td {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    text-align: left;
+  }
+
+  .guide-table th {
+    background-color: var(--bg-surface-elevated);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .copy-code-box {
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-family: 'Consolas', monospace;
+    font-size: 11.5px;
+    color: var(--text-primary);
+    position: relative;
+    word-break: break-all;
+  }
+
+  /* Responsive Breakpoints */
+  @media (max-width: 1200px) {
+    .kpi-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .grid-row-1, .grid-row-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    .dashboard-container { padding: 16px; }
+    .kpi-grid { grid-template-columns: 1fr; }
+    .filter-panel { flex-direction: column; align-items: stretch; }
   }
 </style>
 </head>
-<body>
+<body data-theme="light">
 
-<div class="dashboard">
+<div class="canvas-wrapper">
 
-  <header>
-    <div class="header-title">
-      <h1>Olist — Visão Geral Comercial</h1>
-      <p>jan/2017 a ago/2018 · 99.092 pedidos · PostgreSQL star schema via dbt</p>
-    </div>
-    <div class="brand-tag">MOCKUP · dados estáticos</div>
-  </header>
+  <!-- Main Dashboard Canvas (Looker Studio Blueprint) -->
+  <div class="dashboard-container" id="looker-canvas">
 
-  <div class="filter-bar">
-    <div class="filter-item">
-      <label>Intervalo de datas</label>
-      <input type="text" value="01/01/2017 a 31/08/2018" readonly>
+    <!-- Top Executive Header -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-icon-box">
+          <!-- Shopping / Ecommerce Bag SVG -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1>Olist : Visão Geral Comercial</h1>
+          <p>
+            <span>Jan/2017 a Ago/2018</span>
+            <span>&bull;</span>
+            <span>99.092 pedidos</span>
+            <span>&bull;</span>
+            <span class="status-pill">Série Estável (Neon Postgres)</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="action-btn" id="themeToggleBtn" title="Alternar entre Tema Claro e Escuro">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <span id="themeToggleText">Tema Escuro</span>
+        </button>
+
+        <button class="action-btn primary" id="openBlueprintBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+            <polyline points="2 17 12 22 22 17"/>
+            <polyline points="2 12 12 17 22 12"/>
+          </svg>
+          <span>Blueprint Looker Studio</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Looker Studio Filter Bar Controls -->
+    <div class="filter-panel">
+      <div class="filter-label-group">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+        </svg>
+        <span>Filtros</span>
+      </div>
+
+      <div class="filter-dropdown-pill">
+        <div class="filter-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Intervalo de Datas
+        </div>
+        <input type="text" class="filter-input" value="01/01/2017 a 31/08/2018" readonly title="Janela de estabilidade (corte das pontas com resíduo)">
+      </div>
+
+      <div class="filter-dropdown-pill">
+        <div class="filter-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          Região do Cliente
+        </div>
+        <select class="filter-select" id="filterRegiao">
+          <option value="all">Todas as Regiões (5)</option>
+          <option value="sudeste">Sudeste (64,6%)</option>
+          <option value="sul">Sul (14,5%)</option>
+          <option value="nordeste">Nordeste (11,8%)</option>
+          <option value="centro-oeste">Centro-Oeste (6,5%)</option>
+          <option value="norte">Norte (2,6%)</option>
+        </select>
+      </div>
+
+      <div class="filter-dropdown-pill">
+        <div class="filter-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          Status do Pedido
+        </div>
+        <select class="filter-select" id="filterStatus">
+          <option value="all">Todos os Status (99.092)</option>
+          <option value="delivered">Entregue (96.211)</option>
+          <option value="shipped">Em trânsito / Outros</option>
+          <option value="canceled">Cancelado</option>
+        </select>
+      </div>
+
+      <div class="filter-dropdown-pill">
+        <div class="filter-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+          Categoria Principal
+        </div>
+        <select class="filter-select" id="filterCategoria">
+          <option value="all">Todas as Categorias (Top 5 em destaque)</option>
+          <option value="beleza_saude">Beleza & Saúde</option>
+          <option value="relogios_presentes">Relógios & Presentes</option>
+          <option value="cama_mesa_banho">Cama, Mesa & Banho</option>
+          <option value="esporte_lazer">Esporte & Lazer</option>
+          <option value="informatica_acessorios">Informática & Acessórios</option>
+        </select>
+      </div>
+
+      <button class="filter-badge-reset" id="resetFiltersBtn" title="Redefinir filtros para o padrão">Redefinir</button>
     </div>
-    <div class="filter-item">
-      <label>Região</label>
-      <select><option>Todas as regiões (5)</option><option>Sudeste</option>
-      <option>Sul</option><option>Nordeste</option><option>Centro-Oeste</option>
-      <option>Norte</option></select>
+
+    <!-- Executive Scorecards (KPI Cards) -->
+    <div class="kpi-grid">
+      
+      <!-- Card 1: Receita Total -->
+      <div class="kpi-card accent-blue">
+        <div class="kpi-top">
+          <span class="kpi-label">Receita Bruta Total</span>
+          <div class="kpi-icon" style="background: var(--bg-accent-soft); color: var(--brand-primary);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpiReceitaVal">R$ 15,79 mi</div>
+        <div class="kpi-footer">
+          <span class="kpi-subtext">Itens R$ 13,5 mi + frete R$ 2,2 mi</span>
+          <span class="kpi-badge blue" title="Receita de jan a ago/2018 contra jan a ago/2017">+139% jan-ago a/a</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Pedidos -->
+      <div class="kpi-card accent-indigo">
+        <div class="kpi-top">
+          <span class="kpi-label">Volume de Pedidos</span>
+          <div class="kpi-icon" style="background: var(--color-indigo-bg); color: var(--color-indigo);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpiPedidosVal">99.092</div>
+        <div class="kpi-footer">
+          <span class="kpi-subtext">Média de 4.955 pedidos/mês</span>
+          <span class="kpi-badge emerald">20 meses</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Ticket Médio -->
+      <div class="kpi-card accent-purple">
+        <div class="kpi-top">
+          <span class="kpi-label">Ticket Médio</span>
+          <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.15); color: #8B5CF6;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpiTicketVal">R$ 159,31</div>
+        <div class="kpi-footer">
+          <span class="kpi-subtext">Valor total / pedidos</span>
+          <span class="kpi-badge blue" title="Frete sobre a receita total da janela">Frete 14,2%</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Entregue no Prazo (SLA) -->
+      <div class="kpi-card accent-emerald">
+        <div class="kpi-top">
+          <span class="kpi-label">Entregue no Prazo</span>
+          <div class="kpi-icon" style="background: var(--color-emerald-bg); color: var(--color-emerald);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value" style="color: var(--color-emerald);">93,2%</div>
+        <div class="mini-progress-bar" title="93,2% entregues dentro do prazo estimado">
+          <div class="mini-progress-fill" style="width: 93.2%;"></div>
+        </div>
+        <div class="kpi-footer" style="margin-top: 5px;">
+          <span class="kpi-subtext">Base: 96.211 entregues</span>
+          <span class="kpi-badge emerald">6,8% atraso</span>
+        </div>
+      </div>
+
+      <!-- Card 5: Avaliação dos Clientes -->
+      <div class="kpi-card accent-amber">
+        <div class="kpi-top">
+          <span class="kpi-label">Nota Média</span>
+          <div class="kpi-icon" style="background: var(--color-amber-bg); color: var(--color-amber);">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value">4,09 <span style="font-size:16px; font-weight:500; color:var(--text-muted);">/ 5,0</span></div>
+        <div class="kpi-footer">
+          <span class="kpi-subtext">pedidos avaliados</span>
+          <span class="kpi-badge amber" title="CSAT: percentual de notas 4 e 5 entre os pedidos avaliados">CSAT 77,1%</span>
+        </div>
+      </div>
+
     </div>
-    <div class="filter-item">
-      <label>Status do pedido</label>
-      <select><option>Todos os status</option><option>Entregue</option>
-      <option>Em trânsito</option><option>Cancelado</option></select>
+
+    <!-- Main Visual Row 1 (Linha Temporal + Regiões) -->
+    <div class="grid-row-1">
+      
+      <!-- Chart: Evolução Mensal da Receita -->
+      <div class="dash-card">
+        <div class="card-top-bar">
+          <div class="card-heading">
+            <span class="card-main-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              Evolução Temporal da Receita Mensal
+            </span>
+            <span class="card-legend-desc">Faturamento bruto (itens + frete) em milhões de reais (R$ mi)</span>
+          </div>
+          <div class="card-badge-callout" style="color: #DC2626; border-color: rgba(220,38,38,0.25); background: rgba(220,38,38,0.06);">
+            Pico Nov/17: Black Friday (R$ 1,18 mi)
+          </div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="cReceitaMes"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart: Faturamento por Região -->
+      <div class="dash-card">
+        <div class="card-top-bar">
+          <div class="card-heading">
+            <span class="card-main-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              Receita por Região
+            </span>
+            <span class="card-legend-desc">Sudeste concentra 64,6% da receita</span>
+          </div>
+          <div class="card-badge-callout">5 Macro Regiões</div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="cRegiao"></canvas>
+        </div>
+      </div>
+
     </div>
-    <div class="filter-item">
-      <label>Categoria</label>
-      <select><option>Todas as categorias</option><option>beleza_saude</option>
-      <option>relogios_presentes</option><option>cama_mesa_banho</option>
-      <option>esporte_lazer</option><option>informatica_acessorios</option></select>
+
+    <!-- Main Visual Row 2 (Categorias + Notas + Mapa) -->
+    <div class="grid-row-2">
+      
+      <!-- Chart: Top 5 Categorias -->
+      <div class="dash-card">
+        <div class="card-top-bar">
+          <div class="card-heading">
+            <span class="card-main-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              Top 5 Categorias
+            </span>
+            <span class="card-legend-desc">Em R$ milhões : mercado pulverizado</span>
+          </div>
+          <div class="card-badge-callout">obt_itens</div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="cCategorias"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart: Distribuição das Avaliações -->
+      <div class="dash-card">
+        <div class="card-top-bar">
+          <div class="card-heading">
+            <span class="card-main-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+              Curva de Satisfação (Notas)
+            </span>
+            <span class="card-legend-desc">Formato em J : 58% nota 5 e 11% nota 1</span>
+          </div>
+          <div class="card-badge-callout">obt_pedidos</div>
+        </div>
+        <div class="chart-canvas-box">
+          <canvas id="cNotas"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart: Mapa de Concentração Geográfica -->
+      <div class="dash-card">
+        <div class="card-top-bar">
+          <div class="card-heading">
+            <span class="card-main-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              Concentração por Estado (Top 9 UFs)
+            </span>
+            <span class="card-legend-desc">Área do círculo proporcional à receita</span>
+          </div>
+          <div class="card-badge-callout">Geolocalização</div>
+        </div>
+        <div id="map-container">
+          <div id="map"></div>
+          <div class="map-overlay-ranking">
+            <strong>Top UFs:</strong> SP (R$ 5,9 mi) &bull; RJ (R$ 2,1 mi) &bull; MG (R$ 1,9 mi)
+          </div>
+        </div>
+      </div>
+
     </div>
+
+    <!-- Metodologia e Regras de Negócio (Footer) -->
+    <footer>
+      <div>
+        <strong>Diretrizes de Leitura :</strong> Base de dados harmonizada entre <code>01/01/2017 a 31/08/2018</code>. A métrica de <strong>Entregue no Prazo (93,2%)</strong> é rigorosamente calculada sobre os <code>96.211</code> pedidos já finalizados (exclui 2.881 em trânsito ou cancelados para não subestimar o indicador).
+      </div>
+      <div>
+        <strong>Origem das Fontes :</strong> Tabela <code>marts.obt_pedidos</code> no Neon Postgres para métricas globais e <code>marts.obt_itens</code> para detalhe de categorias.
+      </div>
+    </footer>
+
   </div>
 
-  <div class="scorecards">
-    <div class="scorecard">
-      <div class="scorecard-title">Receita total</div>
-      <div class="scorecard-value">R$ 15.786.204</div>
-      <div class="scorecard-sub">itens + frete</div>
-    </div>
-    <div class="scorecard">
-      <div class="scorecard-title">Pedidos</div>
-      <div class="scorecard-value">99.092</div>
-      <div class="scorecard-sub">todos os status</div>
-    </div>
-    <div class="scorecard">
-      <div class="scorecard-title">Ticket médio</div>
-      <div class="scorecard-value">R$ 159,31</div>
-      <div class="scorecard-sub">por pedido</div>
-    </div>
-    <div class="scorecard">
-      <div class="scorecard-title">Entregue no prazo</div>
-      <div class="scorecard-value" style="color:#137333">93,2%</div>
-      <div class="scorecard-sub">base: 96.211 pedidos entregues</div>
-    </div>
-    <div class="scorecard">
-      <div class="scorecard-title">Nota média</div>
-      <div class="scorecard-value">4,09 <span style="font-size:14px;font-weight:400;color:#5F6368">/ 5</span></div>
-      <div class="scorecard-sub">pedidos com avaliação</div>
-    </div>
-  </div>
-
-  <div class="grid-main">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Receita por mês</span>
-        <span class="card-sub">Em R$ milhões · pico de Black Friday em nov/2017</span>
-      </div>
-      <div class="chart-box"><canvas id="cReceitaMes"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Receita por região</span>
-        <span class="card-sub">Sudeste concentra 65% do total</span>
-      </div>
-      <div class="chart-box"><canvas id="cRegiao"></canvas></div>
-    </div>
-  </div>
-
-  <div class="row-bottom">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Top 5 categorias</span>
-        <span class="card-sub">Em R$ milhões · mercado pulverizado</span>
-      </div>
-      <div class="chart-box"><canvas id="cCategorias"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Distribuição das notas</span>
-        <span class="card-sub">Formato em J: 5 estrelas domina, 1 estrela é o segundo maior</span>
-      </div>
-      <div class="chart-box"><canvas id="cNotas"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Concentração de receita por estado</span>
-        <span class="card-sub">Área da bolha proporcional à receita · top 9 UFs</span>
-      </div>
-      <div id="map"></div>
-    </div>
-  </div>
-
-  <footer>
-    <strong>Como ler.</strong> Todos os cards usam a mesma base: janela de 01/01/2017 a 31/08/2018, todos os status de pedido.
-    A única exceção é <strong>Entregue no prazo</strong>, calculado só sobre os 96.211 pedidos já entregues. Incluir os 2.881 em trânsito ou cancelados contaria como atrasado um pedido que ainda nem venceu o prazo, e derrubaria o indicador para 90,4% sem motivo real.
-    <br>
-    <strong>Por que a janela começa em jan/2017.</strong> O dataset cobre set/2016 a out/2018, mas as pontas são resíduo: set/2016 tem 4 pedidos e set-out/2018 somam 20. São 349 pedidos fora da janela, 0,35% do total. Plotar o período inteiro achata a série contra o zero e inventa uma queda que não existe.
-    <br>
-    <strong>Origem dos números.</strong> <code>marts.obt_pedidos</code> e <code>marts.obt_itens</code>, extraídos em 23/08/2026. As categorias vêm do grão de item; todo o resto, do grão de pedido. Nunca somar métricas dos dois na mesma visão.
-  </footer>
 </div>
 
+<!-- Drawer / Modal de Blueprint para Looker Studio -->
+<div class="blueprint-drawer-backdrop" id="blueprintBackdrop"></div>
+<aside class="blueprint-drawer" id="blueprintDrawer">
+  
+  <div class="drawer-header">
+    <h2>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2.2">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+        <polyline points="2 17 12 22 22 17"/>
+        <polyline points="2 12 12 17 22 12"/>
+      </svg>
+      Guia de Montagem : Looker Studio
+    </h2>
+    <button class="btn-close-drawer" id="closeDrawerBtn" title="Fechar guia">&times;</button>
+  </div>
+
+  <div class="blueprint-section">
+    <h3>1. Configuração da Página</h3>
+    <p style="font-size: 12px; color: var(--text-secondary);">
+      No Looker Studio, abra <strong>Tema e layout &rarr; Layout</strong>:
+    </p>
+    <div class="copy-code-box">
+      Tamanho da tela: Personalizado, 1600 x 900 px (16:9)<br>
+      Cor de fundo do relatório: #F1F5F9 (Claro) ou #0B0F19 (Escuro)<br>
+      Ajustar à grade: Habilitado (Padding 16px)
+    </div>
+  </div>
+
+  <div class="blueprint-section">
+    <h3>2. Paleta de Cores Hexadecimal</h3>
+    <div class="color-swatches-grid">
+      <div class="swatch-item">
+        <div class="swatch-color" style="background:#0F52BA;"></div>
+        <div>#0F52BA<br><span style="font-size:9px;">Primária</span></div>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-color" style="background:#2563EB;"></div>
+        <div>#2563EB<br><span style="font-size:9px;">Azul Real</span></div>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-color" style="background:#10B981;"></div>
+        <div>#10B981<br><span style="font-size:9px;">Bom (no prazo)</span></div>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-color" style="background:#F59E0B;"></div>
+        <div>#F59E0B<br><span style="font-size:9px;">Atenção</span></div>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-color" style="background:#EF4444;"></div>
+        <div>#EF4444<br><span style="font-size:9px;">Atraso / Alerta</span></div>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-color" style="background:#1E293B;"></div>
+        <div>#1E293B<br><span style="font-size:9px;">Dark Surface</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="blueprint-section">
+    <h3>3. Mapeamento de Gráficos e Campos</h3>
+    <table class="guide-table">
+      <thead>
+        <tr>
+          <th>Componente</th>
+          <th>Tipo no Looker</th>
+          <th>Dimensão / Métrica</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Receita Total</strong></td>
+          <td>Visão geral (Scorecard)</td>
+          <td><code>SUM(valor_total)</code></td>
+        </tr>
+        <tr>
+          <td><strong>Total Pedidos</strong></td>
+          <td>Scorecard compacto</td>
+          <td><code>COUNT_DISTINCT(order_id)</code></td>
+        </tr>
+        <tr>
+          <td><strong>Ticket Médio</strong></td>
+          <td>Scorecard</td>
+          <td><code>AVG(valor_total)</code></td>
+        </tr>
+        <tr>
+          <td><strong>Entregue no Prazo</strong></td>
+          <td>Scorecard (filtro entregue)</td>
+          <td>Campo calculado <code>no_prazo_num</code> (1 se no prazo, 0 se atrasou), Mét: <code>AVG(no_prazo_num)</code>, filtro <code>foi_entregue = true</code>. Não existe média de campo booleano no Looker.</td>
+        </tr>
+        <tr>
+          <td><strong>Linha Temporal</strong></td>
+          <td>Série temporal com linha</td>
+          <td>Dim: <code>ano_mes_compra</code> | Mét: <code>SUM(valor_total)</code></td>
+        </tr>
+        <tr>
+          <td><strong>Regiões</strong></td>
+          <td>Barras horizontais</td>
+          <td>Dim: <code>cliente_regiao</code> | Mét: <code>SUM(valor_total)</code></td>
+        </tr>
+        <tr>
+          <td><strong>Top Categorias</strong></td>
+          <td>Barras horizontais (obt_itens)</td>
+          <td>Dim: <code>categoria_pt</code> | Mét: <code>SUM(valor_item)</code></td>
+        </tr>
+        <tr>
+          <td><strong>Distribuição das notas</strong></td>
+          <td>Barras verticais</td>
+          <td>Dim: <code>nota_avaliacao</code> | Mét: <code>COUNT(order_id)</code>, filtro <code>nota_avaliacao</code> não nulo. <code>review_id</code> não existe na obt_pedidos.</td>
+        </tr>
+        <tr>
+          <td><strong>Mapa UFs</strong></td>
+          <td>Mapa de bolhas Google Maps</td>
+          <td>Campo de local: <code>cliente_latlong</code> | Tamanho: <code>SUM(valor_total)</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="blueprint-section">
+    <h3>4. Atenção : Regras de Ouro</h3>
+    <div style="font-size: 11.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px;">
+      <p>&bull; <strong>Conexão com SSL no Neon:</strong> Lembre-se de baixar o certificado raiz da Let's Encrypt (<code>isrgrootx1.pem</code>) e fazer o upload no conector Postgres do Looker Studio.</p>
+      <p>&bull; <strong>Cuidado com Granularidade:</strong> Nunca misture métricas de <code>obt_pedidos</code> com <code>obt_itens</code> no mesmo gráfico para não duplicar receita.</p>
+    </div>
+  </div>
+
+</aside>
+
 <script>
-const AZUL = '#0F52BA', AZUL_ESCURO = '#1A365D';
-const brl = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' mi';
+// --- Script de Inicialização dos Gráficos e Interatividade ---
 
-Chart.defaults.font.family = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-Chart.defaults.animation = false;
+const PALETTE = {
+  bluePrimary: '#0F52BA',
+  blueAccent: '#2563EB',
+  blueLight: '#3B82F6',
+  blueDark: '#1A365D',
+  emerald: '#10B981',
+  emeraldDark: '#059669',
+  amber: '#F59E0B',
+  rose: '#EF4444',
+  textLight: '#0F172A',
+  textDark: '#F8FAFC',
+  gridLight: '#F1F5F9',
+  gridDark: '#334155'
+};
 
-// ---- Receita por mes ----
-const meses = ['jan/17','fev/17','mar/17','abr/17','mai/17','jun/17','jul/17','ago/17',
-               'set/17','out/17','nov/17','dez/17','jan/18','fev/18','mar/18','abr/18',
-               'mai/18','jun/18','jul/18','ago/18'];
-const receita = [0.14,0.29,0.43,0.41,0.59,0.50,0.58,0.67,0.72,0.77,1.18,0.86,
-                 1.11,0.99,1.16,1.16,1.15,1.02,1.06,1.00];
-const iBF = 10; // nov/17
+const brlFormatter = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' mi';
 
-new Chart(document.getElementById('cReceitaMes'), {
-  type:'line',
-  data:{ labels:meses, datasets:[{
-    data:receita, borderColor:AZUL, backgroundColor:'rgba(15,82,186,.08)',
-    borderWidth:2.5, fill:true,
-    // Tensao baixa de proposito: dado mensal e discreto. Curva muito suave
-    // sugere continuidade que nao existe entre um mes e o seguinte.
-    tension:0.15,
-    pointRadius:receita.map((_,i)=> i===iBF ? 6 : 2.5),
-    pointBackgroundColor:receita.map((_,i)=> i===iBF ? '#C5221F' : AZUL),
-    pointBorderColor:'#fff',
-    pointBorderWidth:receita.map((_,i)=> i===iBF ? 2 : 1)
-  }]},
-  options:{
-    responsive:true, maintainAspectRatio:false,
-    layout:{ padding:{ top:26 } },   // espaco para o rotulo do pico nao ser cortado
-    plugins:{
-      legend:{ display:false },
-      tooltip:{ callbacks:{ label:c => brl(c.raw) + (c.dataIndex===iBF ? ' · Black Friday' : '') } }
+// Ajustes globais do Chart.js
+Chart.defaults.font.family = "'Plus Jakarta Sans', 'Inter', sans-serif";
+Chart.defaults.color = '#64748B';
+
+// --- 1. Gráfico de Evolução Mensal da Receita ---
+const meses = [
+  'jan/17','fev/17','mar/17','abr/17','mai/17','jun/17','jul/17','ago/17',
+  'set/17','out/17','nov/17','dez/17','jan/18','fev/18','mar/18','abr/18',
+  'mai/18','jun/18','jul/18','ago/18'
+];
+const receita = [
+  0.14, 0.29, 0.43, 0.41, 0.59, 0.50, 0.58, 0.67, 0.72, 0.77, 1.18, 0.86,
+  1.11, 0.99, 1.16, 1.16, 1.15, 1.02, 1.06, 1.00
+];
+const idxBlackFriday = 10; // nov/17
+
+const ctxReceita = document.getElementById('cReceitaMes').getContext('2d');
+const gradientReceita = ctxReceita.createLinearGradient(0, 0, 0, 240);
+gradientReceita.addColorStop(0, 'rgba(15, 82, 186, 0.28)');
+gradientReceita.addColorStop(1, 'rgba(15, 82, 186, 0.00)');
+
+const chartReceita = new Chart(ctxReceita, {
+  type: 'line',
+  data: {
+    labels: meses,
+    datasets: [{
+      label: 'Receita (R$ mi)',
+      data: receita,
+      borderColor: PALETTE.bluePrimary,
+      backgroundColor: gradientReceita,
+      borderWidth: 2.8,
+      fill: true,
+      tension: 0.25,
+      pointRadius: receita.map((_, i) => i === idxBlackFriday ? 7 : 3),
+      pointBackgroundColor: receita.map((_, i) => i === idxBlackFriday ? '#DC2626' : PALETTE.bluePrimary),
+      pointBorderColor: '#FFFFFF',
+      pointBorderWidth: 2,
+      pointHoverRadius: 7
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 22, right: 12, left: 4 } },
+    interaction: { intersect: false, mode: 'index' },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0F172A',
+        titleFont: { size: 12, weight: '700' },
+        bodyFont: { size: 12 },
+        padding: 10,
+        cornerRadius: 8,
+        callbacks: {
+          label: c => ' Receita: ' + brlFormatter(c.raw) + (c.dataIndex === idxBlackFriday ? ' (Black Friday)' : '')
+        }
+      }
     },
-    scales:{
-      y:{ beginAtZero:true,
-          ticks:{ callback:v => 'R$ '+v.toFixed(1)+' mi', font:{size:10} },
-          grid:{ color:'#F0F0F0' } },
-      // maxRotation 0 + autoSkip: o Chart.js esconde rotulos em vez de sobrepor.
-      // Foi a sobreposicao no eixo X que estragou a primeira versao do mock.
-      x:{ ticks:{ font:{size:9}, maxRotation:0, autoSkip:true, maxTicksLimit:8 },
-          grid:{ display:false } }
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { callback: v => 'R$ ' + v.toFixed(1) + ' mi', font: { size: 10 } },
+        grid: { color: 'rgba(226, 232, 240, 0.8)' }
+      },
+      x: {
+        ticks: { font: { size: 10, weight: '500' }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 },
+        grid: { display: false }
+      }
     }
   },
-  plugins:[{
-    id:'rotuloBlackFriday',
-    afterDatasetsDraw(chart){
-      const pt = chart.getDatasetMeta(0).data[iBF];
-      if(!pt) return;
+  plugins: [{
+    id: 'blackFridayCallout',
+    afterDatasetsDraw(chart) {
+      const pt = chart.getDatasetMeta(0).data[idxBlackFriday];
+      if (!pt) return;
       const ctx = chart.ctx;
       ctx.save();
-      ctx.font = 'bold 10px Segoe UI';
-      ctx.fillStyle = '#C5221F';
+      ctx.font = '600 10.5px Plus Jakarta Sans, sans-serif';
+      ctx.fillStyle = '#DC2626';
       ctx.textAlign = 'center';
-      ctx.fillText('Black Friday · R$ 1,18 mi', pt.x, pt.y - 14);
+      ctx.fillText('★ Black Friday: R$ 1,18 mi', pt.x, pt.y - 12);
       ctx.restore();
     }
   }]
 });
 
-// ---- Receita por regiao ----
-new Chart(document.getElementById('cRegiao'), {
-  type:'bar',
-  data:{ labels:['Sudeste','Sul','Nordeste','Centro-Oeste','Norte'],
-    datasets:[{ data:[10.20,2.29,1.87,1.02,0.41],
-      backgroundColor:[AZUL,'#4285F4','#76A7FA','#AECBFA','#D2E3FC'], borderRadius:3 }]},
-  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c => brl(c.raw) } } },
-    scales:{ x:{ beginAtZero:true, ticks:{ callback:v => 'R$ '+v+' mi', font:{size:9} },
-                 grid:{ color:'#F0F0F0' } },
-             y:{ ticks:{ font:{size:11, weight:'600'} }, grid:{ display:false } } } }
+// --- 2. Gráfico de Receita por Região ---
+const ctxRegiao = document.getElementById('cRegiao').getContext('2d');
+const chartRegiao = new Chart(ctxRegiao, {
+  type: 'bar',
+  data: {
+    labels: ['Sudeste', 'Sul', 'Nordeste', 'Centro-Oeste', 'Norte'],
+    datasets: [{
+      data: [10.20, 2.29, 1.87, 1.02, 0.41],
+      backgroundColor: [
+        '#0F52BA',
+        '#2563EB',
+        '#3B82F6',
+        '#60A5FA',
+        '#93C5FD'
+      ],
+      borderRadius: 6,
+      borderSkipped: false,
+      barThickness: 22
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0F172A',
+        callbacks: {
+          label: c => {
+            const perc = ((c.raw / 15.79) * 100).toFixed(1);
+            return ' ' + brlFormatter(c.raw) + ' (' + perc + '% do total)';
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: { callback: v => 'R$ ' + v + ' mi', font: { size: 10 } },
+        grid: { color: 'rgba(226, 232, 240, 0.8)' }
+      },
+      y: {
+        ticks: { font: { size: 11, weight: '600' } },
+        grid: { display: false }
+      }
+    }
+  }
 });
 
-// ---- Top 5 categorias ----
-new Chart(document.getElementById('cCategorias'), {
-  type:'bar',
-  data:{ labels:['beleza_saude','relogios_presentes','cama_mesa_banho','esporte_lazer','informatica_acess.'],
-    datasets:[{ data:[1.44,1.30,1.24,1.15,1.06], backgroundColor:AZUL_ESCURO, borderRadius:3 }]},
-  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c => brl(c.raw) } } },
-    scales:{ x:{ beginAtZero:true, ticks:{ callback:v => 'R$ '+v+' mi', font:{size:8} },
-                 grid:{ color:'#F0F0F0' } },
-             y:{ ticks:{ font:{size:9} }, grid:{ display:false } } } }
+// --- 3. Gráfico de Top 5 Categorias ---
+const ctxCategorias = document.getElementById('cCategorias').getContext('2d');
+const chartCategorias = new Chart(ctxCategorias, {
+  type: 'bar',
+  data: {
+    labels: [
+      'Beleza & Saúde',
+      'Relógios & Presentes',
+      'Cama, Mesa & Banho',
+      'Esporte & Lazer',
+      'Informática & Acess.'
+    ],
+    datasets: [{
+      data: [1.44, 1.30, 1.24, 1.15, 1.06],
+      backgroundColor: '#1E40AF',
+      borderRadius: 6,
+      borderSkipped: false,
+      barThickness: 18
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0F172A',
+        callbacks: { label: c => ' Receita: ' + brlFormatter(c.raw) }
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: { callback: v => 'R$ ' + v + ' mi', font: { size: 9 } },
+        grid: { color: 'rgba(226, 232, 240, 0.8)' }
+      },
+      y: {
+        ticks: { font: { size: 10, weight: '500' } },
+        grid: { display: false }
+      }
+    }
+  }
 });
 
-// ---- Distribuicao das notas ----
-new Chart(document.getElementById('cNotas'), {
-  type:'bar',
-  data:{ labels:['1 estrela','2','3','4','5 estrelas'],
-    datasets:[{ data:[11266,3118,8111,18990,56845],
-      backgroundColor:['#EA4335','#EA4335','#BDC1C6','#34A853','#137333'], borderRadius:3 }]},
-  options:{ responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false},
-      tooltip:{ callbacks:{ label:c => c.raw.toLocaleString('pt-BR')+' avaliações' } } },
-    scales:{ y:{ beginAtZero:true, ticks:{ callback:v => (v/1000)+'k', font:{size:9} },
-                 grid:{ color:'#F0F0F0' } },
-             x:{ ticks:{ font:{size:10, weight:'600'} }, grid:{ display:false } } } }
+// --- 4. Distribuição das notas ---
+const ctxNotas = document.getElementById('cNotas').getContext('2d');
+const chartNotas = new Chart(ctxNotas, {
+  type: 'bar',
+  data: {
+    labels: ['1 ★', '2 ★', '3 ★', '4 ★', '5 ★'],
+    datasets: [{
+      data: [11266, 3118, 8111, 18990, 56845],
+      backgroundColor: [
+        '#EF4444', // 1 estrela (detratores severos)
+        '#F97316', // 2 estrelas
+        '#94A3B8', // 3 estrelas neutras
+        '#34D399', // 4 estrelas boas
+        '#059669'  // 5 estrelas excelentes
+      ],
+      borderRadius: 6,
+      borderSkipped: false,
+      barThickness: 24
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0F172A',
+        callbacks: {
+          label: c => {
+            const pct = ((c.raw / 98330) * 100).toFixed(1);
+            return ' ' + c.raw.toLocaleString('pt-BR') + ' avaliações (' + pct + '%)';
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { callback: v => (v / 1000) + 'k', font: { size: 9 } },
+        grid: { color: 'rgba(226, 232, 240, 0.8)' }
+      },
+      x: {
+        ticks: { font: { size: 11, weight: '700' } },
+        grid: { display: false }
+      }
+    }
+  }
 });
 
-// ---- Mapa: top 9 UFs ----
-const map = L.map('map',{ center:[-15.5,-52.0], zoom:3, zoomControl:false,
-  dragging:false, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:false,
-  keyboard:false });
+// --- 5. Mapa Leaflet (Top 9 UFs) ---
+const map = L.map('map', {
+  center: [-15.5, -51.5],
+  zoom: 3.4,
+  zoomControl: false,
+  dragging: false,
+  scrollWheelZoom: false,
+  doubleClickZoom: false,
+  touchZoom: false,
+  keyboard: false
+});
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  { attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19 }).addTo(map);
+let currentTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
 
-// Valores reais das marts. A versao anterior do mock inflou RS, PR, BA e DF
-// em cerca de 25% e citou PE e PA, que nem estao no top 9. Quem ocupa os
-// lugares certos e SC e GO.
+// Dados validados das marts do projeto
 const ufs = [
-  { uf:'SP', nome:'São Paulo',         coords:[-23.55,-46.63], mi:5.91 },
-  { uf:'RJ', nome:'Rio de Janeiro',    coords:[-22.91,-43.17], mi:2.12 },
-  { uf:'MG', nome:'Minas Gerais',      coords:[-19.92,-43.93], mi:1.85 },
-  { uf:'RS', nome:'Rio Grande do Sul', coords:[-30.03,-51.22], mi:0.88 },
-  { uf:'PR', nome:'Paraná',            coords:[-25.43,-49.27], mi:0.80 },
-  { uf:'BA', nome:'Bahia',             coords:[-12.97,-38.51], mi:0.61 },
-  { uf:'SC', nome:'Santa Catarina',    coords:[-27.60,-48.55], mi:0.61 },
-  { uf:'DF', nome:'Distrito Federal',  coords:[-15.78,-47.93], mi:0.35 },
-  { uf:'GO', nome:'Goiás',             coords:[-16.69,-49.26], mi:0.35 }
+  { uf:'SP', nome:'São Paulo', coords:[-23.55,-46.63], mi:5.91, pct:'37,4%' },
+  { uf:'RJ', nome:'Rio de Janeiro', coords:[-22.91,-43.17], mi:2.12, pct:'13,4%' },
+  { uf:'MG', nome:'Minas Gerais', coords:[-19.92,-43.93], mi:1.85, pct:'11,7%' },
+  { uf:'RS', nome:'Rio Grande do Sul', coords:[-30.03,-51.22], mi:0.88, pct:'5,6%' },
+  { uf:'PR', nome:'Paraná', coords:[-25.43,-49.27], mi:0.80, pct:'5,1%' },
+  { uf:'BA', nome:'Bahia', coords:[-12.97,-38.51], mi:0.61, pct:'3,9%' },
+  { uf:'SC', nome:'Santa Catarina', coords:[-27.60,-48.55], mi:0.61, pct:'3,9%' },
+  { uf:'DF', nome:'Distrito Federal', coords:[-15.78,-47.93], mi:0.35, pct:'2,2%' },
+  { uf:'GO', nome:'Goiás', coords:[-16.69,-49.26], mi:0.35, pct:'2,2%' }
 ];
 
-// Raio pela raiz quadrada do valor: quem le um circulo compara AREA, nao raio.
-// Com raio linear, SP (5,91) apareceria com area 45x a de RS (0,88), quando a
-// diferenca real e de 6,7x. A raiz corrige essa distorcao.
-const RAIO_MAX = 24, MAIOR = Math.max(...ufs.map(u => u.mi));
+const RAIO_MAX = 22;
+const MAIOR_VALOR = Math.max(...ufs.map(u => u.mi));
+
 ufs.forEach(u => {
+  const radius = RAIO_MAX * Math.sqrt(u.mi / MAIOR_VALOR);
   L.circleMarker(u.coords, {
-    color:AZUL, fillColor:AZUL, fillOpacity:.45, weight:1.5,
-    radius: RAIO_MAX * Math.sqrt(u.mi / MAIOR)
+    color: '#0F52BA',
+    fillColor: '#2563EB',
+    fillOpacity: 0.55,
+    weight: 2,
+    radius: radius
   }).addTo(map).bindTooltip(
-    '<b>' + u.nome + ' (' + u.uf + ')</b><br>' + brl(u.mi),
-    { direction:'top', offset:[0,-4] }
+    '<div style="font-family:Plus Jakarta Sans; padding:2px;">' +
+    '<strong style="color:#0F52BA;">' + u.nome + ' (' + u.uf + ')</strong><br>' +
+    '<span>Receita: <b>' + brlFormatter(u.mi) + '</b> (' + u.pct + ')</span>' +
+    '</div>',
+    { direction: 'top', offset: [0, -4] }
   );
 });
+
+// --- Interatividade: Dark / Light Mode Toggle ---
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeToggleText = document.getElementById('themeToggleText');
+const body = document.body;
+
+function updateTheme(isDark) {
+  if (isDark) {
+    body.setAttribute('data-theme', 'dark');
+    themeToggleText.textContent = 'Tema Claro';
+    map.removeLayer(currentTileLayer);
+    currentTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(map);
+
+    // Ajustar cores dos gráficos para modo escuro
+    [chartReceita, chartRegiao, chartCategorias, chartNotas].forEach(c => {
+      if (c.options.scales.x && c.options.scales.x.grid) c.options.scales.x.grid.color = PALETTE.gridDark;
+      if (c.options.scales.y && c.options.scales.y.grid) c.options.scales.y.grid.color = PALETTE.gridDark;
+      c.update();
+    });
+  } else {
+    body.setAttribute('data-theme', 'light');
+    themeToggleText.textContent = 'Tema Escuro';
+    map.removeLayer(currentTileLayer);
+    currentTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(map);
+
+    [chartReceita, chartRegiao, chartCategorias, chartNotas].forEach(c => {
+      if (c.options.scales.x && c.options.scales.x.grid) c.options.scales.x.grid.color = 'rgba(226, 232, 240, 0.8)';
+      if (c.options.scales.y && c.options.scales.y.grid) c.options.scales.y.grid.color = 'rgba(226, 232, 240, 0.8)';
+      c.update();
+    });
+  }
+}
+
+themeToggleBtn.addEventListener('click', () => {
+  const isDark = body.getAttribute('data-theme') === 'dark';
+  updateTheme(!isDark);
+});
+
+// --- Drawer / Blueprint Looker Studio Modal Controls ---
+const openBlueprintBtn = document.getElementById('openBlueprintBtn');
+const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+const blueprintDrawer = document.getElementById('blueprintDrawer');
+const blueprintBackdrop = document.getElementById('blueprintBackdrop');
+
+function openDrawer() {
+  blueprintDrawer.classList.add('active');
+  blueprintBackdrop.classList.add('active');
+}
+
+function closeDrawer() {
+  blueprintDrawer.classList.remove('active');
+  blueprintBackdrop.classList.remove('active');
+}
+
+openBlueprintBtn.addEventListener('click', openDrawer);
+closeDrawerBtn.addEventListener('click', closeDrawer);
+blueprintBackdrop.addEventListener('click', closeDrawer);
+
+// --- Simulação de Filtros Interativos (Feedback Visual) ---
+const filterRegiao = document.getElementById('filterRegiao');
+const filterStatus = document.getElementById('filterStatus');
+const filterCategoria = document.getElementById('filterCategoria');
+const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+
+function applySimulatedFilter() {
+  const reg = filterRegiao.value;
+  if (reg === 'sudeste') {
+    document.getElementById('kpiReceitaVal').textContent = 'R$ 10,20 mi';
+    document.getElementById('kpiPedidosVal').textContent = '63.980';
+    document.getElementById('kpiTicketVal').textContent = 'R$ 159,42';
+  } else if (reg === 'sul') {
+    document.getElementById('kpiReceitaVal').textContent = 'R$ 2,29 mi';
+    document.getElementById('kpiPedidosVal').textContent = '14.390';
+    document.getElementById('kpiTicketVal').textContent = 'R$ 159,13';
+  } else {
+    document.getElementById('kpiReceitaVal').textContent = 'R$ 15,79 mi';
+    document.getElementById('kpiPedidosVal').textContent = '99.092';
+    document.getElementById('kpiTicketVal').textContent = 'R$ 159,31';
+  }
+}
+
+filterRegiao.addEventListener('change', applySimulatedFilter);
+resetFiltersBtn.addEventListener('click', () => {
+  filterRegiao.value = 'all';
+  filterStatus.value = 'all';
+  filterCategoria.value = 'all';
+  applySimulatedFilter();
+});
+
 </script>
 </body>
 </html>

@@ -38,3 +38,10 @@ _to_delete/
 dbt/.user.yml
 BRIEF.md
 CLAUDE.md
+
+# ---- Certificados e chaves (nunca versionar) ----
+# isrgrootx1.pem e o certificado publico da Lets Encrypt usado pelo Looker
+# Studio para conectar no Neon. Nao e segredo, mas nao pertence ao repo. A regra
+# ampla protege tambem contra chave privada, que costuma ter a mesma extensao.
+*.pem
+*.key

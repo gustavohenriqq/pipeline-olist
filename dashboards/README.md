@@ -71,13 +71,26 @@ silenciosa entre os dois bancos.
    | Campo | Valor |
    |---|---|
    | Host | o valor de `NEON_HOST` |
-   | Port | `5432` |
+   | Port | deixe em branco (o conector usa a porta padrao) |
    | Database | `neondb` |
    | Username | `neondb_owner` |
    | Password | o valor de `NEON_PASSWORD` |
 
 4. **Marque "Enable SSL"**. O Neon so aceita conexao criptografada; sem essa
-   marcacao a conexao e recusada. Deixe os campos de certificado em branco.
+   marcacao a conexao e recusada. Ao marcar, aparecem campos novos:
+   - **Server certificate:** baixe o certificado raiz da Let's Encrypt em
+     https://letsencrypt.org/certs/isrgrootx1.pem e faca upload dele.
+   - **Enable client authentication:** deixe **desmarcado**.
+
+   Use o host **com** `-pooler` no nome, que e o que o guia oficial do Neon
+   indica para o Looker Studio: https://neon.com/docs/connect/connect-looker-studio
+
+   > Correcao: uma versao anterior deste guia mandava deixar os campos de
+   > certificado em branco. O guia oficial do Neon pede o upload do certificado.
+
+   **Se for trocar a senha do Neon, troque antes de conectar.** Senha trocada
+   depois derruba todas as fontes de dados do relatorio, e cada uma precisa ser
+   autenticada de novo.
 5. Clique em **Autenticar** e depois escolha a aba **CUSTOM QUERY**.
 
    Use custom query em vez de selecionar a tabela na lista: o conector do Looker

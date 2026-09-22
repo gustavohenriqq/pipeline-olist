@@ -50,7 +50,7 @@ analise usou para achar o problema. O plano completo, incluindo o que foi
 descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
 
 > Status: **Etapa 1 (fundacao) e Etapa 2 (analise) concluidas** no dataset
-> completo. 70 testes de qualidade, 88 PASS e 0 ERROR, rodando no CI a cada
+> completo. 72 testes de qualidade, 91 PASS e 0 ERROR, rodando no CI a cada
 > push. O dashboard do Looker Studio ainda nao foi publicado: a conexao esta
 > pronta, falta o passo manual de montagem.
 
@@ -229,7 +229,7 @@ dbt docs serve    --profiles-dir . --port 8081
 - Schema `raw`: 9 tabelas cruas.
 - Schema `staging` e `intermediate`: views de limpeza e agregacao.
 - Schema `marts`: 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
-- 70 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
+- 72 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
 - Camada de servico no Neon com as marts publicadas, para o Looker Studio ler 24/7.
 
 ---
@@ -294,7 +294,7 @@ cd dbt && dbt build --profiles-dir . && cd ..   # constroi e testa local
 python scripts/publicar_marts.py                # espelha as marts no Neon
 ```
 
-**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos 70 testes do dbt.
+**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos 72 testes do dbt.
 
 O passo a passo completo de conexao, as paginas sugeridas e os numeros de conferencia estao em [dashboards/README.md](dashboards/README.md).
 
@@ -310,7 +310,7 @@ Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.
 O plano completo, com as decisoes descartadas e a evidencia por tras de cada
 uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 
-1. **Fundacao** (concluida, menos a publicacao do dashboard): ingestao, Postgres, dbt, 70 testes e camada de servico no Neon.
+1. **Fundacao** (concluida, menos a publicacao do dashboard): ingestao, Postgres, dbt, 72 testes e camada de servico no Neon.
 2. **Analise do atraso:** documento com recomendacao e numero, investigando por que a curva de nota nao e monotona.
 3. **Confiabilidade no dbt:** models incrementais, idempotencia, reprocessamento por janela, freshness e CI enxuto.
 4. **Previsao de atraso:** classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts.

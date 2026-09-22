@@ -24,12 +24,44 @@ models:
         data_tests: [unique, not_null]
 
   - name: dim_produtos
-    description: Dimensao de produtos com categoria PT/EN.
+    description: Dimensao de produtos com categoria PT/EN e rotulos de leitura.
     columns:
       - name: produto_sk
         data_tests: [unique, not_null]
       - name: product_id
         data_tests: [unique, not_null]
+      - name: categoria_nome
+        description: >
+          Nome da categoria formatado para leitura. Nunca nulo: produto sem
+          categoria na origem vira 'Nao informada'.
+        data_tests: [not_null]
+      - name: categoria_grupo
+        description: >
+          Macro-categoria comercial. Agrupa as 73 categorias da origem em 14
+          grupos mais 'Nao informada'. O teste de valores aceitos e a trava:
+          categoria nova na origem cai em 'Diversos' e o teste avisa, em vez de
+          o relatorio mostrar um grupo generico crescendo em silencio.
+        data_tests:
+          - accepted_values:
+              values:
+                - "Casa e Decoracao"
+                - "Beleza e Saude"
+                - "Moda e Acessorios"
+                - "Esporte e Lazer"
+                - "Eletronicos e Informatica"
+                - "Eletrodomesticos"
+                - "Ferramentas e Construcao"
+                - "Bebes e Brinquedos"
+                - "Automotivo"
+                - "Pet Shop"
+                - "Livros, Midia e Arte"
+                - "Alimentos e Bebidas"
+                - "Escritorio e Papelaria"
+                - "Industria e Servicos"
+                - "Diversos"
+                - "Nao informada"
+              config:
+                severity: warn
 
   - name: dim_geolocalizacao
     description: Dimensao de geolocalizacao por prefixo de CEP.
@@ -54,6 +86,17 @@ models:
         data_tests: [unique, not_null]
       - name: order_id
         data_tests: [unique, not_null]
+      - name: status_pedido
+        description: >
+          order_status traduzido. Se a origem trouxer um status novo, a macro
+          devolve o valor original em ingles em vez de esconder num 'Outro', e o
+          teste abaixo acusa.
+        data_tests:
+          - accepted_values:
+              values: ["Entregue", "Enviado", "Cancelado", "Indisponivel",
+                       "Faturado", "Em processamento", "Criado", "Aprovado"]
+              config:
+                severity: warn
       - name: cliente_sk
         description: FK para dim_clientes.
         data_tests:

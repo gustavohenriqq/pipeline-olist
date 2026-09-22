@@ -37,6 +37,8 @@ select
     -- Produto
     pr.product_id,
     pr.categoria_pt,
+    pr.categoria_nome,
+    pr.categoria_grupo,
     -- coalesce porque nem toda categoria do Olist tem traducao oficial.
     -- Sem isso, o grafico em ingles perderia linhas em vez de mostrar o nome PT.
     coalesce(pr.categoria_en, pr.categoria_pt) as categoria_en,

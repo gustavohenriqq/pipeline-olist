@@ -44,7 +44,7 @@ análise usou para achar o problema.
 **Entregas:**
 - Ingestão Python + pandas dos 9 CSVs para o schema `raw` do Postgres (via COPY).
 - Projeto dbt: staging, intermediate e marts (star schema).
-- 5 dimensões + 2 fatos + 2 tabelas largas (OBT), 70 testes de qualidade passando.
+- 5 dimensões + 2 fatos + 2 tabelas largas (OBT), 72 testes de qualidade passando.
 - Docker Compose com Postgres e pgAdmin.
 - Camada de serviço no Neon (Postgres serverless) com as marts publicadas.
 - CI no GitHub Actions rodando o pipeline inteiro sobre uma amostra versionada.

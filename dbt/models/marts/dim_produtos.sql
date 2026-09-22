@@ -8,6 +8,12 @@ select
     product_id,
     category_name_pt            as categoria_pt,
     category_name_en            as categoria_en,
+
+    -- Rotulos para leitura humana. A coluna crua continua acima: rotulo e
+    -- adicional, nunca substituicao. Ver dbt/macros/rotulos.sql.
+    {{ categoria_rotulo('category_name_pt') }}  as categoria_nome,
+    {{ categoria_macro('category_name_pt') }}   as categoria_grupo,
+
     photos_qty                  as qtd_fotos,
     weight_g                    as peso_g,
     length_cm                   as comprimento_cm,

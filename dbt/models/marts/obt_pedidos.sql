@@ -37,6 +37,7 @@ select
     p.pedido_sk,
     p.order_id,
     p.order_status,
+    p.status_pedido,
 
     -- Cliente (grao de pessoa, nao de pedido)
     c.customer_unique_id,

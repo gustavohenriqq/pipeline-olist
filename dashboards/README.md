@@ -3,7 +3,7 @@
 ## Arquitetura de servico do BI
 
 ```
-data/raw (CSVs)  ->  Postgres local (Docker)  ->  dbt build (91 nos, 70 testes)
+data/raw (CSVs)  ->  Postgres local (Docker)  ->  dbt build (94 nos, 72 testes)
                                                         |
                                                         v
                                               marts (star schema + OBTs)

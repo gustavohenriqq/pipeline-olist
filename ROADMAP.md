@@ -72,7 +72,7 @@ passo manual de montar e publicar.
 **Entregue:** [docs/analise-atraso.md](docs/analise-atraso.md).
 
 **Conclusões:**
-- O Sudeste concentra 62% dos atrasos mas opera **abaixo** da média nacional (6,1% contra 6,8%). Corrigindo pelo volume, o **Nordeste responde por 537 dos 569 atrasos em excesso do país**, 94% do total.
+- O Sudeste concentra 62% dos atrasos e, como região, opera abaixo da média nacional (6,1% contra 6,8%). Mas por estado o foco aparece: o **Rio de Janeiro sozinho gera 659 atrasos em excesso, mais que o Nordeste inteiro (537)**. RJ e Nordeste respondem por 86% do excesso. *Correção: a primeira versão atribuía 94% ao Nordeste, porque a conta por região deixava São Paulo (-923) compensar o RJ dentro do Sudeste.*
 - **87% do atraso nasce no transporte, 13% no vendedor.** Nos pedidos atrasados do Nordeste o vendedor é o mais rápido do país (4,8 dias contra 6,5 do Sudeste). A ação é logística, não cobrança de SLA de vendedor.
 - O efeito do atraso sobre a nota persiste dentro das cinco regiões (queda de 2,55 a 2,74 pontos): não é composição regional.
 

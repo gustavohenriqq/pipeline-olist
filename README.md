@@ -19,16 +19,23 @@ Atrasar entre 8 e 30 dias derruba para **1,65**.
 Sao **6.534 pedidos atrasados, R$ 1.150.892 em receita, 7,3% do total**.
 
 E a leitura obvia sobre onde agir esta errada. O Sudeste concentra 62% dos
-atrasos, mas tem taxa de **6,1% contra 6,8% da media nacional**: ele atrasa mais
-em volume porque vende mais, nao porque opera pior. Corrigindo pelo tamanho,
-**o Nordeste sozinho responde por 537 dos 569 atrasos em excesso do pais**, ou
-94% do total. Trazer a regiao para a media nacional vale cerca de R$ 112 mil.
+atrasos e, como regiao, tem taxa **abaixo** da media nacional (6,1% contra 6,8%).
+Mas olhando estado por estado, o foco aparece: o **Rio de Janeiro sozinho gera
+659 atrasos em excesso**, mais que o Nordeste inteiro (537). Ele sumia na visao
+por regiao porque Sao Paulo, muito maior e com taxa de 4,5%, compensava o RJ
+dentro do mesmo balde. **RJ e Nordeste respondem por 86% do atraso em excesso**,
+associado a cerca de R$ 224 mil.
+
+> Uma versao anterior deste README dizia que o Nordeste respondia por 94% do
+> excesso. A conta estava certa por regiao e errada como conclusao. O erro
+> apareceu quando um mapa por estado pediu um grao mais fino, e esta documentado
+> na analise.
 
 E a acao intuitiva tambem esta errada. Decompondo o tempo de entrega, **87% do
-atraso nasce no transporte e so 13% no vendedor**. Nos pedidos atrasados do
-Nordeste, o vendedor e o **mais rapido do pais** (4,8 dias contra 6,5 do
-Sudeste). Cobrar SLA desses vendedores atacaria a parte que ja funciona melhor
-que a media. A acao e logistica, nao comercial.
+atraso nasce no transporte e so 13% no vendedor**. Tanto no Nordeste quanto no
+RJ, o vendedor despacha **mais rapido** que a media nos pedidos atrasados, e o
+transporte e que demora. Cobrar SLA desses vendedores atacaria a parte que ja
+funciona melhor que a media. A acao e logistica, nao comercial.
 
 > Analise completa, com o controle por regiao, a decomposicao vendedor contra
 > transportadora, a investigacao da anomalia da cauda e as queries de

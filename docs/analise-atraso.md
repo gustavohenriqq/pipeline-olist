@@ -18,8 +18,17 @@ o Sudeste tem **6,1% de taxa de atraso contra 6,8% da média nacional**: ele tem
 mais atrasos porque tem mais pedidos, não porque atrasa mais. Corrigindo pelo
 volume, o Sudeste tem **434 atrasos a menos** do que se esperaria.
 
-O problema real está no **Nordeste**, que sozinho responde por **537 dos 569
-atrasos em excesso** do país.
+O problema real tem **dois endereços**, e o segundo só aparece no nível de
+estado: o **Rio de Janeiro**, sozinho, gera **659 atrasos em excesso**, e os nove
+estados do **Nordeste** somam **537**. Juntos, respondem por 86% de todo o atraso
+em excesso do país.
+
+> **Correção.** Uma versão anterior deste documento afirmava que o Nordeste
+> respondia por 94% do atraso em excesso. A conta estava certa no nível de
+> região e errada como conclusão: agregando por região, o excesso do Rio de
+> Janeiro (+659) ficava escondido dentro do Sudeste, compensado pelo desempenho
+> de São Paulo (-923). O erro apareceu quando um mapa por estado pediu um grão
+> mais fino. Detalhe na seção 2.1.
 
 **De quem é o atraso.** Decompondo o tempo de entrega, **87% do atraso nasce no
 transporte e apenas 13% no vendedor**. E nos pedidos atrasados do Nordeste, o
@@ -27,11 +36,13 @@ vendedor é o mais rápido do país (4,8 dias contra 6,5 do Sudeste). Os vendedo
 que atendem a região despacham acima da média e mesmo assim o pedido chega
 atrasado.
 
-**Recomendação.** Priorizar **malha logística** para Nordeste e Norte, não
-cobrança de SLA de vendedor. Trazer o Nordeste para a média nacional eliminaria
-cerca de 537 atrasos por ano, associados a **R$ 112 mil** em receita, e evitaria
-a queda de 2,6 pontos de nota nesses pedidos. Nenhuma outra região apresenta
-atraso em excesso relevante.
+**Recomendação.** Priorizar **malha logística** para o **Rio de Janeiro** e os
+estados do **Nordeste**, não cobrança de SLA de vendedor. Trazer esses dez
+estados para a média nacional eliminaria cerca de 1.196 atrasos, associados a
+**R$ 224 mil** em receita (R$ 111 mil no RJ e R$ 114 mil no Nordeste), e evitaria
+a queda de 2,6 pontos de nota nesses pedidos. No RJ o padrão se repete: o
+vendedor despacha mais rápido que a média (5,2 dias contra 6,3) e o transporte é
+mais lento (32,7 dias contra 26,4).
 
 Vale notar o que essa conclusão evita: a ação intuitiva seria cobrar os
 vendedores da região com pior indicador. Os dados mostram que isso atacaria
@@ -90,8 +101,49 @@ cada região produz**, dada a taxa nacional de 6,8%.
 | Sul | 13.817 | 815 | 936 | -121 | — |
 | Sudeste | 66.190 | 4.049 | 4.483 | -434 | — |
 
-O Nordeste responde por **94% de todo o atraso em excesso do país**. Sudeste,
-Sul e Centro-Oeste operam abaixo da média: não há problema a corrigir neles.
+No nível de região, o Nordeste parece responder por 94% do atraso em excesso, e
+Sudeste, Sul e Centro-Oeste parecem operar abaixo da média. **A seção seguinte
+mostra por que essa leitura está incompleta.**
+
+### 2.1 O nível de região escondia o maior foco do país
+
+A mesma conta, feita por estado:
+
+| UF | Região | Entregues | Taxa | Excesso | Receita evitável |
+|---|---|---|---|---|---|
+| **RJ** | Sudeste | 12.344 | 12,1% | **+659** | **R$ 110.872** |
+| BA | Nordeste | 3.256 | 12,2% | +175 | |
+| CE | Nordeste | 1.281 | 13,7% | +89 | |
+| ES | Sudeste | 1.994 | 10,7% | +79 | R$ 14.881 |
+| MA | Nordeste | 716 | 17,5% | +77 | |
+| AL | Nordeste | 397 | 21,4% | +58 | |
+| ... | | | | | |
+| MG | Sudeste | 11.352 | 4,6% | -249 | |
+| **SP** | Sudeste | 40.500 | 4,5% | **-923** | |
+
+Somando só os estados que atrasam acima da média:
+
+| Grupo | Excesso | Participação | Receita evitável |
+|---|---|---|---|
+| **Rio de Janeiro** | 659 | **47%** | R$ 110.872 |
+| **Nordeste** (os 9 estados) | 537 | **38%** | R$ 113.581 |
+| Espírito Santo | 79 | 6% | R$ 14.881 |
+| Outros (MS, PA, RR, SC, TO) | 124 | 9% | R$ 23.492 |
+| **Total** | **1.399** | 100% | **R$ 262.826** |
+
+**O Rio de Janeiro sozinho tem mais atraso em excesso que o Nordeste inteiro.**
+Na visão por região, ele desaparece porque São Paulo, com 40.500 pedidos
+entregues e taxa de 4,5%, gera 923 atrasos a menos que o esperado e compensa o
+RJ dentro do mesmo balde "Sudeste". O saldo da região fica negativo (-434) e o
+foco some.
+
+É um erro clássico de agregação: o total do grupo pode esconder um membro ruim
+quando outro membro muito maior é muito bom. A lição de método vale mais que o
+número: **excesso precisa ser calculado no grão mais fino disponível e só depois
+agregado**, nunca o contrário.
+
+Os nove estados do Nordeste têm excesso positivo, então para essa região a conta
+por região e por estado coincide. O que muda a conclusão é exclusivamente o RJ.
 
 ### Um fator agravante identificado
 
@@ -211,18 +263,23 @@ O vendedor despacha em cerca de 3 dias em qualquer região. O transporte varia d
 **6,4 dias no Sudeste a 16,9 dias no Norte**, quase o triplo, e o mesmo padrão se
 amplifica nos pedidos atrasados.
 
-E o detalhe que fecha o caso: nos pedidos atrasados do **Nordeste**, a região com
-todo o excesso de atraso do país, o vendedor é o **mais rápido de todos** (4,8
-dias, contra 6,5 do Sudeste). Os vendedores que atendem o Nordeste despacham mais
-rápido que a média e ainda assim os pedidos chegam atrasados. O problema não está
-neles.
+E o detalhe que fecha o caso: nos pedidos atrasados do **Nordeste**, o vendedor é
+o **mais rápido de todos** (4,8 dias, contra 6,5 do Sudeste). Os vendedores que
+atendem o Nordeste despacham mais rápido que a média e ainda assim os pedidos
+chegam atrasados. O problema não está neles.
+
+O **Rio de Janeiro**, que a seção 2.1 mostrou ser o maior foco de excesso do país,
+repete o padrão: nos pedidos atrasados, o vendedor leva 5,2 dias (contra 6,3 no
+resto do país) e o transporte leva **32,7 dias** (contra 26,4). Os dois focos têm
+a mesma causa.
 
 ### Recomendação revisada
 
 A ação é **logística, não comercial**. Cobrar SLA de despacho dos vendedores do
 Nordeste atacaria a parte que já funciona melhor que a média e não moveria o
 indicador. O investimento precisa ir para malha de distribuição e prazo de
-transporte nas rotas para Nordeste e Norte.
+transporte nas rotas para o **Rio de Janeiro** e o **Nordeste**, que juntos
+concentram 86% do atraso em excesso do país.
 
 Isso também corrige a leitura do prazo prometido: se o transporte para o Norte
 leva 16,9 dias mesmo quando dá certo, parte do "atraso" pode ser prazo estimado
@@ -290,7 +347,9 @@ where foi_entregue
 group by 1
 order by 1;
 
--- Excesso de atraso por regiao, contra a taxa nacional
+-- Excesso de atraso por regiao, contra a taxa nacional.
+-- ATENCAO: este recorte esconde o RJ dentro do Sudeste (ver secao 2.1).
+-- Use a query por estado, logo abaixo, para decidir onde agir.
 with base as (
   select avg(case when not entregue_no_prazo then 1.0 else 0 end) as taxa_nacional
   from marts.obt_pedidos where foi_entregue
@@ -306,5 +365,24 @@ from marts.obt_pedidos p
 cross join base b
 where p.foi_entregue
 group by p.cliente_regiao, b.taxa_nacional
+order by excesso desc;
+-- Excesso de atraso por ESTADO: o grao certo para decidir onde agir.
+-- Excesso calculado no grao mais fino e so depois agregado, para que um estado
+-- grande e bom (SP) nao esconda um estado ruim (RJ) dentro da mesma regiao.
+with base as (
+  select avg(case when not entregue_no_prazo then 1.0 else 0 end) as taxa_nacional
+  from marts.obt_pedidos where foi_entregue
+)
+select
+  p.cliente_uf,
+  p.cliente_regiao,
+  count(*)                                                     as entregues,
+  round(100.0 * avg(case when not p.entregue_no_prazo then 1.0 else 0 end), 1) as taxa,
+  sum(case when not p.entregue_no_prazo then 1 else 0 end)
+    - round(count(*) * b.taxa_nacional)                        as excesso
+from marts.obt_pedidos p
+cross join base b
+where p.foi_entregue
+group by p.cliente_uf, p.cliente_regiao, b.taxa_nacional
 order by excesso desc;
 ```

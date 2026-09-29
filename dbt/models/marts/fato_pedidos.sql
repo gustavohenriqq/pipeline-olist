@@ -38,6 +38,7 @@ select
     -- Dimensoes degeneradas (ficam no proprio fato)
     o.order_status,
     {{ status_pedido_pt('o.order_status') }}          as status_pedido,
+    {{ situacao_pedido('o.order_status') }}           as situacao_pedido,
     p.tipos_pagamento,
 
     -- Metricas de valor

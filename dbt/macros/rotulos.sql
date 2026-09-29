@@ -209,3 +209,34 @@
         else 'Nao mapeada'
     end
 {% endmacro %}
+
+
+{#
+  Situacao do pedido em tres grupos, para grafico de composicao.
+
+  Por que existe: os 8 status crus nao servem a um grafico de rosca ou de
+  composicao, porque 97,1% dos pedidos caem em 'delivered'. Uma fatia de 97%
+  com sete fios de cabelo ao lado e bonito e nao informa nada.
+
+  Agrupados por DESFECHO, que e a pergunta que o leitor faz:
+    Entregue       -> chegou ao cliente
+    Em andamento   -> ainda pode chegar (enviado, faturado, em processamento,
+                      criado, aprovado)
+    Nao concluido  -> nao vai chegar (cancelado, indisponivel)
+
+  Assim as fatias ficam comparaveis e o grafico responde "quanto nao chegou ao
+  cliente?", que e acionavel, em vez de "quantos status existem", que nao e.
+
+  O ELSE devolve 'Nao mapeada' de proposito, pelo mesmo motivo da macro de
+  categoria: status novo na origem precisa disparar o teste, nao se esconder
+  dentro de um grupo valido.
+#}
+{% macro situacao_pedido(coluna) %}
+    case
+        when {{ coluna }} = 'delivered' then 'Entregue'
+        when {{ coluna }} in ('shipped', 'invoiced', 'processing', 'created', 'approved')
+            then 'Em andamento'
+        when {{ coluna }} in ('canceled', 'unavailable') then 'Nao concluido'
+        else 'Nao mapeada'
+    end
+{% endmacro %}

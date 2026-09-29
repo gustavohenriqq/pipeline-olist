@@ -97,6 +97,16 @@ models:
                        "Faturado", "Em processamento", "Criado", "Aprovado"]
               config:
                 severity: warn
+      - name: situacao_pedido
+        description: >
+          Desfecho do pedido em tres grupos, para grafico de composicao. Existe
+          porque 97,1% dos pedidos sao 'Entregue': uma rosca com os 8 status
+          crus vira uma fatia unica com fios de cabelo ao lado.
+        data_tests:
+          - accepted_values:
+              values: ["Entregue", "Em andamento", "Nao concluido"]
+              config:
+                severity: warn
       - name: cliente_sk
         description: FK para dim_clientes.
         data_tests:

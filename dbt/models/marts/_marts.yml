@@ -13,7 +13,8 @@ models:
         description: Regiao do Brasil derivada da UF.
         data_tests:
           - accepted_values:
-              values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
+              arguments:
+                values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
 
   - name: dim_vendedores
     description: Dimensao de vendedores.
@@ -43,23 +44,24 @@ models:
           o relatorio mostrar um grupo generico crescendo em silencio.
         data_tests:
           - accepted_values:
-              values:
-                - "Casa e Decoracao"
-                - "Beleza e Saude"
-                - "Moda e Acessorios"
-                - "Esporte e Lazer"
-                - "Eletronicos e Informatica"
-                - "Eletrodomesticos"
-                - "Ferramentas e Construcao"
-                - "Bebes e Brinquedos"
-                - "Automotivo"
-                - "Pet Shop"
-                - "Livros, Midia e Arte"
-                - "Alimentos e Bebidas"
-                - "Escritorio e Papelaria"
-                - "Industria e Servicos"
-                - "Diversos"
-                - "Nao informada"
+              arguments:
+                values:
+                  - "Casa e Decoracao"
+                  - "Beleza e Saude"
+                  - "Moda e Acessorios"
+                  - "Esporte e Lazer"
+                  - "Eletronicos e Informatica"
+                  - "Eletrodomesticos"
+                  - "Ferramentas e Construcao"
+                  - "Bebes e Brinquedos"
+                  - "Automotivo"
+                  - "Pet Shop"
+                  - "Livros, Midia e Arte"
+                  - "Alimentos e Bebidas"
+                  - "Escritorio e Papelaria"
+                  - "Industria e Servicos"
+                  - "Diversos"
+                  - "Nao informada"
               config:
                 severity: warn
 
@@ -93,8 +95,9 @@ models:
           teste abaixo acusa.
         data_tests:
           - accepted_values:
-              values: ["Entregue", "Enviado", "Cancelado", "Indisponivel",
-                       "Faturado", "Em processamento", "Criado", "Aprovado"]
+              arguments:
+                values: ["Entregue", "Enviado", "Cancelado", "Indisponivel",
+                         "Faturado", "Em processamento", "Criado", "Aprovado"]
               config:
                 severity: warn
       - name: situacao_pedido
@@ -104,35 +107,40 @@ models:
           crus vira uma fatia unica com fios de cabelo ao lado.
         data_tests:
           - accepted_values:
-              values: ["Entregue", "Em andamento", "Nao concluido"]
+              arguments:
+                values: ["Entregue", "Em andamento", "Nao concluido"]
               config:
                 severity: warn
       - name: cliente_sk
         description: FK para dim_clientes.
         data_tests:
           - relationships:
-              to: ref('dim_clientes')
-              field: cliente_sk
+              arguments:
+                to: ref('dim_clientes')
+                field: cliente_sk
       - name: tempo_sk_compra
         description: FK para dim_tempo (data da compra).
         data_tests:
           - relationships:
-              to: ref('dim_tempo')
-              field: tempo_sk
+              arguments:
+                to: ref('dim_tempo')
+                field: tempo_sk
               config:
                 severity: warn
       - name: geo_sk
         description: FK para dim_geolocalizacao (CEP do cliente). Alguns CEPs de cliente nao existem na base de geolocalizacao, por isso o teste e apenas aviso.
         data_tests:
           - relationships:
-              to: ref('dim_geolocalizacao')
-              field: geo_sk
+              arguments:
+                to: ref('dim_geolocalizacao')
+                field: geo_sk
               config:
                 severity: warn
       - name: nota_avaliacao
         data_tests:
           - accepted_values:
-              values: [1, 2, 3, 4, 5]
+              arguments:
+                values: [1, 2, 3, 4, 5]
               config:
                 severity: warn
       - name: dias_ate_transportadora
@@ -143,7 +151,8 @@ models:
           compra), o que e impossivel e indica erro de origem.
         data_tests:
           - valor_minimo:
-              min_value: 0
+              arguments:
+                min_value: 0
               config:
                 severity: warn
       - name: dias_em_transporte
@@ -153,7 +162,8 @@ models:
           pedidos tem valor negativo (cliente recebendo antes da coleta).
         data_tests:
           - valor_minimo:
-              min_value: 0
+              arguments:
+                min_value: 0
               config:
                 severity: warn
 
@@ -166,16 +176,18 @@ models:
         description: FK para dim_produtos.
         data_tests:
           - relationships:
-              to: ref('dim_produtos')
-              field: produto_sk
+              arguments:
+                to: ref('dim_produtos')
+                field: produto_sk
               config:
                 severity: warn
       - name: vendedor_sk
         description: FK para dim_vendedores.
         data_tests:
           - relationships:
-              to: ref('dim_vendedores')
-              field: vendedor_sk
+              arguments:
+                to: ref('dim_vendedores')
+                field: vendedor_sk
               config:
                 severity: warn
 
@@ -195,12 +207,14 @@ models:
         description: Regiao do Brasil do cliente, derivada da UF.
         data_tests:
           - accepted_values:
-              values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
+              arguments:
+                values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
       - name: valor_total
         description: Valor de itens mais frete. Nunca negativo.
         data_tests:
           - valor_minimo:
-              min_value: 0
+              arguments:
+                min_value: 0
       - name: dias_ate_transportadora
         description: Parte do tempo de entrega sob responsabilidade do vendedor.
       - name: dias_em_transporte
@@ -224,9 +238,11 @@ models:
         description: Regiao do Brasil do vendedor, derivada da UF.
         data_tests:
           - accepted_values:
-              values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
+              arguments:
+                values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
       - name: valor_item
         description: Valor do produto mais o frete rateado do item. Nunca negativo.
         data_tests:
           - valor_minimo:
-              min_value: 0
+              arguments:
+                min_value: 0

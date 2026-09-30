@@ -14,7 +14,8 @@ models:
         description: Situacao do pedido.
         data_tests:
           - accepted_values:
-              values: ["delivered", "shipped", "canceled", "unavailable", "invoiced", "processing", "created", "approved"]
+              arguments:
+                values: ["delivered", "shipped", "canceled", "unavailable", "invoiced", "processing", "created", "approved"]
 
   - name: stg_olist__order_items
     description: Um item por linha (um pedido pode ter varios itens).
@@ -24,10 +25,12 @@ models:
       - name: price
         data_tests:
           - valor_minimo:
-              min_value: 0
+              arguments:
+                min_value: 0
     data_tests:
       - combinacao_unica:
-          combination_of_columns: [order_id, order_item_id]
+          arguments:
+            combination_of_columns: [order_id, order_item_id]
 
   - name: stg_olist__customers
     description: Um cliente por pedido. customer_unique_id agrupa a mesma pessoa.
@@ -63,10 +66,12 @@ models:
       - name: payment_type
         data_tests:
           - accepted_values:
-              values: ["credit_card", "boleto", "voucher", "debit_card", "not_defined"]
+              arguments:
+                values: ["credit_card", "boleto", "voucher", "debit_card", "not_defined"]
     data_tests:
       - combinacao_unica:
-          combination_of_columns: [order_id, payment_sequential]
+          arguments:
+            combination_of_columns: [order_id, payment_sequential]
 
   - name: stg_olist__order_reviews
     description: >
@@ -79,7 +84,8 @@ models:
       - name: review_score
         data_tests:
           - accepted_values:
-              values: [1, 2, 3, 4, 5]
+              arguments:
+                values: [1, 2, 3, 4, 5]
 
   - name: stg_olist__geolocation
     description: Um ponto medio (lat/lng) por prefixo de CEP.

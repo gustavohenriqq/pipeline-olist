@@ -19,7 +19,7 @@ clean-targets:
 # Convencao de materializacao por camada:
 #   staging      -> views  (leves, so renomeiam/limpam a raw)
 #   intermediate -> views  (juntam e agregam antes das marts)
-#   marts        -> tables (o que o BI e o agente consomem; precisa ser rapido)
+#   marts        -> tables; os dois fatos sobrescrevem para incremental
 models:
   olist:
     staging:

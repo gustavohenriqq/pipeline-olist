@@ -45,3 +45,14 @@ CLAUDE.md
 # ampla protege tambem contra chave privada, que costuma ter a mesma extensao.
 *.pem
 *.key
+
+# ---- Contexto pessoal (dados pessoais, pretensao, empresas-alvo) ----
+contexto.md
+
+# ---- Mockups gerados por IA com numeros inventados ----
+# Nao publicar: a maioria dos valores nao bate com o banco (clientes, itens,
+# variacoes "vs periodo anterior", cancelados 1,6% contra 0,59% real, ranking de
+# categorias e estados) e o rodape atribui direitos a Olist, o que apresenta o
+# projeto como produto oficial. O mockup conferido e olist_visao_geral.html.
+dashboards/mockup/mockup-png.png
+dashboards/mockup/olist_dashboard_premium_mockup.html

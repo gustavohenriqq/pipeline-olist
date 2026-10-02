@@ -328,7 +328,7 @@ uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 Duas mudancas de rota, ambas por evidencia nos dados:
 
 - **PySpark foi cortado.** 1,5 milhao de linhas roda em 23 segundos num Postgres em container. Volume nao justifica computacao distribuida.
-- **Airflow saiu deste projeto.** Fonte estatica nao tem o que agendar. Orquestracao fica no projeto irmao de transporte em tempo real, onde a coleta continua de API a justifica.
+- **Airflow saiu deste projeto.** Fonte estatica nao tem o que agendar, e orquestracao sem necessidade real vira enfeite.
 - **Previsao de demanda virou previsao de atraso.** A serie tem 20 meses uteis, 1,7 ciclo anual. Nao da para validar sazonalidade com menos de dois ciclos.
 
 ### O que este projeto nao demonstra

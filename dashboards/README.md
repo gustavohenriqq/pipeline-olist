@@ -215,6 +215,10 @@ Registradas porque cada uma custou uma rodada de tentativa e erro:
   pede `0.068`, nao `6.8`.
 - **O rotulo da linha de referencia herda a cor da linha** e nao tem controle
   proprio. Para cor diferente, desligar o rotulo e usar caixa de texto.
+- **Cor por valor de dimensao e chaveada pelo texto do valor.** Quando os rotulos
+  do dbt ganharam acento ("Casa e Decoracao" virou "Casa e Decoração"), as cores
+  atribuidas no Looker se perderam e precisaram ser refeitas. Renomear um rotulo no
+  dbt e mudanca que quebra o BI, mesmo sem mudar nenhum numero.
 - **Cor barra a barra.** Cor por valor de dimensao so funciona com uma serie por
   valor. A saida limpa e **formatacao condicional pela metrica**, que ainda
   acompanha os filtros: uma regra "acima da media" muda sozinha quando o recorte
@@ -222,7 +226,7 @@ Registradas porque cada uma custou uma rodada de tentativa e erro:
 - **Escala ordinal ordenada pela metrica.** As notas sairam como 5, 4, 1, 3, 2.
   Escala se ordena pela propria dimensao.
 - **Rosca com 97% numa fatia nao informa.** Motivou o campo `situacao_pedido` no
-  dbt (Entregue, Em andamento, Nao concluido).
+  dbt (Entregue, Em andamento, Não concluído).
 - **Mapa de receita com SP dominante.** SP tem 37% da receita e 20 estados tem
   menos de 10% do que SP fatura. Sem cor media na escala, os 20 ficam no mesmo
   tom.
@@ -245,7 +249,7 @@ na fonte de dados.
 | Avaliacao media | 4,09 |
 | Taxa de atraso nacional | 6,8% |
 | Nordeste / Sudeste (taxa de atraso) | 12,7% / 6,1% |
-| Top categoria | Casa e Decoracao, R$ 3,23 mi |
+| Top categoria | Casa e Decoração, R$ 3,23 mi |
 | SP no mapa | R$ 5,91 mi |
 | Pico de receita | nov/2017, R$ 1,18 mi |
 

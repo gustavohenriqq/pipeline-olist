@@ -44,22 +44,22 @@ models:
         data_tests:
           - accepted_values:
               values:
-                - "Casa e Decoracao"
-                - "Beleza e Saude"
-                - "Moda e Acessorios"
+                - "Casa e Decoração"
+                - "Beleza e Saúde"
+                - "Moda e Acessórios"
                 - "Esporte e Lazer"
-                - "Eletronicos e Informatica"
-                - "Eletrodomesticos"
-                - "Ferramentas e Construcao"
-                - "Bebes e Brinquedos"
+                - "Eletrônicos e Informática"
+                - "Eletrodomésticos"
+                - "Ferramentas e Construção"
+                - "Bebês e Brinquedos"
                 - "Automotivo"
                 - "Pet Shop"
-                - "Livros, Midia e Arte"
+                - "Livros, Mídia e Arte"
                 - "Alimentos e Bebidas"
-                - "Escritorio e Papelaria"
-                - "Industria e Servicos"
+                - "Escritório e Papelaria"
+                - "Indústria e Serviços"
                 - "Diversos"
-                - "Nao informada"
+                - "Não informada"
               config:
                 severity: warn
 
@@ -93,7 +93,7 @@ models:
           teste abaixo acusa.
         data_tests:
           - accepted_values:
-              values: ["Entregue", "Enviado", "Cancelado", "Indisponivel",
+              values: ["Entregue", "Enviado", "Cancelado", "Indisponível",
                        "Faturado", "Em processamento", "Criado", "Aprovado"]
               config:
                 severity: warn
@@ -104,7 +104,7 @@ models:
           crus vira uma fatia unica com fios de cabelo ao lado.
         data_tests:
           - accepted_values:
-              values: ["Entregue", "Em andamento", "Nao concluido"]
+              values: ["Entregue", "Em andamento", "Não concluído"]
               config:
                 severity: warn
       - name: cliente_sk

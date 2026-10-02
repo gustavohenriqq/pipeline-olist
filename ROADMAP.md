@@ -50,16 +50,17 @@ análise usou para achar o problema.
 - CI no GitHub Actions rodando o pipeline inteiro sobre uma amostra versionada.
 
 **Pendente:** publicar o relatório no Looker Studio e colar o link aqui e no
-README. A conexão está pronta e testada, o guia de montagem e os números de
-conferência estão em [dashboards/README.md](dashboards/README.md), e existe um
-mockup da página inicial em [dashboards/mockup/](dashboards/mockup/). Falta o
-passo manual de montar e publicar.
+README. A página inicial está em montagem: cards, evolução de vendas e taxa de
+atraso por região já foram conferidos contra o banco. A configuração de cada
+componente e os números de conferência estão em
+[dashboards/README.md](dashboards/README.md).
 
 **Decisões e alternativas:**
 - **dbt-core (CLI) vs dbt Cloud.** Escolhido o core, gratuito e local. O dbt Cloud tem agendador e IDE web, mas custa e não agrega para portfólio.
 - **PostgreSQL vs DuckDB.** Postgres, porque é o que as vagas pedem e serve BI e agente ao mesmo tempo. DuckDB seria mais rápido para análise local, mas não é um servidor multiusuário.
 - **Publicar só as marts no Neon vs rodar o dbt direto na nuvem.** Escolhido publicar só as marts. O free tier do Neon dá 0,5 GB e a raw `geolocation` tem 1 milhão de linhas; além disso, cada `dbt build` na nuvem viraria tráfego de rede. Construir e testar local e publicar só o resultado aprovado é mais rápido, mais barato e espelha o padrão de produção, onde o BI nunca lê a camada crua. O target `prod` apontando para o Neon fica documentado no `profiles.yml` como alternativa.
 - **Tabela larga (OBT) ao lado do star schema.** O Looker Studio só junta fontes por "blend", que é limitado. Em vez de degradar o modelo, o projeto deriva duas OBTs (`obt_pedidos`, `obt_itens`) a partir do star, que continua sendo a fonte da verdade. Cada OBT respeita um grão, para não inflar receita.
+- **Rótulos no dbt, não no BI.** Status, situação do pedido e categoria em 14 grupos são gerados por macros em `dbt/macros/rotulos.sql`. No Looker, a tradução resolveria um relatório e deixaria o Power BI e o agente vendo os nomes crus. As colunas de origem continuam nas marts, e o `ELSE` de cada macro devolve um valor fora da lista aceita, para que categoria ou status novo na origem dispare o teste em vez de se esconder num grupo válido. O teste pegou um caso real: `cool_stuff` (R$ 719 mil) caía no balde de sobra.
 
 **Riscos em produção:** schemas fixos, carga full (não incremental) e geolocalização incompleta. Detalhes no README, seção 6. Some-se a isso a duplicação de dado entre o warehouse local e o Neon: são dois bancos que podem divergir se alguém publicar sem rodar os testes antes. Por isso a publicação é sempre full e transacional, e o alvo `make publish` encadeia build e publicação na ordem certa.
 

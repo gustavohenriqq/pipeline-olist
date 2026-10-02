@@ -126,39 +126,130 @@ receita infla. Mantenha cada pagina ligada a uma fonte so:
 
 ---
 
-## Paginas sugeridas
+## Pagina 1: Visao Geral Comercial
 
-**1. Visao geral** (fonte: `obt_pedidos`)
-- Scorecards: `COUNT(order_id)`, `SUM(valor_total)`, `AVG(valor_total)`,
-  `AVG(nota_avaliacao)`.
-- Serie temporal: `ano_mes_compra` no eixo X, `SUM(valor_total)` no Y.
-- Filtro de periodo por `data_compra`, aplicado ao relatorio inteiro.
+Estado em 02/10/2026: **em montagem no Looker Studio, ainda nao publicada.**
+Cards, evolucao de vendas e taxa de atraso por regiao estao prontos e
+conferidos contra o banco. Categorias, notas e mapa estao sendo ajustados.
 
-**2. Geografia** (fonte: `obt_pedidos`)
-- Mapa de bolhas usando `cliente_latlong`, tamanho por `SUM(valor_total)`.
-- Barras: `cliente_regiao` por receita.
-- Tabela: top 15 `cliente_cidade` com receita e ticket medio.
+### Configuracao geral
 
-**3. Entregas** (fonte: `obt_pedidos`)
-- Scorecard de `entregue_no_prazo` como percentual, **com filtro `foi_entregue = true`** na pagina (veja a nota sobre denominador abaixo).
-- Barras: `AVG(tempo_entrega_dias)` por `cliente_regiao`, mesmo filtro.
-- Histograma de `atraso_dias` filtrando `foi_entregue = true`.
+| Ajuste | Valor |
+|---|---|
+| Tamanho da tela | Personalizado, 1600 x 900 |
+| Controle de periodo | **Fixo**, 01/01/2017 a 31/08/2018, no nivel do relatorio |
+| Tema, "Cor de acordo com" | Valores de dimensao |
+| Fundo da pagina / cards | `#F1F5F9` / `#FFFFFF`, borda `#E2E8F0` |
+| Cor principal | `#0F52BA` (linhas), `#60A5FA` (barras em destaque) |
+| Contexto e referencia | `#CBD5E1` (barras), `#94A3B8` (linhas de referencia) |
 
-**4. Produtos e vendedores** (fonte: `obt_itens`)
-- Barras: top 15 `categoria_pt` por `SUM(valor_item)`.
-- Tabela: top 20 `seller_id` com receita, itens vendidos e ticket medio.
-- Segmentacao por `venda_interregional` para mostrar o efeito no frete.
+**Por que o periodo comeca em jan/2017.** O dataset cobre set/2016 a out/2018,
+mas as pontas sao residuo de coleta: 349 pedidos, 0,35% do total. Plotar o
+periodo inteiro achata a serie contra o eixo. O controle continua livre para
+quem abrir o relatorio; o padrao fixo so define a primeira impressao.
 
-**5. Satisfacao** (fonte: `obt_pedidos`)
-- `AVG(nota_avaliacao)` por `cliente_regiao` e por faixa de `atraso_dias`.
-- Essa cruzada e a mais interessante do dataset: a nota cai junto com o atraso.
+### Filtros do cabecalho
+
+| Filtro | Controle | Fonte | Campo |
+|---|---|---|---|
+| Periodo | Controle de periodo | (todas) | dimensao de periodo de cada grafico |
+| Status do pedido | Lista suspensa | `obt_pedidos` | `status_pedido` |
+| Regiao | Lista suspensa | `obt_pedidos` | `cliente_regiao` |
+| Categoria | Lista suspensa | `obt_itens` | `categoria_grupo` |
+
+O filtro de status nao afeta graficos da `obt_itens`, que nao tem esse campo. O
+de regiao funciona nas duas fontes porque o campo tem o mesmo nome nelas.
+
+### Os cinco cards (todos da `obt_pedidos`)
+
+| Card | Metrica | Agregacao | Filtro | Formato |
+|---|---|---|---|---|
+| Pedidos | `order_id` | Contagem distinta | nenhum | Numero, 0 casas |
+| Receita bruta | `valor_total` | Soma | nenhum | Moeda BRL, compacto, 2 casas |
+| Clientes unicos | `customer_unique_id` | **Contagem distinta** | nenhum | Numero, 0 casas |
+| Entregue no prazo | `no_prazo_num` | Media | **`foi_entregue` = true** | Percentual, 1 casa |
+| Avaliacao media | `nota_avaliacao` | Media | nenhum | Numero, 2 casas |
+
+Em todos: dimensao do periodo `data_compra`, periodo padrao Automatico,
+comparacao desligada.
+
+**Por que os cards nao tem variacao contra periodo anterior.** Com a janela de 20
+meses, "periodo anterior" sao os 20 meses antes de jan/2017, que tem 329 pedidos.
+O card mostraria **+27.506%**. "Ano anterior" mostraria +330%, com metade da base
+fora do dataset. O crescimento real esta contado no grafico de evolucao.
+
+### Graficos
+
+| Grafico | Fonte | Configuracao |
+|---|---|---|
+| **Evolucao de vendas** | `obt_pedidos` | Serie temporal, `data_compra` em **Ano e mes**, `valor_total` Soma. Area em gradiente, linha de referencia constante 789310 (media mensal), anotacao da Black Friday em caixa de texto |
+| **Taxa de atraso por regiao** | `obt_pedidos` | Barras horizontais, `cliente_regiao`, `atrasou` Media, filtro so entregues. Linha de referencia **0.068**. Formatacao condicional: `atrasou` > 0.068 em `#60A5FA`, resto em `#E2E8F0` |
+| **Top categorias** | `obt_itens` | Barras horizontais, `categoria_grupo`, `valor_item` Soma, 5 linhas, sem "Outros" |
+| **Distribuicao das notas** | `obt_pedidos` | Colunas, `nota_avaliacao` ordenada **pela dimensao**, `order_id` Contagem distinta, excluir nota nula. Notas 1 a 3 em `#CBD5E1`, 4 e 5 em `#60A5FA` (clientes satisfeitos) |
+| **Mapa por estado** | `obt_pedidos` | Mapa geografico, `uf_iso`, `valor_total` Soma, com cor minima, **media** e maxima |
+
+### Campos calculados criados no Looker (fonte `obt_pedidos`)
+
+| Campo | Formula | Uso |
+|---|---|---|
+| `no_prazo_num` | `CASE WHEN entregue_no_prazo = TRUE THEN 1 WHEN entregue_no_prazo = FALSE THEN 0 END` | Card de entregue no prazo |
+| `atrasou` | `CASE WHEN entregue_no_prazo = FALSE THEN 1 WHEN entregue_no_prazo = TRUE THEN 0 END` | Taxa de atraso. Tipo Percentual |
+| `uf_iso` | `CONCAT("BR-", cliente_uf)` | Mapa. Tipo Geo, subdivisao do pais (1o nivel) |
+
+Os dois `CASE` nao tem `ELSE` de proposito. Com `ELSE 0`, o pedido sem data de
+entrega entraria na media como atrasado, e o card cairia de 93,2% para 90,5%.
+
+---
+
+## Armadilhas do Looker Studio pagas na montagem
+
+Registradas porque cada uma custou uma rodada de tentativa e erro:
+
+- **Card mostrando o dataset inteiro (99.441) com o filtro de periodo ativo.** Duas
+  causas possiveis: o grafico sem **Dimensao do periodo** definida (obrigatoria
+  quando a fonte tem mais de uma data) ou o controle de periodo sem padrao, que
+  equivale a "todas as datas".
+- **Numero compacto nao fica no formato do campo.** "R$ 15,79 mi" se liga na aba
+  **Estilo** do card. O formato do campo so define tipo e casas.
+- **Linha de referencia usa o valor bruto.** Metrica percentual em media de 0 e 1
+  pede `0.068`, nao `6.8`.
+- **O rotulo da linha de referencia herda a cor da linha** e nao tem controle
+  proprio. Para cor diferente, desligar o rotulo e usar caixa de texto.
+- **Cor barra a barra.** Cor por valor de dimensao so funciona com uma serie por
+  valor. A saida limpa e **formatacao condicional pela metrica**, que ainda
+  acompanha os filtros: uma regra "acima da media" muda sozinha quando o recorte
+  muda, enquanto cor fixa por regiao mentiria.
+- **Escala ordinal ordenada pela metrica.** As notas sairam como 5, 4, 1, 3, 2.
+  Escala se ordena pela propria dimensao.
+- **Rosca com 97% numa fatia nao informa.** Motivou o campo `situacao_pedido` no
+  dbt (Entregue, Em andamento, Nao concluido).
+- **Mapa de receita com SP dominante.** SP tem 37% da receita e 20 estados tem
+  menos de 10% do que SP fatura. Sem cor media na escala, os 20 ficam no mesmo
+  tom.
 
 ---
 
 ## Numeros de conferencia
 
 Se o dashboard mostrar valores diferentes destes, algo esta errado no filtro ou
-na fonte de dados:
+na fonte de dados.
+
+### Na janela padrao do relatorio (01/01/2017 a 31/08/2018)
+
+| Metrica | Valor esperado |
+|---|---|
+| Pedidos | 99.092 |
+| Receita bruta | R$ 15,79 mi |
+| Clientes unicos | 95.774 |
+| Entregue no prazo | 93,2% (base: entregues) |
+| Avaliacao media | 4,09 |
+| Taxa de atraso nacional | 6,8% |
+| Nordeste / Sudeste (taxa de atraso) | 12,7% / 6,1% |
+| Top categoria | Casa e Decoracao, R$ 3,23 mi |
+| SP no mapa | R$ 5,91 mi |
+| Pico de receita | nov/2017, R$ 1,18 mi |
+
+### No dataset inteiro (set/2016 a out/2018)
 
 | Metrica | Valor esperado | Denominador |
 |---|---|---|

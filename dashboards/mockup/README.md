@@ -53,3 +53,20 @@ Valores da **janela filtrada**, diferindo dos 99.441 pedidos e R$ 15.843.553 do 
    E o unico indicador calculado apenas sobre os pedidos com status `delivered` (96.211 pedidos). Os 2.881 pedidos em transito ou cancelados nao tem prazo vencido. Se incluidos no denominador, derrubam o indicador para 90,4% de forma incorreta. No Looker Studio, aplique sempre o filtro de componente `foi_entregue = true` nesse scorecard.
 3. **Nunca misturar graos no mesmo grafico:**
    Metricas de receita global, frete, pedidos e clientes vem de `obt_pedidos`. Metricas de produtos, categorias e vendedores vem de `obt_itens`.
+
+---
+
+## Onde o relatorio real divergiu do mockup
+
+O mockup foi o ponto de partida, nao a especificacao final. Na montagem, quatro
+decisoes mudaram, todas por motivo de dado:
+
+| No mockup | No relatorio | Por que |
+|---|---|---|
+| Card de ticket medio | Card de clientes unicos | Escolha do dono |
+| Badges de variacao nos cards | Sem variacao | "Periodo anterior" de uma janela de 20 meses compara com 329 pedidos e daria +27.506% |
+| Receita por regiao | **Taxa de atraso por regiao** com linha da media | Receita por regiao repetia o mapa; a taxa conta o achado do projeto |
+| Notas do vermelho ao verde | Cinza para 1 a 3, azul para 4 e 5 | Semaforo destoava da pagina; o azul destaca os satisfeitos, que e a definicao do CSAT |
+| Mapa de bolhas | Mapa preenchido por estado | Bolhas por CEP seriam 19 mil pontos |
+
+A configuracao real de cada componente esta em [../README.md](../README.md).

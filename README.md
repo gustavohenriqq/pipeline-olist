@@ -237,6 +237,7 @@ dbt docs serve    --profiles-dir . --port 8081
 - Schema `staging` e `intermediate`: views de limpeza e agregacao.
 - Schema `marts`: 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
 - 74 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
+- Rotulos em portugues gerados no dbt: status do pedido, situacao (entregue, em andamento, nao concluido) e categoria em 14 grupos comerciais.
 - Camada de servico no Neon com as marts publicadas, para o Looker Studio ler 24/7.
 
 ---
@@ -254,7 +255,7 @@ pipeline-olist/
 │   │   ├── staging/          # limpeza e casting (views)
 │   │   ├── intermediate/     # joins e agregacoes (views)
 │   │   └── marts/            # star schema (tables)
-│   ├── macros/               # helpers proprios (surrogate key, calendario, regiao, testes)
+│   ├── macros/               # helpers proprios (surrogate key, calendario, regiao, rotulos, testes)
 │   ├── tests/                # testes singulares
 │   ├── dbt_project.yml
 │   └── profiles.yml
@@ -264,7 +265,7 @@ pipeline-olist/
 ├── docker-compose.yml        # Postgres + pgAdmin
 ├── Makefile                  # atalhos (make pipeline, make dbt-run, ...)
 ├── requirements.txt
-└── ROADMAP.md                # plano completo das 6 fases
+└── ROADMAP.md                # plano por etapas e decisoes descartadas
 ```
 
 ---
@@ -305,7 +306,7 @@ python scripts/publicar_marts.py                # espelha as marts no Neon
 
 O passo a passo completo de conexao, as paginas sugeridas e os numeros de conferencia estao em [dashboards/README.md](dashboards/README.md).
 
-- **Looker Studio (publico):** link sera adicionado assim que o relatorio for publicado.
+- **Looker Studio (publico):** em montagem. A pagina inicial (cards, evolucao de vendas e taxa de atraso por regiao) ja esta conferida contra o banco; o link entra aqui quando o relatorio for publicado. A configuracao de cada componente e as armadilhas do Looker encontradas no caminho estao em [dashboards/README.md](dashboards/README.md).
 - **Power BI (Fase 4):** dashboard executivo com DAX avancado, RLS por regiao e vendedor e OLS para metricas sensiveis. Ali o consumo e do star schema, nao das OBTs.
 
 Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.

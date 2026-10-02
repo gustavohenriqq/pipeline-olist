@@ -123,9 +123,7 @@ do dbt, sem ferramenta nova.
 propósito, e está registrada na tabela de decisões descartadas. O dataset é um
 arquivo estático que nunca muda: uma DAG agendada rodaria todo dia sobre o mesmo
 dado, e a pergunta "orquestrar o quê?" não teria boa resposta. É o mesmo
-raciocínio que tirou o PySpark. Airflow, backfill de fonte viva, data lake
-particionado e monitoramento ficam no projeto irmão de transporte público em
-tempo real, onde a coleta contínua de uma API cria a necessidade real de cada um.
+raciocínio que tirou o PySpark.
 
 **Riscos em produção:** model incremental com lógica de janela errada perde ou
 duplica dado em silêncio. Por isso o teste de idempotência (build duplo, contagem
@@ -231,7 +229,7 @@ registrar o que foi.
 | **Análise de coorte e retenção** | 3,1% de clientes com mais de um pedido | Dataset não sustenta. Registrado como achado, não produzido como análise vazia |
 | **dbt Cloud** | Custa, e o valor é agendador e IDE web | dbt-core cobre o que o projeto precisa |
 | **Databricks Community Edition** | Sem cluster persistente, sem scheduler, mount de Blob limitado | Não permite arquitetura cloud de verdade |
-| **Airflow** | Fonte é um arquivo estático, sem atualização. Não há evento, agenda nem janela nova para processar | Orquestração sem necessidade real vira enfeite. Coberta no projeto irmão, onde a coleta contínua de API a justifica |
+| **Airflow** | Fonte é um arquivo estático, sem atualização. Não há evento, agenda nem janela nova para processar | Orquestração sem necessidade real vira enfeite |
 
 ---
 
@@ -245,15 +243,4 @@ Honestidade sobre limite é parte do trabalho. Este projeto **não** cobre:
 - **Orquestração.** Sem fonte que muda, não há o que agendar.
 
 Essas competências pedem um projeto de forma diferente, com dado coletado ao
-longo do tempo de uma fonte real. É a lacuna consciente deste repositório, e é
-coberta por um projeto irmão de transporte público em tempo real.
-
-### Divisão de papéis entre os dois projetos
-
-| Projeto | Papel | Competências centrais |
-|---|---|---|
-| **Este (Olist)** | Analytics engineering, análise e ML | dbt, star schema, testes de qualidade, análise com recomendação, estatística, classificação |
-| **Transporte em tempo real** | Engenharia de dados | Ingestão de API, data lake medallion particionado, PySpark, Airflow, monitoramento |
-
-A divisão evita que os dois repitam a mesma demonstração, e cada ferramenta
-aparece onde o problema de fato a exige.
+longo do tempo de uma fonte real. É a lacuna consciente deste repositório.

@@ -288,7 +288,7 @@ pipeline-olist/
 
 - **Schemas fixos (`staging`, `marts`).** Otimo local, mas num warehouse compartilhado por varios devs isso causa colisao. Em producao, o padrao `<ambiente>_<schema>` (comportamento default do dbt) e mais seguro.
 - **Geolocalizacao incompleta.** 278 CEPs de cliente nao existem na base de geolocalizacao. O teste de integridade esta como **aviso**, nao erro, de proposito. Em producao, decidir: enriquecer com outra fonte de CEP ou aceitar o gap.
-- **Reprocessamento full.** Hoje a carga refaz tudo. Com volume grande, o certo e carga incremental (models incrementais no dbt e ingestao so do delta).
+- **Incrementalidade parcial.** Os dois fatos escrevem apenas linhas novas ou alteradas, com idempotencia validada no CI. A ingestao raw, dimensoes e OBTs continuam full; os fatos ainda leem o resultado inteiro para detectar correcoes antigas sem `updated_at`. Exclusoes da origem exigem `--full-refresh`. Ver [incrementalidade](docs/incrementalidade.md).
 - **Segredos.** O `.env` nunca vai para o Git. Em producao, usar um cofre de segredos (Azure Key Vault, AWS Secrets Manager).
 
 ---

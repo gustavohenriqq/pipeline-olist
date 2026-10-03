@@ -51,3 +51,6 @@ jobs:
       - name: dbt build (run + test)
         working-directory: dbt
         run: dbt build --profiles-dir .
+
+      - name: Validar incrementalidade e idempotencia (banco descartavel)
+        run: python scripts/validate_incremental.py

@@ -1,3 +1,10 @@
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='pedido_sk',
+    on_schema_change='fail'
+) }}
+
 -- Fato no grao de PEDIDO (uma linha por pedido).
 -- Traz as chaves para as dimensoes (cliente, tempo, geolocalizacao) e as
 -- metricas aditivas do pedido (valores, pagamento, nota, tempo de entrega).
@@ -24,8 +31,9 @@ itens as (
 
 avaliacao as (
     select * from {{ ref('int_avaliacao_por_pedido') }}
-)
+),
 
+resultado as (
 select
     {{ gera_sk(['o.order_id']) }} as pedido_sk,
     o.order_id,
@@ -89,3 +97,13 @@ left join customers c   on o.customer_id = c.customer_id
 left join pagamentos p  on o.order_id = p.order_id
 left join itens i       on o.order_id = i.order_id
 left join avaliacao a   on o.order_id = a.order_id
+)
+
+select * from resultado
+{% if is_incremental() %}
+-- O CSV nao tem updated_at: comparamos o resultado inteiro, incluindo NULLs,
+-- para detectar novos registros e correcoes antigas sem uma janela arbitraria.
+-- delete+insert substitui por chave somente as linhas retornadas pelo EXCEPT.
+except
+select * from {{ this }}
+{% endif %}

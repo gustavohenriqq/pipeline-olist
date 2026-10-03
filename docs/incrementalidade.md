@@ -38,6 +38,15 @@ dbt build --profiles-dir . --full-refresh
 `on_schema_change='fail'` impede uma evolucao de schema silenciosa. O modo normal
 nao remove uma chave que desapareceu do snapshot; nesse caso, use full-refresh.
 
+Na pratica, isso pesa em toda coluna nova nos fatos. Se os fatos ja fossem
+incrementais, `dias_ate_transportadora`, `dias_em_transporte` e `situacao_pedido`
+teriam passado por isso, e o mesmo vale para a Etapa 4 se a previsao de atraso
+entrar no `fato_pedidos`.
+Com `fail`, o build normal para com erro em vez de seguir com a coluna faltando,
+e a correcao e rodar `--full-refresh` uma vez. Por isso a previsao deve ir para
+uma tabela propria, ligada ao fato pela chave, e nao para uma coluna do fato:
+assim o modelo pode ser reprocessado sem reconstruir o fato inteiro.
+
 ## Limites
 
 O delta reduz as escritas nos fatos, mas ainda le e compara o resultado completo.

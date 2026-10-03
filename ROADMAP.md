@@ -108,8 +108,8 @@ análise precisa controlar por esses fatores antes de afirmar causalidade.
 honesta sobre a idade do dado.
 
 **Entregas planejadas:**
-- **Models incrementais — entregue:** os dois fatos usam `delete+insert` por chave no Postgres, com delta por comparação de todas as colunas. Detalhes e limites em [incrementalidade](docs/incrementalidade.md).
-- **Idempotência — entregue:** CI valida build repetido, novas linhas com datas antigas, correções antigas e igualdade com full-refresh. **Janela por `--vars` continua planejada**; hoje a comparação completa detecta alterações independentemente da data de compra.
+- **Models incrementais (entregue):** os dois fatos usam `delete+insert` por chave no Postgres, com delta por comparação de todas as colunas. Detalhes e limites em [incrementalidade](docs/incrementalidade.md).
+- **Idempotência (entregue):** CI valida build repetido, novas linhas com datas antigas, correções antigas e igualdade com full-refresh. **Janela por `--vars` continua planejada**; hoje a comparação completa detecta alterações independentemente da data de compra.
 - **Freshness:** `dbt source freshness` com limite de aviso e de erro sobre a camada raw.
 - **Metadados de execução persistidos:** resultado de cada build e de cada teste gravado numa tabela, para responder "quando esse número foi atualizado pela última vez?".
 - **CI enxuto:** rodar só o que mudou (`state:modified+`), em vez do projeto inteiro a cada push.

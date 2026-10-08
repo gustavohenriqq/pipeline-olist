@@ -1,0 +1,33 @@
+{
+  "modelo": [
+    {"caso": "linhas_fato_pedidos", "dax": "EVALUATE ROW(\"v\", COUNTROWS(fato_pedidos))"},
+    {"caso": "linhas_fato_itens_pedido", "dax": "EVALUATE ROW(\"v\", COUNTROWS(fato_itens_pedido))"},
+    {"caso": "linhas_dim_clientes", "dax": "EVALUATE ROW(\"v\", COUNTROWS(dim_clientes))"},
+    {"caso": "linhas_dim_produtos", "dax": "EVALUATE ROW(\"v\", COUNTROWS(dim_produtos))"},
+    {"caso": "linhas_dim_vendedores", "dax": "EVALUATE ROW(\"v\", COUNTROWS(dim_vendedores))"},
+    {"caso": "linhas_dim_tempo", "dax": "EVALUATE ROW(\"v\", COUNTROWS(dim_tempo))"},
+    {"caso": "linhas_previsao_atraso", "dax": "EVALUATE ROW(\"v\", COUNTROWS(previsao_atraso))"},
+    {"caso": "linhas_seguranca_bi", "dax": "EVALUATE ROW(\"v\", COUNTROWS(seguranca_bi))"}
+  ],
+  "medidas": [
+    {"caso": "pedidos", "dax": "EVALUATE ROW(\"v\", [Pedidos])"},
+    {"caso": "receita", "dax": "EVALUATE ROW(\"v\", [Receita])"},
+    {"caso": "ticket_medio", "dax": "EVALUATE ROW(\"v\", [Ticket Médio])"},
+    {"caso": "pct_no_prazo", "dax": "EVALUATE ROW(\"v\", [% no Prazo])"},
+    {"caso": "nota_media", "dax": "EVALUATE ROW(\"v\", [Nota Média])"},
+    {"caso": "excesso_rj", "dax": "EVALUATE ROW(\"v\", CALCULATE([Atraso em Excesso], dim_clientes[uf] = \"RJ\"))"},
+    {"caso": "receita_2018", "dax": "EVALUATE ROW(\"v\", CALCULATE([Receita Acumulada no Ano], dim_tempo[ano] = 2018))"},
+    {"caso": "variacao_mensal_2018_03", "dax": "EVALUATE ROW(\"v\", CALCULATE([Variação Mensal %], dim_tempo[ano_mes] = \"2018-03\"))"},
+    {"caso": "variacao_mensal_2016_09", "dax": "EVALUATE ROW(\"v\", CALCULATE([Variação Mensal %], dim_tempo[ano_mes] = \"2016-09\"))"},
+    {"caso": "pedidos_alerta", "dax": "EVALUATE ROW(\"v\", [Pedidos em Alerta])"},
+    {"caso": "receita_risco", "dax": "EVALUATE ROW(\"v\", [Receita em Risco])"}
+  ],
+  "seguranca": [
+    {"caso": "pedidos@{usuario}", "dax": "EVALUATE ROW(\"v\", [Pedidos])"},
+    {"caso": "itens@{usuario}", "dax": "EVALUATE ROW(\"v\", COUNTROWS(fato_itens_pedido))"}
+  ],
+  "ols_vendedor": [
+    {"caso": "ols_cidade_bloqueada", "dax": "EVALUATE TOPN(1, VALUES(dim_clientes[cidade]))"},
+    {"caso": "ols_cliente_bloqueado", "dax": "EVALUATE TOPN(1, VALUES(dim_clientes[customer_unique_id]))"}
+  ]
+}

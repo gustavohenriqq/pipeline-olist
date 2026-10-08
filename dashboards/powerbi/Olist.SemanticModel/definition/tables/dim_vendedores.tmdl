@@ -1,0 +1,38 @@
+/// Vendedor, filtrado pelo RLS no papel Vendedor.
+table dim_vendedores
+
+	column vendedor_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: vendedor_sk
+
+	column seller_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: seller_id
+
+	column cidade
+		dataType: string
+		summarizeBy: none
+		sourceColumn: cidade
+
+	column uf
+		dataType: string
+		summarizeBy: none
+		sourceColumn: uf
+
+	column regiao
+		dataType: string
+		summarizeBy: none
+		sourceColumn: regiao
+
+	partition dim_vendedores = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "dim_vendedores"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"vendedor_sk", "seller_id", "cidade", "uf", "regiao"})
+				in
+				    Colunas

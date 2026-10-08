@@ -1,0 +1,83 @@
+/// Fato no grao de pedido: receita, entrega e nota.
+table fato_pedidos
+
+	column pedido_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: pedido_sk
+
+	column order_id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: order_id
+
+	column cliente_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: cliente_sk
+
+	column tempo_sk_compra
+		dataType: int64
+		isHidden
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: tempo_sk_compra
+
+	column valor_total
+		dataType: decimal
+		formatString: \R$ #,0.00
+		summarizeBy: sum
+		sourceColumn: valor_total
+
+	column valor_itens
+		dataType: decimal
+		formatString: \R$ #,0.00
+		summarizeBy: sum
+		sourceColumn: valor_itens
+
+	column valor_frete
+		dataType: decimal
+		formatString: \R$ #,0.00
+		summarizeBy: sum
+		sourceColumn: valor_frete
+
+	column qtd_itens
+		dataType: int64
+		formatString: 0
+		summarizeBy: sum
+		sourceColumn: qtd_itens
+
+	column entregue_no_prazo
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: entregue_no_prazo
+
+	column nota_avaliacao
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: nota_avaliacao
+
+	column atraso_dias
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: atraso_dias
+
+	column situacao_pedido
+		dataType: string
+		summarizeBy: none
+		sourceColumn: situacao_pedido
+
+	partition fato_pedidos = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "fato_pedidos"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"pedido_sk", "order_id", "cliente_sk", "tempo_sk_compra", "valor_total", "valor_itens", "valor_frete", "qtd_itens", "entregue_no_prazo", "nota_avaliacao", "atraso_dias", "situacao_pedido"})
+				in
+				    Colunas

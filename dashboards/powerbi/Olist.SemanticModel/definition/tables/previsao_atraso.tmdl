@@ -1,0 +1,35 @@
+/// Previsao de atraso da Etapa 4. So teste e em_andamento sao honestos.
+table previsao_atraso
+
+	column pedido_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: pedido_sk
+
+	column prob_atraso
+		dataType: double
+		formatString: 0.0%
+		summarizeBy: none
+		sourceColumn: prob_atraso
+
+	column alerta
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: alerta
+
+	column conjunto
+		dataType: string
+		summarizeBy: none
+		sourceColumn: conjunto
+
+	partition previsao_atraso = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "previsao_atraso"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"pedido_sk", "prob_atraso", "alerta", "conjunto"}),
+				    Tipos = Table.TransformColumnTypes(Colunas, {{"prob_atraso", type number}})
+				in
+				    Tipos

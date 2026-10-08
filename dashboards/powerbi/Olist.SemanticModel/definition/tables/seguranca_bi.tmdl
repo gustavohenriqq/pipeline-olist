@@ -1,0 +1,33 @@
+/// Usuarios ficticios do RLS dinamico. Oculta e sem relacao.
+table seguranca_bi
+	isHidden
+
+	column email
+		dataType: string
+		summarizeBy: none
+		sourceColumn: email
+
+	column perfil
+		dataType: string
+		summarizeBy: none
+		sourceColumn: perfil
+
+	column regiao
+		dataType: string
+		summarizeBy: none
+		sourceColumn: regiao
+
+	column seller_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: seller_id
+
+	partition seguranca_bi = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "seguranca_bi"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"email", "perfil", "regiao", "seller_id"})
+				in
+				    Colunas

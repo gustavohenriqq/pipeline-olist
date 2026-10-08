@@ -1,0 +1,6 @@
+# Dependencias da Etapa 4 (previsao de atraso). O CI instala para rodar o pytest.
+# Instale com: pip install -r requirements.txt -r requirements-ml.txt
+scikit-learn>=1.4,<1.7
+numpy>=1.26
+joblib>=1.3
+pytest>=8

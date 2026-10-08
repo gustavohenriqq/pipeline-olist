@@ -1,6 +1,6 @@
 # Dependencias da Fase 1 (ingestao + dbt). E o que o CI usa.
-# As fases 5 (ML) e 6 (agente IA) tem dependencias proprias em
-# requirements-extra.txt, para nao pesar o ambiente base.
+# A Etapa 4 (ML) tem dependencias em requirements-ml.txt, e a 6 (agente IA)
+# em requirements-extra.txt, para nao pesar o ambiente base.
 
 pandas>=2.0,<3.1
 psycopg2-binary>=2.9

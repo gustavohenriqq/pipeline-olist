@@ -3,9 +3,9 @@
 Executar (da raiz, depois de python -m ml.treinar): python -m ml.inferir
 
 A tabela e criada vazia pelo dbt (hook on-run-start); aqui so se troca o
-conteudo, com TRUNCATE + COPY na mesma transacao: quem le a tabela ve a versao
-anterior inteira ou a nova inteira, nunca metade. Rodar duas vezes da o mesmo
-numero de linhas.
+conteudo, com TRUNCATE + COPY na mesma transacao: um erro no meio desfaz tudo e
+a versao anterior fica. Leitores concorrentes esperam o commit (TRUNCATE trava a
+tabela). Rodar duas vezes da o mesmo numero de linhas.
 """
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# Dependencias das fases 5 (ML) e 6 (agente IA).
+# Dependencias da Etapa 4 (ML, via requirements-ml.txt) e da 6 (agente IA).
 # Instale so quando chegar nessas fases: pip install -r requirements-extra.txt
 
 # ---- Etapa 4: previsao de atraso ----

@@ -135,7 +135,8 @@ igual) entra no CI, e não só na documentação.
 
 **Entregue** (detalhe e números em [docs/modelo-atraso.md](docs/modelo-atraso.md)):
 - Features em SQL no model dbt `ml.ml_features_atraso`, com lista permitida no
-  Python e teste que falha se um campo posterior à compra entrar no modelo.
+  Python (que descarta qualquer outra coluna) e teste que impede um campo da
+  lista proibida de entrar nela.
 - Baseline por UF, regressão logística e gradient boosting, com split
   **temporal** (treino 2017, validação jan a abr/2018, teste mai a ago/2018) e
   backtest mensal.
@@ -144,8 +145,8 @@ igual) entra no CI, e não só na documentação.
   num período de crise (10,8% de atraso), alerta demais num período calmo
   (4,4%). Resultado registrado como tal, com sensibilidade de custo.
 - Drift por PSI: `prazo_prometido_dias` (0,391) e `valor_frete` (0,288)
-  sinalizados entre treino e teste. Na primeira execução, o PSI de 4,92 em
-  `mes_compra` revelou que o mês do ano decorava 2017; a feature saiu.
+  sinalizados entre treino e teste. Na primeira execução, a validação mostrou
+  que `mes_compra` decorava 2017 (PSI de 4,92 na coluna); a feature saiu.
 - **Inferência em lote em `marts.previsao_atraso`**, com DDL no dbt (hook
   `on-run-start`), testes de source e escrita idempotente.
 - Experimento de vazamento proposital: com `atraso_dias`, ROC-AUC 1,000.

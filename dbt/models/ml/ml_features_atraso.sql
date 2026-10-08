@@ -1,8 +1,9 @@
 -- Features do modelo de previsao de atraso (Etapa 4), uma linha por pedido.
 --
 -- Regra que governa este model: so entra o que ja existe NO ATO DA COMPRA.
--- A lista permitida e repetida em ml/features.py (PERMITIDAS), e um teste
--- Python falha se o modelo receber qualquer coluna fora dela.
+-- A lista permitida e repetida em ml/features.py (PERMITIDAS): matriz()
+-- descarta qualquer coluna fora dela, e um teste impede que um campo de
+-- PROIBIDAS entre na lista. Coluna nova aqui precisa ser auditada.
 --
 -- Ficaram de fora, de proposito (detalhe em docs/modelo-atraso.md):
 --   approved_at                        posterior a compra (boleto leva dias)

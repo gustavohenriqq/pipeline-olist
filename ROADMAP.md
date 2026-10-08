@@ -129,17 +129,30 @@ igual) entra no CI, e não só na documentação.
 
 ---
 
-## Etapa 4 — Previsão de atraso (frente de ML)
+## Etapa 4: Previsão de atraso (concluída)
 
 **Objetivo:** prever, no momento do pedido, se ele vai atrasar, e devolver isso ao warehouse.
 
-**Entregas planejadas:**
-- Classificador binário de atraso, treinado só com informação disponível no ato da compra.
-- Baseline ingênua antes do modelo (ex: taxa histórica de atraso por região).
-- Split **temporal**, nunca aleatório.
-- Limiar de decisão escolhido por custo de negócio, não por 0,5 padrão.
-- **Inferência em lote escrita de volta nas marts**, como tabela que o dashboard lê.
-- Monitoramento de drift entre treino e produção.
+**Entregue** (detalhe e números em [docs/modelo-atraso.md](docs/modelo-atraso.md)):
+- Features em SQL no model dbt `ml.ml_features_atraso`, com lista permitida no
+  Python e teste que falha se um campo posterior à compra entrar no modelo.
+- Baseline por UF, regressão logística e gradient boosting, com split
+  **temporal** (treino 2017, validação jan a abr/2018, teste mai a ago/2018) e
+  backtest mensal.
+- No teste, PR-AUC 0,085 contra 0,049 da baseline, com 4,4% de atraso na base.
+- Limiar escolhido por custo na validação. **Não se paga no teste:** escolhido
+  num período de crise (10,8% de atraso), alerta demais num período calmo
+  (4,4%). Resultado registrado como tal, com sensibilidade de custo.
+- Drift por PSI: `prazo_prometido_dias` (0,391) e `valor_frete` (0,288)
+  sinalizados entre treino e teste. Na primeira execução, o PSI de 4,92 em
+  `mes_compra` revelou que o mês do ano decorava 2017; a feature saiu.
+- **Inferência em lote em `marts.previsao_atraso`**, com DDL no dbt (hook
+  `on-run-start`), testes de source e escrita idempotente.
+- Experimento de vazamento proposital: com `atraso_dias`, ROC-AUC 1,000.
+
+**Ficou de fora, de propósito:** taxa histórica por vendedor (exige cálculo
+"como era na data da compra"), limiar adaptativo ou por capacidade, página do
+Looker com pedidos em risco, retreino agendado e alerta automático de drift.
 
 **Por que o alvo mudou.** O plano original era previsão de demanda. Os dados não
 sustentam: a série tem **20 meses utilizáveis, ou 1,7 ciclo anual**. Sazonalidade

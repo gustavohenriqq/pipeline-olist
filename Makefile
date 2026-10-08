@@ -7,7 +7,7 @@
 PYTHON ?= python
 DBT = $(PYTHON) -m dbt.cli.main
 
-.PHONY: help up down logs ingest dbt-run dbt-test dbt-docs publicar pipeline clean
+.PHONY: help up down logs ingest dbt-run dbt-test dbt-docs ml-testes ml-treinar ml-inferir publicar pipeline clean
 
 help:
 	@echo "Alvos disponiveis:"
@@ -17,6 +17,9 @@ help:
 	@echo "  dbt-run    - roda os modelos dbt (staging -> intermediate -> marts)"
 	@echo "  dbt-test   - roda os testes de qualidade dbt"
 	@echo "  dbt-docs   - gera e serve a documentacao dbt em http://localhost:8081"
+	@echo "  ml-testes  - testes Python do modelo de atraso (pytest)"
+	@echo "  ml-treinar - treina o modelo de atraso e grava ml/artefatos/metricas.json"
+	@echo "  ml-inferir - pontua os pedidos e grava marts.previsao_atraso"
 	@echo "  publicar   - espelha as marts no Neon (camada de servico do BI)"
 	@echo "  pipeline   - up + ingest + dbt build (fim a fim, local)"
 	@echo "  publish    - pipeline + publicar (fim a fim ate o dashboard)"
@@ -41,6 +44,18 @@ dbt-test:
 
 dbt-docs:
 	cd dbt && $(DBT) docs generate --profiles-dir . && $(DBT) docs serve --profiles-dir . --port 8081
+
+# Modelo de atraso (Etapa 4). Ordem: dbt build -> ml-treinar -> ml-inferir
+# -> dbt test da source -> publicar. Ver docs/modelo-atraso.md.
+ml-testes:
+	$(PYTHON) -m pytest tests -q
+
+ml-treinar:
+	$(PYTHON) -m ml.treinar
+
+ml-inferir:
+	$(PYTHON) -m ml.inferir
+	cd dbt && $(DBT) test --profiles-dir . --select source:ml_saida
 
 # Publica so a camada marts no Neon. Roda depois do dbt, nunca antes:
 # o que vai para o BI e sempre o que ja passou nos testes de qualidade.

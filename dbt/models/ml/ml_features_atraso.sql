@@ -13,6 +13,10 @@
 --   order_status, status_pedido, situacao_pedido   mudam ao longo do pedido
 --   valor_pago, qtd_pagamentos         redundantes com valor e parcelas
 --   ano_compra                         o ano nao se repete no futuro
+--   mes_compra                         com um ano so de treino, o mes do ano
+--                                      decora 2017 (Black Friday) em vez de
+--                                      ensinar sazonalidade; a 1a execucao
+--                                      teve PSI 4,9 nela (docs/modelo-atraso.md)
 --
 -- Colunas de controle (nao sao features): pedido_sk, order_id, purchased_at
 -- (separacao temporal) e atrasou (alvo; nulo quando ainda nao houve entrega).
@@ -129,7 +133,6 @@ base as (
         pg.payment_type as tipo_pagamento,
         p.max_parcelas,
 
-        extract(month  from p.purchased_at)::int as mes_compra,
         extract(isodow from p.purchased_at)::int as dia_semana_compra,
         extract(hour   from p.purchased_at)::int as hora_compra,
 
@@ -181,7 +184,6 @@ select
     categoria_grupo,
     tipo_pagamento,
     max_parcelas,
-    mes_compra,
     dia_semana_compra,
     hora_compra
 from base

@@ -43,7 +43,13 @@ jobs:
           python-version: "3.11"
 
       - name: Instalar dependencias
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -r requirements-ml.txt
+
+      # Testes do modelo de atraso: lista permitida, cortes temporais, custo,
+      # limiar e PSI. O treino real nao roda aqui: 800 pedidos nao dao
+      # metrica que signifique algo.
+      - name: Testes Python (ML)
+        run: python -m pytest tests -q
 
       - name: Ingestao da amostra
         run: python ingestion/ingest.py

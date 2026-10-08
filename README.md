@@ -50,16 +50,38 @@ projeto:
 |---|---|---|
 | **Analise** | Quantificar o problema e recomendar acao | Etapa 2 |
 | **Engenharia** | Entregar o dado com confiabilidade, todo dia | Etapas 1 e 3 |
-| **ML** | Prever o atraso no momento do pedido | Etapa 4 |
+| **ML** | Prever o atraso no momento do pedido | Etapa 4 (concluida) |
 
 O ciclo fecha quando a previsao do modelo aparece no mesmo dashboard que a
 analise usou para achar o problema. O plano completo, incluindo o que foi
 descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
 
-> Status: **Etapa 1 (fundacao) e Etapa 2 (analise) concluidas** no dataset
-> completo. 74 testes de qualidade, 92 PASS e 0 ERROR, rodando no CI a cada
-> push. O dashboard do Looker Studio ainda nao foi publicado: a conexao esta
-> pronta, falta o passo manual de montagem.
+> Status: **Etapas 1 (fundacao), 2 (analise) e 4 (ML) concluidas** no dataset
+> completo, com o dashboard publicado. No dataset completo, `dbt build` com 104
+> PASS, 3 WARN propositais e 0 ERROR; no CI, a cada push, o mesmo build na
+> amostra e os 20 testes Python do modelo. A Etapa 3 (confiabilidade) esta em andamento.
+
+### Previsao de atraso (Etapa 4)
+
+Um gradient boosting treinado so com o que existe no ato da compra (prazo
+prometido, geografia, frete, carga, pagamento), com separacao temporal, baseline
+antes do modelo e limiar escolhido por custo. A previsao volta ao warehouse em
+`marts.previsao_atraso`, testada pelo dbt e publicada no Neon junto com as
+demais marts.
+
+- No teste (mai a ago/2018), PR-AUC **0,085** contra **0,049** da baseline por UF,
+  numa base com 4,4% de atraso. Os 10% de pedidos mais arriscados atrasam 10 vezes
+  mais que os 10% menos arriscados.
+- **O alerta nao se paga no periodo de teste:** o limiar escolhido num periodo de
+  crise (10,8% de atraso) erra demais num periodo calmo (4,4%). O documento
+  mostra o custo mes a mes e o que faria em producao.
+- A validacao expos um erro de desenho: o mes da compra decorava 2017 (o modelo
+  perdia ate para a baseline, e o PSI da coluna deu 4,92). A feature saiu, e a
+  primeira execucao continua versionada.
+- Com vazamento proposital (`atraso_dias` como feature), o mesmo modelo chega a
+  ROC-AUC 1,000: o numero que um modelo inutil mostraria.
+
+Resultados, auditoria de features e limites: [docs/modelo-atraso.md](docs/modelo-atraso.md).
 
 Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn e Power BI.**
 
@@ -236,7 +258,7 @@ dbt docs serve    --profiles-dir . --port 8081
 - Schema `raw`: 9 tabelas cruas.
 - Schema `staging` e `intermediate`: views de limpeza e agregacao.
 - Schema `marts`: 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
-- 74 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
+- Testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range): 74 na fundacao, mais os do modelo de atraso.
 - Rotulos em portugues gerados no dbt: status do pedido, situacao (entregue, em andamento, nao concluido) e categoria em 14 grupos comerciais.
 - Camada de servico no Neon com as marts publicadas, para o Looker Studio ler 24/7.
 
@@ -254,17 +276,22 @@ pipeline-olist/
 │   ├── models/
 │   │   ├── staging/          # limpeza e casting (views)
 │   │   ├── intermediate/     # joins e agregacoes (views)
-│   │   └── marts/            # star schema (tables)
+│   │   ├── marts/            # star schema (tables)
+│   │   └── ml/               # features do modelo de atraso (lista permitida)
 │   ├── macros/               # helpers proprios (surrogate key, calendario, regiao, rotulos, testes)
 │   ├── tests/                # testes singulares
 │   ├── dbt_project.yml
 │   └── profiles.yml
+├── ml/                       # treino, avaliacao e inferencia do modelo de atraso
+│   └── artefatos/            # metricas.json versionado (modelo.joblib fora do Git)
+├── tests/                    # testes Python do modelo (pytest)
 ├── scripts/                  # gerar_amostra.py, publicar_marts.py
 ├── dashboards/               # guia do Looker Studio e notas de Power BI
 ├── docs/                     # diagramas e decisoes
 ├── docker-compose.yml        # Postgres + pgAdmin
 ├── Makefile                  # atalhos (make pipeline, make dbt-run, ...)
 ├── requirements.txt
+├── requirements-ml.txt       # dependencias do modelo (scikit-learn, pytest)
 └── ROADMAP.md                # plano por etapas e decisoes descartadas
 ```
 
@@ -302,7 +329,7 @@ cd dbt && dbt build --profiles-dir . && cd ..   # constroi e testa local
 python scripts/publicar_marts.py                # espelha as marts no Neon
 ```
 
-**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos 74 testes do dbt.
+**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos testes do dbt.
 
 O passo a passo completo de conexao, as paginas sugeridas e os numeros de conferencia estao em [dashboards/README.md](dashboards/README.md).
 
@@ -323,7 +350,7 @@ uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 1. **Fundacao** (concluida, com o dashboard publicado): ingestao, Postgres, dbt, 74 testes e camada de servico no Neon.
 2. **Analise do atraso:** documento com recomendacao e numero, investigando por que a curva de nota nao e monotona.
 3. **Confiabilidade no dbt:** models incrementais, idempotencia, reprocessamento por janela, freshness e CI enxuto.
-4. **Previsao de atraso:** classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts.
+4. **Previsao de atraso** (concluida): classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts. Resultados em [docs/modelo-atraso.md](docs/modelo-atraso.md).
 5. **Power BI avancado:** DAX, RLS por regiao e vendedor, OLS.
 6. **Agente de IA** (opcional): LangChain sobre as marts, com usuario somente leitura.
 

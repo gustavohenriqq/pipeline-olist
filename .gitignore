@@ -56,3 +56,6 @@ contexto.md
 # projeto como produto oficial. O mockup conferido e olist_visao_geral.html.
 dashboards/mockup/mockup-png.png
 dashboards/mockup/olist_dashboard_premium_mockup.html
+
+# Modelo treinado (binario, regeravel com python -m ml.treinar). As metricas sao versionadas.
+ml/artefatos/*.joblib

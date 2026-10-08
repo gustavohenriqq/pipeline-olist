@@ -36,7 +36,8 @@ dbt build --profiles-dir . --full-refresh
 ```
 
 `on_schema_change='fail'` impede uma evolução de schema silenciosa. O modo normal
-não remove uma chave que desapareceu do snapshot; nesse caso, use full-refresh.
+não remove uma chave que desapareceu do snapshot; nesse caso, use full-refresh ou
+o reprocessamento por janela do período afetado.
 
 Na prática, isso pesa em toda coluna nova nos fatos. Se os fatos já fossem
 incrementais, `dias_ate_transportadora`, `dias_em_transporte` e `situacao_pedido`
@@ -46,6 +47,20 @@ Com `fail`, o build normal para com erro em vez de seguir com a coluna faltando,
 e a correção é rodar `--full-refresh` uma vez. Por isso a previsão deve ir para
 uma tabela própria, ligada ao fato pela chave, e não para uma coluna do fato:
 assim o modelo pode ser reprocessado sem reconstruir o fato inteiro.
+
+## Reprocessar só uma janela
+
+Para refazer um período sem comparar o fato inteiro, e refletindo inclusive
+exclusões na origem, passe a janela pela data da compra (fim exclusivo):
+
+```sh
+dbt build --profiles-dir . --select fato_pedidos fato_itens_pedido \
+  --vars '{janela_inicio: 2018-03-01, janela_fim: 2018-04-01}'
+```
+
+Um `pre_hook` apaga do fato as linhas da janela e o model insere as atuais, na
+mesma transação. Fora da janela nada muda. Detalhes, proteções e o que a
+validação prova estão em [confiabilidade.md](confiabilidade.md#3-reprocessamento-por-janela).
 
 ## Limites
 
@@ -73,6 +88,8 @@ Os cenários cobrem:
 - Correção de status, transição para NULL, preço, pagamento e avaliação antigos.
 - Conservação das linhas que não mudaram e reexecução do delta sem novas escritas.
 - Igualdade de todas as colunas dos fatos entre resultado incremental e full-refresh.
+- Reprocessamento por janela, freshness e metadados de execução (ver
+  [confiabilidade.md](confiabilidade.md)).
 
 Os testes de qualidade existentes rodam em cada build, incluindo os relacionamentos
 configurados como aviso.

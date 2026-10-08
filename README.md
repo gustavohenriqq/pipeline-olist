@@ -49,17 +49,33 @@ projeto:
 | Frente | Papel | Estado |
 |---|---|---|
 | **Análise** | Quantificar o problema e recomendar ação | Etapa 2 |
-| **Engenharia** | Entregar o dado com confiabilidade, todo dia | Etapas 1 e 3 |
+| **Engenharia** | Entregar o dado com confiabilidade, todo dia | Etapas 1 e 3 (concluídas) |
 | **ML** | Prever o atraso no momento do pedido | Etapa 4 (concluída) |
 
 O ciclo fecha quando a previsão do modelo aparece no mesmo dashboard que a
 análise usou para achar o problema. O plano completo, incluindo o que foi
 descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 
-> Status: **Etapas 1 (fundação), 2 (análise) e 4 (ML) concluídas** no dataset
-> completo, com o dashboard publicado. No dataset completo, `dbt build` com 104
-> PASS, 3 WARN propositais e 0 ERROR; no CI, a cada push, o mesmo build na
-> amostra e os 20 testes Python do modelo. A Etapa 3 (confiabilidade) está em andamento.
+> Status: **Etapas 1 a 4 concluídas** no dataset completo, com o dashboard
+> publicado. `dbt build` com 103 nós ok, 3 avisos propositais e 0 erro (22
+> models e 84 testes), e cada execução fica registrada no próprio banco. No CI,
+> cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
+> validação de idempotência, janela e metadados.
+
+### Confiabilidade (Etapa 3)
+
+- **Freshness da carga:** a ingestão grava `_carregado_em` e `dbt source
+  freshness` avisa depois de 24 horas e falha depois de 7 dias.
+- **Metadados de execução:** cada comando do dbt e cada model ou teste ficam
+  gravados no schema `meta`. O rodapé do dashboard mostra quando o dado foi
+  processado e quantos testes passaram.
+- **Reprocessamento por janela:** `--vars '{janela_inicio: ..., janela_fim: ...}'`
+  troca só as linhas daquele período nos fatos, refletindo inclusive exclusões
+  na origem, numa transação.
+- **CI enxuto:** `state:modified` contra a branch base; PR só de documentação não
+  reconstrói nada.
+
+Detalhes, limites e o que pode dar errado em produção: [docs/confiabilidade.md](docs/confiabilidade.md).
 
 ### Previsão de atraso (Etapa 4)
 
@@ -229,7 +245,7 @@ OLIST_DATA_DIR=data/sample python ingestion/ingest.py
 cd dbt && dbt build --profiles-dir .
 ```
 
-É exatamente o que o CI (GitHub Actions) roda a cada push. Para o dataset completo, use `data/raw/` como abaixo.
+É o que o CI (GitHub Actions) roda: no PR, só os models que mudaram; na `main`, tudo. Para o dataset completo, use `data/raw/` como abaixo.
 
 ### Passo a passo manual
 
@@ -239,6 +255,7 @@ Sem `make` (Windows puro), rode na ordem:
 docker compose up -d
 python ingestion/ingest.py
 cd dbt
+dbt source freshness --profiles-dir .   # idade da carga
 dbt run  --profiles-dir .
 dbt test --profiles-dir .
 cd ..
@@ -260,6 +277,8 @@ dbt docs serve    --profiles-dir . --port 8081
 - Schema `marts`: 5 dimensões + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
 - Testes de qualidade dbt (unicidade, não nulo, valores aceitos, integridade referencial e range): 74 na fundação, mais os do modelo de atraso.
 - Rótulos em português gerados no dbt: status do pedido, situação (entregue, em andamento, não concluído) e categoria em 14 grupos comerciais.
+- Schema `meta`: histórico de cada execução do dbt e do resultado de cada model e teste.
+- `marts.atualizacao_dados`: quando o dado foi processado, para o rodapé do dashboard.
 - Camada de serviço no Neon com as marts publicadas, para o Looker Studio ler 24/7.
 
 ---
@@ -315,7 +334,7 @@ pipeline-olist/
 
 - **Schemas fixos (`staging`, `marts`).** Ótimo local, mas num warehouse compartilhado por vários devs isso causa colisão. Em produção, o padrão `<ambiente>_<schema>` (comportamento default do dbt) é mais seguro.
 - **Geolocalização incompleta.** 278 CEPs de cliente não existem na base de geolocalização. O teste de integridade está como **aviso**, não erro, de propósito. Em produção, decidir: enriquecer com outra fonte de CEP ou aceitar o gap.
-- **Incrementalidade parcial.** Os dois fatos escrevem apenas linhas novas ou alteradas, com idempotência validada no CI. A ingestão raw, dimensões e OBTs continuam full; os fatos ainda leem o resultado inteiro para detectar correções antigas sem `updated_at`. Exclusões da origem exigem `--full-refresh`. Ver [incrementalidade](docs/incrementalidade.md).
+- **Incrementalidade parcial.** Os dois fatos escrevem apenas linhas novas ou alteradas, com idempotência validada no CI. A ingestão raw, dimensões e OBTs continuam full; os fatos ainda leem o resultado inteiro para detectar correções antigas sem `updated_at`. Exclusões da origem pedem `--full-refresh` ou o reprocessamento da janela afetada. Ver [incrementalidade](docs/incrementalidade.md) e [confiabilidade](docs/confiabilidade.md).
 - **Segredos.** O `.env` nunca vai para o Git. Em produção, usar um cofre de segredos (Azure Key Vault, AWS Secrets Manager).
 
 ---
@@ -349,7 +368,7 @@ uma, está no [ROADMAP.md](ROADMAP.md). Resumo:
 
 1. **Fundação** (concluída, com o dashboard publicado): ingestão, Postgres, dbt, 74 testes e camada de serviço no Neon.
 2. **Análise do atraso** (concluída): documento com recomendação e número, investigando por que a curva de nota não é monótona.
-3. **Confiabilidade no dbt:** models incrementais, idempotência, reprocessamento por janela, freshness e CI enxuto.
+3. **Confiabilidade no dbt** (concluída): models incrementais, idempotência, reprocessamento por janela, freshness, metadados de execução e CI enxuto. Detalhes em [docs/confiabilidade.md](docs/confiabilidade.md).
 4. **Previsão de atraso** (concluída): classificador treinado só com informação disponível no ato da compra, com inferência escrita de volta nas marts. Resultados em [docs/modelo-atraso.md](docs/modelo-atraso.md).
 5. **Power BI avançado:** DAX, RLS por região e vendedor, OLS.
 6. **Agente de IA** (opcional): LangChain sobre as marts, com usuário somente leitura.

@@ -21,18 +21,21 @@ arriscados atrasam **10,0%** das vezes; os 10% menos arriscados, **1,0%**.
 preventiva R$ 15, atraso não evitado R$ 60), alertar só compensa se mais de 25%
 dos pedidos marcados forem atrasar. O limiar escolhido na validação (0,11) acerta
 **9,4%** no teste. Resultado: R$ 99.510 de custo contra R$ 66.900 de não fazer
-nada. Na validação (jan a abr/2018, 10,8% de atraso) o mesmo modelo economizava:
-R$ 168.135 contra R$ 177.780.
+nada. Na validação o custo fica abaixo de "nunca agir", mas isso não prova
+nada: o limiar foi escolhido justamente para minimizar o custo ali.
 
-**A leitura honesta:** o valor do alerta depende do regime de atraso, mais do que
-da qualidade do modelo. Em meses de crise logística (fev e mar/2018, 14% e 19% de
-atraso) a ação preventiva compensa; em meses calmos, não. Um limiar fixo,
-escolhido num período, não serve para o outro.
+**A leitura mais provável:** o valor do alerta depende do regime de atraso, mais
+do que da qualidade do modelo. O limiar foi escolhido num período com 10,8% de
+atraso e aplicado num período com 4,4%; com menos atrasos, a precisão cai abaixo
+do ponto de equilíbrio. Os meses de crise (fev e mar/2018) são consistentes com
+essa leitura, mas estão dentro do período em que o limiar foi escolhido, então
+não a provam sozinhos.
 
-**O monitor de drift pegou um erro de desenho meu.** A primeira execução usava o
-mês da compra como feature. O PSI dessa coluna entre treino e teste deu **4,92**
-(acima de 0,2 já é alerta), e o modelo principal perdia para a regressão
-logística na validação. Com um só ano de treino, o mês do ano decora o que
+**A validação expôs um erro de desenho meu.** A primeira execução usava o mês da
+compra como feature, e o modelo principal perdia para a regressão logística e
+até para a baseline na validação. O PSI de 4,92 dessa coluna entre treino e
+teste confirma o descompasso (seria alto para qualquer feature de calendário,
+já que o teste cobre só 4 meses do ano). Com um só ano de treino, o mês do ano decora o que
 aconteceu em cada mês de 2017; não ensina sazonalidade. A coluna saiu, e a seção
 "Primeira execução" conta o que mudou, inclusive que o teste foi olhado duas
 vezes.
@@ -53,8 +56,10 @@ conseguida com vazamento vale menos que uma métrica modesta e honesta.
 ## 2. Auditoria de features
 
 As features são montadas em SQL, no model dbt `ml.ml_features_atraso`, e o Python
-só aceita as colunas da lista `PERMITIDAS` em `ml/features.py`. Um teste falha se
-alguém puser na lista um campo proibido.
+só aceita as colunas da lista `PERMITIDAS` em `ml/features.py`: `matriz()`
+descarta qualquer outra coluna, e um teste impede que um campo da lista
+`PROIBIDAS` entre na permitida. A lista proibida é mantida à mão; um campo
+posterior à compra com nome novo precisa ser auditado por quem o adicionar.
 
 **Permitidas** (todas existem no ato da compra): prazo prometido em dias, UF e
 região do cliente e do vendedor principal, venda entre regiões, distância entre
@@ -100,7 +105,7 @@ trata nulo nativamente; a logística imputa a mediana.
 
 | Conjunto | Compras | Pedidos | Taxa de atraso |
 |---|---|---|---|
-| Treino | jan a dez/2017 | 43.426 | 5,7% (contagem direta em `ml.ml_features_atraso`) |
+| Treino | jan a dez/2017 | 43.426 | 5,6% (contagem direta em `ml.ml_features_atraso`) |
 | Validação | jan a abr/2018 | 27.425 | 10,8% |
 | Teste | mai a ago/2018 | 25.352 | 4,4% |
 | Em andamento | toda a janela, sem entrega | 1.707 | sem resposta |
@@ -152,8 +157,13 @@ linear.
 
 1. Nenhuma feature posterior à compra, verificado por teste: **cumprido.**
 2. Principal supera a baseline em PR-AUC no teste: **cumprido** (0,085 contra 0,049).
-3. Limiar com custo menor que "nunca agir" e "agir sempre": **cumprido na
-   validação, não no teste.** Explicação na próxima seção.
+3. Limiar com custo menor que "nunca agir" e "agir sempre": **não cumprido.**
+   Só faz sentido medir fora da amostra (na validação o custo é menor por
+   construção), e no teste o alerta custa mais que não agir. Próxima seção.
+4. Tabela no Postgres local e no Neon, com testes dbt passando: **cumprido no
+   Postgres local** (97.910 linhas, testes da source passando). Neon: ver o
+   estado da publicação no README.
+5. Este documento: **cumprido.**
 
 ## 5. Limiar e custo
 
@@ -163,10 +173,9 @@ linear.
 > real.
 
 Com essa hipótese, um alerta só se paga se a chance de atraso do pedido marcado
-passar de 15/60 = **25%**. Na validação, a precisão no limiar ficou em 30,6%, e o
-modelo economizou R$ 9.645 (5,4%) contra não agir. No teste, com a taxa de
-atraso em menos da metade, a precisão caiu para 9,4%, e cada alerta passou a
-custar mais do que evitava.
+passar de 15/60 = **25%**. Na validação, onde o limiar foi escolhido, a precisão
+ficou em 30,6%. No teste, com a taxa de atraso em menos da metade, caiu para
+9,4%, e cada alerta passou a custar mais do que evitava.
 
 **Sensibilidade** (ação fixa em R$ 15, limiar escolhido na validação para cada
 razão, custo medido no teste):
@@ -214,13 +223,15 @@ que o treino. É o mesmo problema do limiar visto por outro ângulo.
 
 Para cada mês de 2018, o modelo principal (mesmos hiperparâmetros) é treinado com
 todos os pedidos anteriores ao mês e avaliado no mês. Custos com o limiar 0,11.
+Atenção: limiar e hiperparâmetros foram escolhidos com jan a abr/2018, então
+esses quatro meses (marcados com *) não são fora da amostra para o custo.
 
 | Mês | Pedidos | Taxa | PR-AUC 1ª execução | PR-AUC atual | PR-AUC / taxa | Custo (R$) | Nunca agir (R$) |
 |---|---|---|---|---|---|---|---|
-| 2018-01 | 7.069 | 5,7% | 0,102 | 0,125 | 2,2x | 27.615 | 24.180 |
-| 2018-02 | 6.555 | 14,1% | 0,262 | 0,292 | 2,1x | 50.355 | 55.560 |
-| 2018-03 | 7.003 | 19,0% | 0,308 | 0,372 | 2,0x | 67.740 | 79.680 |
-| 2018-04 | 6.798 | 4,5% | 0,125 | 0,176 | 3,9x | 31.410 | 18.360 |
+| 2018-01* | 7.069 | 5,7% | 0,102 | 0,125 | 2,2x | 27.615 | 24.180 |
+| 2018-02* | 6.555 | 14,1% | 0,262 | 0,292 | 2,1x | 50.355 | 55.560 |
+| 2018-03* | 7.003 | 19,0% | 0,308 | 0,372 | 2,0x | 67.740 | 79.680 |
+| 2018-04* | 6.798 | 4,5% | 0,125 | 0,176 | 3,9x | 31.410 | 18.360 |
 | 2018-05 | 6.749 | 6,6% | 0,137 | 0,166 | 2,5x | 36.390 | 26.580 |
 | 2018-06 | 6.096 | 1,2% | 0,055 | 0,103 | 8,9x | 13.335 | 4.260 |
 | 2018-07 | 6.156 | 3,4% | 0,075 | 0,092 | 2,7x | 36.930 | 12.480 |
@@ -230,10 +241,12 @@ Três leituras:
 
 - **A ordenação é estável:** de janeiro a julho, a PR-AUC fica entre 2 e 9 vezes a
   taxa base.
-- **O alerta só se paga nos meses de crise:** fevereiro e março, os dois únicos
-  com taxa acima de 14%.
+- **O custo só fica abaixo de "nunca agir" em fevereiro e março**, os dois meses
+  com taxa acima de 14%. É consistente com o ponto de equilíbrio de 25%, mas
+  ambos estão dentro do período de escolha do limiar. Nos quatro meses fora da
+  amostra (mai a ago), o alerta não se paga em nenhum.
 - **Agosto é o ponto fraco:** a PR-AUC cai para quase o acaso (1,1x). É o mês em
-  que o prazo médio prometido despencou para 15,8 dias, contra 23 a 28 antes, e
+  que o prazo médio prometido despencou para 15,8 dias (20,3 em julho, contra 23 a 28 antes), e
   o drift abaixo mostra essa mudança.
 
 ## 8. Drift
@@ -276,6 +289,8 @@ O que denunciou o problema:
 | Principal, ROC-AUC na validação | 0,619 | 0,705 |
 | Logística, PR-AUC na validação | 0,236 | 0,244 |
 | Principal, PR-AUC no teste | 0,087 | 0,085 |
+| Principal, ROC-AUC no teste | 0,698 | 0,680 |
+| Principal, limiar e custo no teste (R$) | 0,16 e 71.265 | 0,11 e 99.510 |
 
 Na validação, o gradient boosting com o mês ficava abaixo da logística e até da
 baseline (0,179). Sem o mês, ele empata com a logística, e o backtest melhora em
@@ -285,8 +300,9 @@ sete dos oito meses.
 Ele foi usado duas: a remoção do mês foi decidida depois de ver a primeira
 execução inteira, teste incluído. A decisão se sustenta só com a validação e com
 o argumento do `ano_compra`, mas quem lê os números do teste deve saber disso. A
-PR-AUC no teste ficou praticamente igual nas duas execuções (0,087 e 0,085), o
-que indica que a mudança não foi feita para melhorar o teste.
+execução atual é um pouco pior no teste em todas as medidas (PR-AUC 0,087 para
+0,085, ROC-AUC 0,698 para 0,680, custo R$ 71.265 para R$ 99.510), o que indica
+que a mudança não foi feita para melhorar o teste.
 
 ## 10. A tabela `marts.previsao_atraso`
 

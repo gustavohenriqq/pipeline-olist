@@ -57,9 +57,9 @@ analise usou para achar o problema. O plano completo, incluindo o que foi
 descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
 
 > Status: **Etapas 1 (fundacao), 2 (analise) e 4 (ML) concluidas** no dataset
-> completo, com o dashboard publicado. `dbt build` com 104 PASS, 3 WARN
-> propositais e 0 ERROR, mais 20 testes Python do modelo, rodando no CI a cada
-> push. A Etapa 3 (confiabilidade) esta em andamento.
+> completo, com o dashboard publicado. No dataset completo, `dbt build` com 104
+> PASS, 3 WARN propositais e 0 ERROR; no CI, a cada push, o mesmo build na
+> amostra e os 20 testes Python do modelo. A Etapa 3 (confiabilidade) esta em andamento.
 
 ### Previsao de atraso (Etapa 4)
 
@@ -72,10 +72,11 @@ antes do modelo e limiar escolhido por custo. A previsao volta ao warehouse em
   numa base com 4,4% de atraso. Os 10% de pedidos mais arriscados atrasam 10 vezes
   mais que os 10% menos arriscados.
 - **O alerta nao se paga no periodo de teste:** o limiar escolhido num periodo de
-  crise (10,8% de atraso) erra demais num periodo calmo. O valor da acao depende
-  do regime de atraso, e o documento mostra isso mes a mes.
-- O monitor de drift acusou um erro de desenho (o mes da compra decorava 2017,
-  PSI 4,92). A feature saiu, e a primeira execucao continua versionada.
+  crise (10,8% de atraso) erra demais num periodo calmo (4,4%). O documento
+  mostra o custo mes a mes e o que faria em producao.
+- A validacao expos um erro de desenho: o mes da compra decorava 2017 (o modelo
+  perdia ate para a baseline, e o PSI da coluna deu 4,92). A feature saiu, e a
+  primeira execucao continua versionada.
 - Com vazamento proposital (`atraso_dias` como feature), o mesmo modelo chega a
   ROC-AUC 1,000: o numero que um modelo inutil mostraria.
 
@@ -256,7 +257,7 @@ dbt docs serve    --profiles-dir . --port 8081
 - Schema `raw`: 9 tabelas cruas.
 - Schema `staging` e `intermediate`: views de limpeza e agregacao.
 - Schema `marts`: 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
-- 74 testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range).
+- Testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range): 74 na fundacao, mais os do modelo de atraso.
 - Rotulos em portugues gerados no dbt: status do pedido, situacao (entregue, em andamento, nao concluido) e categoria em 14 grupos comerciais.
 - Camada de servico no Neon com as marts publicadas, para o Looker Studio ler 24/7.
 
@@ -327,7 +328,7 @@ cd dbt && dbt build --profiles-dir . && cd ..   # constroi e testa local
 python scripts/publicar_marts.py                # espelha as marts no Neon
 ```
 
-**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos 74 testes do dbt.
+**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos testes do dbt.
 
 O passo a passo completo de conexao, as paginas sugeridas e os numeros de conferencia estao em [dashboards/README.md](dashboards/README.md).
 

@@ -31,3 +31,13 @@ models:
     marts:
       +materialized: table
       +schema: marts
+    # Features do modelo de atraso. Schema proprio: nao vai para o Neon,
+    # porque o publicador copia so o schema marts.
+    ml:
+      +materialized: table
+      +schema: ml
+
+# Tabela de saida da previsao, escrita pelo Python e testada como source.
+# Ver macros/previsao_atraso.sql.
+on-run-start:
+  - "{{ cria_tabela_previsao() }}"

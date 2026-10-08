@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: ml_features_atraso
+    description: >
+      Features do modelo de previsao de atraso, uma linha por pedido com compra
+      entre 01/01/2017 e 31/08/2018 (sem cancelados e indisponiveis). So
+      informacao disponivel no ato da compra. Ver docs/modelo-atraso.md.
+    columns:
+      - name: pedido_sk
+        data_tests: [unique, not_null]
+      - name: atrasou
+        description: Alvo. 1 se entregue depois da data prometida, 0 se no prazo, nulo sem entrega.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: prazo_prometido_dias
+        description: Dias entre a compra e a data prometida, que o cliente ve no checkout.
+        data_tests: [not_null]
+
+sources:
+  - name: ml_saida
+    description: >
+      Saida do modelo, escrita por ml/inferir.py (TRUNCATE + COPY). O dbt cria a
+      tabela vazia no on-run-start (macros/previsao_atraso.sql) e testa aqui.
+    schema: marts
+    tables:
+      - name: previsao_atraso
+        description: Probabilidade de atraso por pedido, com o limiar e a versao do modelo.
+        columns:
+          - name: pedido_sk
+            data_tests:
+              - unique
+              - not_null
+              - relationships:
+                  arguments:
+                    to: ref('fato_pedidos')
+                    field: pedido_sk
+          - name: prob_atraso
+            description: Entre 0 e 1 (teste singular assert_prob_atraso_entre_0_e_1).
+          - name: conjunto
+            description: >
+              Em que parte da separacao temporal o pedido caiu. Previsoes sobre
+              treino e validacao sao otimistas; so teste e em_andamento sao honestas.
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ["treino", "validacao", "teste", "em_andamento"]

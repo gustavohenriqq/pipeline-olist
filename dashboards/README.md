@@ -135,11 +135,18 @@ com o link ve, ninguem alem do dono edita):
 Todos os componentes foram conferidos contra o banco. O link foi testado num
 navegador sem login Google, e os numeros carregaram.
 
+![Visao Geral Comercial](../docs/prints/visao-geral-comercial.png)
+
+**Rodape do relatorio.** A pagina tem 1600 x 940 (40 px a mais que o padrao 16:9)
+para caber o aviso "Dados publicos da Olist (Kaggle) [...] Projeto independente
+de portfolio, sem vinculo com a Olist". O logo da Olist no cabecalho sem esse
+aviso faria o relatorio parecer material oficial da empresa.
+
 ### Configuracao geral
 
 | Ajuste | Valor |
 |---|---|
-| Tamanho da tela | Personalizado, 1600 x 900 |
+| Tamanho da tela | Personalizado, 1600 x 940 (na pagina; o tema do relatorio segue 1600 x 900) |
 | Controle de periodo | **Fixo**, 01/01/2017 a 31/08/2018, no nivel do relatorio |
 | Tema, "Cor de acordo com" | Valores de dimensao |
 | Fundo da pagina / cards | `#F1F5F9` / `#FFFFFF`, borda `#E2E8F0` |

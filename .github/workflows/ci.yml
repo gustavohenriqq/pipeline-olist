@@ -1,11 +1,17 @@
 name: pipeline-ci
 
-# Roda a cada push e pull request. Usa a amostra versionada (data/sample),
-# entao nao precisa do dataset do Kaggle. Prova que o pipeline compila e que
-# todos os testes de qualidade do dbt passam.
+# Usa a amostra versionada (data/sample), entao nao precisa do dataset do Kaggle.
+#
+# Dois modos (docs/confiabilidade.md):
+# - pull_request: roda uma vez por PR e constroi so o que mudou no dbt em
+#   relacao a branch base (state:modified). PR so de docs ou de ML nao
+#   reconstroi nenhum model.
+# - push na main: build completo e validacao incremental, a rede de seguranca
+#   depois do merge.
+# Antes, o push em qualquer branch tambem disparava: cada PR rodava duas vezes.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -37,6 +43,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # o PR precisa da branch base para comparar o estado
 
       - uses: actions/setup-python@v5
         with:
@@ -54,9 +62,52 @@ jobs:
       - name: Ingestao da amostra
         run: python ingestion/ingest.py
 
-      - name: dbt build (run + test)
+      # Idade da carga (coluna _carregado_em), recem-feita: deve passar.
+      - name: dbt source freshness
+        working-directory: dbt
+        run: dbt source freshness --profiles-dir .
+
+      # ---- Pull request: so o que mudou ----
+
+      # Manifest da branch base, gerado num worktree a parte (dbt parse nao
+      # precisa de banco). E a referencia do state:modified.
+      - name: Estado da branch base (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          git worktree add "$RUNNER_TEMP/base" "origin/${{ github.base_ref }}"
+          cd "$RUNNER_TEMP/base/dbt"
+          dbt parse --profiles-dir . --target-path "$RUNNER_TEMP/estado_base"
+
+      # "+state:modified+": o que mudou, o que depende disso e tambem os
+      # ancestrais. Os ancestrais entram porque o banco do CI comeca vazio e nao
+      # existe ambiente de producao para --defer. Num warehouse de verdade, o
+      # certo seria "state:modified+ --defer --state <manifest de producao>".
+      - name: Selecao do dbt (PR)
+        if: github.event_name == 'pull_request'
+        id: selecao
+        working-directory: dbt
+        run: |
+          dbt --quiet ls --profiles-dir . --select +state:modified+ \
+            --state "$RUNNER_TEMP/estado_base" --resource-type model --output name \
+            | tee "$RUNNER_TEMP/selecao.txt"
+          echo "models selecionados: $(grep -c . "$RUNNER_TEMP/selecao.txt" || true)"
+          if grep -qxE 'fato_pedidos|fato_itens_pedido' "$RUNNER_TEMP/selecao.txt"; then
+            echo "fatos=sim" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: dbt build so do que mudou (PR)
+        if: github.event_name == 'pull_request'
+        working-directory: dbt
+        run: dbt build --profiles-dir . --select +state:modified+ --state "$RUNNER_TEMP/estado_base"
+
+      # ---- Push na main: tudo ----
+
+      - name: dbt build completo (main)
+        if: github.event_name == 'push'
         working-directory: dbt
         run: dbt build --profiles-dir .
 
-      - name: Validar incrementalidade e idempotencia (banco descartavel)
+      # Na main sempre; no PR, so quando os fatos incrementais estao na selecao.
+      - name: Validar incrementalidade, janela e metadados (banco descartavel)
+        if: github.event_name == 'push' || steps.selecao.outputs.fatos == 'sim'
         run: python scripts/validate_incremental.py

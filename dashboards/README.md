@@ -108,6 +108,14 @@ silenciosa entre os dois bancos.
    SELECT * FROM marts.obt_itens
    ```
 
+   E uma **terceira**, para o rodapé, com atualização dos dados a cada hora (o
+   padrão de 12 horas mostraria uma data velha por meio dia depois de publicar):
+   ```sql
+   SELECT * FROM marts.atualizacao_dados
+   ```
+   Nela, `processado_em`, `carga_raw_em` e `resumo` ficam como **Texto** (ver as
+   armadilhas abaixo).
+
 6. Em **Conectar**, confira os tipos: `data_compra` deve estar como Data,
    `valor_total` como Número, `cliente_latlong` como **Latitude, Longitude**
    (o Looker às vezes marca como texto; corrija na lista de campos).
@@ -137,16 +145,22 @@ navegador sem login Google, e os números carregaram.
 
 ![Visão Geral Comercial](../docs/prints/visao-geral-comercial.png)
 
-**Rodapé do relatório.** A página tem 1600 x 940 (40 px a mais que o padrão 16:9)
-para caber o aviso "Dados públicos da Olist (Kaggle) [...] Projeto independente
-de portfólio, sem vínculo com a Olist". O logo da Olist no cabeçalho sem esse
-aviso faria o relatório parecer material oficial da empresa.
+**Rodapé do relatório.** A página tem 1600 x 965 (65 px a mais que o padrão 16:9)
+para caber duas linhas:
+
+- o aviso "Dados públicos da Olist (Kaggle) [...] Projeto independente de
+  portfólio, sem vínculo com a Olist". O logo da Olist no cabeçalho sem esse
+  aviso faria o relatório parecer material oficial da empresa;
+- a linha de atualização, por exemplo "Dados processados em 08/10/2026 18:26
+  (Brasília) · 81 testes ok, 3 avisos", lida de `marts.atualizacao_dados`. Ela é
+  reescrita a cada `dbt build` e chega ao Neon com as outras marts (ver
+  [docs/confiabilidade.md](../docs/confiabilidade.md)).
 
 ### Configuração geral
 
 | Ajuste | Valor |
 |---|---|
-| Tamanho da tela | Personalizado, 1600 x 940 (na página; o tema do relatório segue 1600 x 900) |
+| Tamanho da tela | Personalizado, 1600 x 965 (na página; o tema do relatório segue 1600 x 900) |
 | Controle de período | **Fixo**, 01/01/2017 a 31/08/2018, no nível do relatório |
 | Tema, "Cor de acordo com" | Valores de dimensão |
 | Fundo da página / cards | `#F1F5F9` / `#FFFFFF`, borda `#E2E8F0` |
@@ -197,6 +211,7 @@ fora do dataset. O crescimento real está contado no gráfico de evolução.
 | **Receita por categoria** | `obt_itens` | Barras horizontais, `categoria_grupo`, `valor_item` Soma em BRL, **10 grupos sem "Outros"**, barras `#60A5FA`. Rótulos compactos com 2 casas (R$ 1,03 mi e R$ 1,02 mi deixam de parecer iguais). Eixo X sem rótulos e com máximo fixo em **4.000.000**, para o rótulo da maior barra caber fora dela |
 | **Distribuição das notas** | `obt_pedidos` | Barras, `nota_avaliacao` ordenada **pela dimensão**, `order_id` Contagem distinta (nome **"Pedidos avaliados"**), excluir nota nula. Notas 1 a 3 em `#CBD5E1`, 4 e 5 em `#60A5FA`. Eixo com máximo fixo em **70.000** pelo mesmo motivo |
 | **Receita por estado (mapa)** | `obt_pedidos` | Gráfico de mapa, `uf_iso`, `valor_total` Soma em BRL, área Brasil, **sem legenda**. Cores: mínima `#E0ECFE`, média `#1D4ED8`, máxima `#0B1F5C` |
+| **Linha de atualização (rodapé)** | `atualizacao_dados` | Tabela, dimensão `resumo`, sem métrica, sem dimensão de período, 1 linha (N principais). Sem cabeçalho, sem número de linha, fundo e bordas transparentes, Roboto 14px `#475569` (igual ao aviso) |
 | **Resumo ao lado do mapa** | `obt_pedidos` | Tabela, `cliente_uf` ("UF"), `valor_total` ("Receita", compacta) e `valor_total` com cálculo **Porcentagem do total** ("%"). 5 primeiras linhas, sem numeração, sem borda |
 
 **Nomes de exibição.** O tooltip do Looker mostra o nome do campo. Cada métrica e
@@ -267,6 +282,17 @@ Registradas porque cada uma custou uma rodada de tentativa e erro:
   com os gráficos arredondados.
 - **Mover pelo teclado anda em saltos de cerca de 30 px** (ajuste a grade). Para
   alinhar, agrupar cada card e usar Organizar > Distribuir.
+- **O controle de período fixo filtra qualquer fonte que tenha data.** A tabela
+  do rodapé mostrava "Não há dados": o controle (2017 a 2018) filtrava a
+  `atualizacao_dados` pela coluna `processado_em`, de 2026. Como essas datas são
+  só registro, viraram Texto na fonte, e o gráfico ficou sem dimensão de período.
+- **O Looker tipa como data um texto que começa com data.** O `resumo` ("Dados
+  processados em 08/10/2026...") veio como Data e hora e precisou ser trocado
+  para Texto.
+- **Duplicar uma fonte (Recurso > Gerenciar fontes de dados > Duplicar) mantém
+  as credenciais.** Assim dá para apontar a cópia para outra consulta sem digitar
+  a senha do Neon de novo. A cópia nasce com o nome da original: renomeie antes
+  de usar.
 
 ---
 

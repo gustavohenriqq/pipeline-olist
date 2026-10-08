@@ -1,0 +1,28 @@
+/// Produto, com o rotulo da categoria e o grupo comercial.
+table dim_produtos
+
+	column produto_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: produto_sk
+
+	column categoria_nome
+		dataType: string
+		summarizeBy: none
+		sourceColumn: categoria_nome
+
+	column categoria_grupo
+		dataType: string
+		summarizeBy: none
+		sourceColumn: categoria_grupo
+
+	partition dim_produtos = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "dim_produtos"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"produto_sk", "categoria_nome", "categoria_grupo"})
+				in
+				    Colunas

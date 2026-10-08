@@ -42,6 +42,12 @@ models:
       +schema: ml
       +post-hook: "analyze {{ this }}"
 
+# Seeds: tabelas pequenas versionadas no Git. seguranca_bi vai para marts
+# porque o Power BI le de la (usuarios ficticios do RLS).
+seeds:
+  olist:
+    +schema: marts
+
 # Janela de reprocessamento dos fatos (data da compra, fim exclusivo). Nulas por
 # padrao: sem elas os fatos usam a comparacao completa. Ver macros/janela.sql.
 vars:

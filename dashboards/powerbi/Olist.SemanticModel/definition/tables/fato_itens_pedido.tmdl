@@ -1,0 +1,67 @@
+/// Fato no grao de item: e onde produto e vendedor se ligam.
+table fato_itens_pedido
+
+	column item_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: item_sk
+
+	column order_id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: order_id
+
+	column produto_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: produto_sk
+
+	column vendedor_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: vendedor_sk
+
+	column cliente_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: cliente_sk
+
+	column tempo_sk_compra
+		dataType: int64
+		isHidden
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: tempo_sk_compra
+
+	column valor_produto
+		dataType: decimal
+		formatString: \R$ #,0.00
+		summarizeBy: sum
+		sourceColumn: valor_produto
+
+	column valor_frete
+		dataType: decimal
+		formatString: \R$ #,0.00
+		summarizeBy: sum
+		sourceColumn: valor_frete
+
+	column valor_item
+		dataType: decimal
+		formatString: \R$ #,0.00
+		summarizeBy: sum
+		sourceColumn: valor_item
+
+	partition fato_itens_pedido = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "fato_itens_pedido"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"item_sk", "order_id", "produto_sk", "vendedor_sk", "cliente_sk", "tempo_sk_compra", "valor_produto", "valor_frete", "valor_item"})
+				in
+				    Colunas

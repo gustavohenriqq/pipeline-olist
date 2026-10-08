@@ -1,0 +1,14 @@
+/// Tabela so de medidas (sem dado). As medidas ficam em pastas de exibicao.
+table _Medidas
+
+	column Coluna
+		dataType: string
+		isHidden
+		isNameInferred
+		isDataTypeInferred
+		summarizeBy: none
+		sourceColumn: [Coluna]
+
+	partition _Medidas = calculated
+		mode: import
+		source = ROW("Coluna", BLANK())

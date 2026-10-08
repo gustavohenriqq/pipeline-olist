@@ -1,0 +1,44 @@
+/// Cliente no grao de pessoa. Identificacao protegida por OLS no papel Vendedor.
+table dim_clientes
+
+	column cliente_sk
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: cliente_sk
+
+	column customer_unique_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: customer_unique_id
+
+	column zip_code_prefix
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: zip_code_prefix
+
+	column cidade
+		dataType: string
+		summarizeBy: none
+		sourceColumn: cidade
+
+	column uf
+		dataType: string
+		summarizeBy: none
+		sourceColumn: uf
+
+	column regiao
+		dataType: string
+		summarizeBy: none
+		sourceColumn: regiao
+
+	partition dim_clientes = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "dim_clientes"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"cliente_sk", "customer_unique_id", "zip_code_prefix", "cidade", "uf", "regiao"})
+				in
+				    Colunas

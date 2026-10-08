@@ -1,0 +1,55 @@
+/// Calendario. Marcada como tabela de datas pela coluna data.
+table dim_tempo
+	dataCategory: Time
+
+	column tempo_sk
+		dataType: int64
+		isHidden
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: tempo_sk
+
+	column data
+		dataType: dateTime
+		isKey
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: data
+
+	column ano
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: ano
+
+	column mes
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: mes
+
+	column trimestre
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: trimestre
+
+	column nome_mes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: nome_mes
+
+	column ano_mes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ano_mes
+
+	partition dim_tempo = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "dim_tempo"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"tempo_sk", "data", "ano", "mes", "trimestre", "nome_mes", "ano_mes"})
+				in
+				    Colunas

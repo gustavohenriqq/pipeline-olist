@@ -99,7 +99,7 @@ pagamento_principal as (
 -- nao e alterada: o mapa do dashboard agrega por UF e nao sofre com isso.
 -- "not materialized": usado duas vezes (cliente e vendedor), o CTE seria
 -- materializado sem estatisticas, e o planner suporia CEP repetido. Assim ele usa
--- as estatisticas da dimensao (CEP unico): 74 s caiu para 8 s.
+-- as estatisticas da dimensao (CEP unico): a consulta caiu de 74 s para 8 s.
 geo as not materialized (
     select zip_code_prefix, latitude::float8 as lat, longitude::float8 as lng
     from {{ ref('dim_geolocalizacao') }}

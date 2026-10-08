@@ -112,7 +112,13 @@
     {%- endfor %};
     {% endif %}
 
-    {% if flags.WHICH == 'build' %}
+    {#- O rodape descreve o projeto inteiro: so um build completo o reescreve.
+        Build com --select/--exclude/--selector (como o "make reprocessar")
+        contaria so parte dos testes e diria "processado agora" sobre o resto. -#}
+    {%- set args = invocation_args_dict -%}
+    {%- set build_completo = flags.WHICH == 'build'
+        and not args.get('select') and not args.get('exclude') and not args.get('selector') -%}
+    {% if build_completo %}
     truncate marts.atualizacao_dados;
     insert into marts.atualizacao_dados
     select
@@ -129,6 +135,9 @@
         'Dados processados em '
             || to_char(now() at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI')
             || ' (Brasília) · {{ ns.t_ok }} testes ok, {{ ns.t_aviso }} avisos'
-            {%- if ns.t_erro > 0 %} || ', {{ ns.t_erro }} erros'{% endif %};
+            {#- erro conta qualquer no (model ou teste); um model quebrado nao
+                pode aparecer como "tudo ok" so porque os testes dele foram pulados. -#}
+            {%- if erro > 0 %} || ', {{ erro }} erros'{% endif %}
+            {%- if ns.pulados > 0 %} || ', {{ ns.pulados }} pulados'{% endif %};
     {% endif %}
 {% endmacro %}

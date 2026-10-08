@@ -73,8 +73,10 @@ jobs:
       # precisa de banco). E a referencia do state:modified.
       - name: Estado da branch base (PR)
         if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}   # via env, nunca interpolado direto no shell
         run: |
-          git worktree add "$RUNNER_TEMP/base" "origin/${{ github.base_ref }}"
+          git worktree add "$RUNNER_TEMP/base" "origin/$BASE_REF"
           cd "$RUNNER_TEMP/base/dbt"
           dbt parse --profiles-dir . --target-path "$RUNNER_TEMP/estado_base"
 
@@ -87,6 +89,7 @@ jobs:
         id: selecao
         working-directory: dbt
         run: |
+          set -o pipefail   # sem isso, uma falha do dbt ls some atras do tee
           dbt --quiet ls --profiles-dir . --select +state:modified+ \
             --state "$RUNNER_TEMP/estado_base" --resource-type model --output name \
             | tee "$RUNNER_TEMP/selecao.txt"

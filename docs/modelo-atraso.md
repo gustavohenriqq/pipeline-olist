@@ -160,9 +160,11 @@ linear.
 3. Limiar com custo menor que "nunca agir" e "agir sempre": **não cumprido.**
    Só faz sentido medir fora da amostra (na validação o custo é menor por
    construção), e no teste o alerta custa mais que não agir. Próxima seção.
-4. Tabela no Postgres local e no Neon, com testes dbt passando: **cumprido no
-   Postgres local** (97.910 linhas, testes da source passando). Neon: ver o
-   estado da publicação no README.
+4. Tabela no Postgres local e no Neon, com testes dbt passando: **cumprido.**
+   97.910 linhas nos dois; testes da source passando no local, e as mesmas
+   verificações (chave única e não nula, relacionamento com o fato,
+   probabilidade entre 0 e 1, valores de `conjunto`) conferidas no Neon em
+   08/10/2026.
 5. Este documento: **cumprido.**
 
 ## 5. Limiar e custo

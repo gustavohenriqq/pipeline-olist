@@ -66,7 +66,8 @@ descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
 Um gradient boosting treinado so com o que existe no ato da compra (prazo
 prometido, geografia, frete, carga, pagamento), com separacao temporal, baseline
 antes do modelo e limiar escolhido por custo. A previsao volta ao warehouse em
-`marts.previsao_atraso`, testada pelo dbt.
+`marts.previsao_atraso`, testada pelo dbt e publicada no Neon junto com as
+demais marts.
 
 - No teste (mai a ago/2018), PR-AUC **0,085** contra **0,049** da baseline por UF,
   numa base com 4,4% de atraso. Os 10% de pedidos mais arriscados atrasam 10 vezes

@@ -209,3 +209,4 @@ models, ele leva de 20 a 45 segundos. O conteúdo é o mesmo
 (md5 da tabela idêntico antes e depois). Em produção, isso aparece como "o job
 que às vezes demora 10 vezes mais", porque depende de o autovacuum chegar antes ou
 depois.
+

@@ -2,7 +2,8 @@
     materialized='incremental',
     incremental_strategy='delete+insert',
     unique_key='item_sk',
-    on_schema_change='fail'
+    on_schema_change='fail',
+    pre_hook="{{ apaga_janela('tempo_sk_compra', 'sk') }}"
 ) }}
 
 -- Fato no grao de ITEM do pedido (uma linha por item).
@@ -42,10 +43,6 @@ left join customers c  on o.customer_id = c.customer_id
 )
 
 select * from resultado
-{% if is_incremental() %}
--- O CSV nao tem updated_at: comparamos o resultado inteiro, incluindo NULLs,
--- para detectar novos registros e correcoes antigas sem uma janela arbitraria.
--- delete+insert substitui por chave somente as linhas retornadas pelo EXCEPT.
-except
-select * from {{ this }}
-{% endif %}
+-- Sem vars: EXCEPT contra o destino (comparacao completa). Com janela_inicio e
+-- janela_fim: so a janela, que o pre_hook apagou antes. Ver macros/janela.sql.
+{{ delta_incremental('tempo_sk_compra', 'sk') }}

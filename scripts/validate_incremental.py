@@ -200,6 +200,72 @@ def check_metadados_extras(database, env):
     print("OK: metadados por invocacao; dbt test nao altera o rodape; aspas escapadas", flush=True)
 
 
+JANELA = "{janela_inicio: '2018-03-01', janela_fim: '2018-04-01'}"
+
+
+def linhas_da_janela(database):
+    """Conteudo dos dois fatos para compras de marco/2018, por chave."""
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("""select * from marts.fato_pedidos
+            where purchased_at >= '2018-03-01' and purchased_at < '2018-04-01' order by pedido_sk""")
+        pedidos = {row[0]: row for row in cur.fetchall()}
+        cur.execute("""select * from marts.fato_itens_pedido
+            where tempo_sk_compra >= 20180301 and tempo_sk_compra < 20180401 order by item_sk""")
+        itens = {row[0]: row for row in cur.fetchall()}
+    return pedidos, itens
+
+
+def check_janela(database, env, build):
+    """Reprocessar marco/2018 remove o pedido apagado ali e ignora mudanca fora dela."""
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("""
+            select o.order_id from raw.orders o
+            where o.order_purchase_timestamp >= '2018-03-01' and o.order_purchase_timestamp < '2018-04-01'
+              and exists (select 1 from raw.order_items i where i.order_id = o.order_id)
+            order by o.order_id limit 1""")
+        alvo = cur.fetchone()[0]
+        cur.execute("""
+            select order_id, order_status from raw.orders
+            where order_purchase_timestamp < '2018-01-01' and order_status = 'delivered'
+            order by order_id limit 1""")
+        fora, status_fora = cur.fetchone()
+        pedidos_antes, itens_antes = linhas_da_janela(database)
+        for tabela in ("order_items", "order_payments", "order_reviews", "orders"):
+            cur.execute(sql.SQL("delete from raw.{} where order_id = %s").format(sql.Identifier(tabela)), (alvo,))
+        cur.execute("update raw.orders set order_status = 'shipped' where order_id = %s", (fora,))
+        conn.commit()
+
+    build("--select", "fato_pedidos", "fato_itens_pedido", "--vars", JANELA)
+    pedidos, itens = linhas_da_janela(database)
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("select count(*) from marts.fato_pedidos where order_id = %s", (alvo,))
+        assert cur.fetchone()[0] == 0, "Pedido apagado na origem continua no fato_pedidos"
+        cur.execute("select count(*) from marts.fato_itens_pedido where order_id = %s", (alvo,))
+        assert cur.fetchone()[0] == 0, "Itens do pedido apagado continuam no fato_itens_pedido"
+        cur.execute("select order_status from marts.fato_pedidos where order_id = %s", (fora,))
+        assert cur.fetchone()[0] == status_fora, "Mudanca fora da janela foi aplicada"
+    assert {k: v for k, v in pedidos_antes.items() if v[1] != alvo} == pedidos, \
+        "Outras linhas de marco mudaram em fato_pedidos"
+    assert {k: v for k, v in itens_antes.items() if v[1] != alvo} == itens, \
+        "Outras linhas de marco mudaram em fato_itens_pedido"
+
+    build()
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("select order_status from marts.fato_pedidos where order_id = %s", (fora,))
+        assert cur.fetchone()[0] == "shipped", "Build normal nao aplicou a mudanca fora da janela"
+    incremental = snapshot(database)
+    build("--full-refresh")
+    assert snapshot(database) == incremental, "Depois da janela, incremental difere do full-refresh"
+
+    proc = dbt(env, "compile", "--select", "fato_pedidos", "--vars", "{janela_inicio: '2018-03-01'}", check=False)
+    assert proc.returncode != 0 and "janela_fim" in proc.stdout, "Janela so com inicio deveria falhar"
+    proc = dbt(env, "compile", "--select", "fato_pedidos", "--vars",
+               "{janela_inicio: '2018-04-01', janela_fim: '2018-03-01'}", check=False)
+    assert proc.returncode != 0, "Janela com inicio depois do fim deveria falhar"
+    print("OK: janela remove o apagado, ignora o de fora, iguala o full-refresh e rejeita vars invalidas",
+          flush=True)
+
+
 def main():
     database = "olist_incremental_check_" + uuid.uuid4().hex
     env = dict(os.environ, POSTGRES_DB=database, OLIST_DATA_DIR=str(ROOT / "data/sample"))
@@ -249,6 +315,7 @@ def main():
             build("--full-refresh")
             assert snapshot(database) == incremental, "Resultado incremental difere do full-refresh"
             print("OK: delta idempotente e identico ao full-refresh em todas as colunas dos fatos", flush=True)
+            check_janela(database, env, build)
         finally:
             with admin.cursor() as cur:
                 cur.execute(sql.SQL("drop database {} with (force)").format(sql.Identifier(database)))

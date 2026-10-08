@@ -7,7 +7,7 @@
 PYTHON ?= python
 DBT = $(PYTHON) -m dbt.cli.main
 
-.PHONY: help up down logs ingest freshness dbt-run dbt-test dbt-docs ml-testes ml-treinar ml-inferir publicar pipeline clean
+.PHONY: help up down logs ingest freshness reprocessar dbt-run dbt-test dbt-docs ml-testes ml-treinar ml-inferir publicar pipeline clean
 
 help:
 	@echo "Alvos disponiveis:"
@@ -15,6 +15,7 @@ help:
 	@echo "  down       - derruba os containers"
 	@echo "  ingest     - carrega os CSVs crus no schema raw do Postgres"
 	@echo "  freshness  - confere a idade da carga da camada raw (dbt source freshness)"
+	@echo "  reprocessar - refaz os fatos so numa janela: make reprocessar INICIO=2018-03-01 FIM=2018-04-01"
 	@echo "  dbt-run    - roda os modelos dbt (staging -> intermediate -> marts)"
 	@echo "  dbt-test   - roda os testes de qualidade dbt"
 	@echo "  dbt-docs   - gera e serve a documentacao dbt em http://localhost:8081"
@@ -40,6 +41,10 @@ ingest:
 # Idade da CARGA (coluna _carregado_em da raw), nao do dado de negocio.
 freshness:
 	cd dbt && $(DBT) source freshness --profiles-dir .
+
+# Substitui nos fatos as linhas com compra entre INICIO (inclusivo) e FIM (exclusivo).
+reprocessar:
+	cd dbt && $(DBT) build --profiles-dir . --select fato_pedidos fato_itens_pedido --vars "{janela_inicio: '$(INICIO)', janela_fim: '$(FIM)'}"
 
 dbt-run:
 	cd dbt && $(DBT) run --profiles-dir .

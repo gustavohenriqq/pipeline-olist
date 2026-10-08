@@ -128,9 +128,12 @@ receita infla. Mantenha cada pagina ligada a uma fonte so:
 
 ## Pagina 1: Visao Geral Comercial
 
-Estado em 02/10/2026: **em montagem no Looker Studio, ainda nao publicada.**
-Cards, evolucao de vendas e taxa de atraso por regiao estao prontos e
-conferidos contra o banco. Categorias, notas e mapa estao sendo ajustados.
+Estado em 08/10/2026: **publicada**, com acesso "nao listado" (qualquer pessoa
+com o link ve, ninguem alem do dono edita):
+**[https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)**
+
+Todos os componentes foram conferidos contra o banco. O link foi testado num
+navegador sem login Google, e os numeros carregaram.
 
 ### Configuracao geral
 
@@ -153,7 +156,7 @@ quem abrir o relatorio; o padrao fixo so define a primeira impressao.
 | Filtro | Controle | Fonte | Campo |
 |---|---|---|---|
 | Periodo | Controle de periodo | (todas) | dimensao de periodo de cada grafico |
-| Status do pedido | Lista suspensa | `obt_pedidos` | `status_pedido` |
+| Status | Lista suspensa | `obt_pedidos` | `status_pedido` (nome de exibicao "Status"; "Status do pedido" ficava cortado) |
 | Regiao | Lista suspensa | `obt_pedidos` | `cliente_regiao` |
 | Categoria | Lista suspensa | `obt_itens` | `categoria_grupo` |
 
@@ -184,9 +187,24 @@ fora do dataset. O crescimento real esta contado no grafico de evolucao.
 |---|---|---|
 | **Evolucao de vendas** | `obt_pedidos` | Serie temporal, `data_compra` em **Ano e mes**, `valor_total` Soma. Area em gradiente, linha de referencia constante 789310 (media mensal), anotacao da Black Friday em caixa de texto |
 | **Taxa de atraso por regiao** | `obt_pedidos` | Barras horizontais, `cliente_regiao`, `atrasou` Media, filtro so entregues. Linha de referencia **0.068**. Formatacao condicional: `atrasou` > 0.068 em `#60A5FA`, resto em `#E2E8F0` |
-| **Top categorias** | `obt_itens` | Barras horizontais, `categoria_grupo`, `valor_item` Soma, 5 linhas, sem "Outros" |
-| **Distribuicao das notas** | `obt_pedidos` | Colunas, `nota_avaliacao` ordenada **pela dimensao**, `order_id` Contagem distinta, excluir nota nula. Notas 1 a 3 em `#CBD5E1`, 4 e 5 em `#60A5FA` (clientes satisfeitos) |
-| **Mapa por estado** | `obt_pedidos` | Mapa geografico, `uf_iso`, `valor_total` Soma, com cor minima, **media** e maxima |
+| **Receita por categoria** | `obt_itens` | Barras horizontais, `categoria_grupo`, `valor_item` Soma em BRL, **10 grupos sem "Outros"**, barras `#60A5FA`. Rotulos compactos com 2 casas (R$ 1,03 mi e R$ 1,02 mi deixam de parecer iguais). Eixo X sem rotulos e com maximo fixo em **4.000.000**, para o rotulo da maior barra caber fora dela |
+| **Distribuicao das notas** | `obt_pedidos` | Barras, `nota_avaliacao` ordenada **pela dimensao**, `order_id` Contagem distinta (nome **"Pedidos avaliados"**), excluir nota nula. Notas 1 a 3 em `#CBD5E1`, 4 e 5 em `#60A5FA`. Eixo com maximo fixo em **70.000** pelo mesmo motivo |
+| **Receita por estado (mapa)** | `obt_pedidos` | Grafico de mapa, `uf_iso`, `valor_total` Soma em BRL, area Brasil, **sem legenda**. Cores: minima `#E0ECFE`, media `#1D4ED8`, maxima `#0B1F5C` |
+| **Resumo ao lado do mapa** | `obt_pedidos` | Tabela, `cliente_uf` ("UF"), `valor_total` ("Receita", compacta) e `valor_total` com calculo **Porcentagem do total** ("%"). 5 primeiras linhas, sem numeracao, sem borda |
+
+**Nomes de exibicao.** O tooltip do Looker mostra o nome do campo. Cada metrica e
+dimensao foi renomeada no proprio grafico ("Receita", "Taxa de atraso", "Nota",
+"Estado"), sem mexer na fonte, para os nomes da fonte continuarem batendo com o
+dbt. A metrica do grafico de notas se chamava "Clientes", mas conta `order_id`:
+o rotulo estava errado, nao so feio.
+
+**Os maximos fixos de eixo sao seguros com qualquer filtro.** Nenhum grupo de
+categoria passa de R$ 3,24 mi e nenhuma nota passa de 57 mil pedidos nem no
+periodo completo.
+
+**Os cinco cards estao agrupados** (fundo, icone, titulo e valor de cada um) e
+distribuidos para ocupar a mesma largura dos graficos. Para editar uma peca,
+duplo clique dentro do grupo ou Ctrl+Shift+G.
 
 ### Campos calculados criados no Looker (fonte `obt_pedidos`)
 
@@ -227,9 +245,21 @@ Registradas porque cada uma custou uma rodada de tentativa e erro:
   Escala se ordena pela propria dimensao.
 - **Rosca com 97% numa fatia nao informa.** Motivou o campo `situacao_pedido` no
   dbt (Entregue, Em andamento, Não concluído).
-- **Mapa de receita com SP dominante.** SP tem 37% da receita e 20 estados tem
-  menos de 10% do que SP fatura. Sem cor media na escala, os 20 ficam no mesmo
-  tom.
+- **O mapa colore em escala linear entre o menor e o maior valor.** Com SP em
+  37% da receita, quase todos os estados caem perto do minimo e o mapa fica de
+  uma cor so. A "cor media" fica no meio da escala (cerca de R$ 2,95 mi), entao a
+  saida e um minimo quase branco e uma cor media forte: RJ e MG ficam em azul
+  firme, Sul e BA em azul medio e o resto claro.
+- **A legenda do mapa ignora o formato de moeda.** Mesmo com a metrica em BRL, ela
+  mostra 5.906.209,11 sem R$. Foi escondida; a tabela ao lado traz os valores.
+- **O valor no tooltip do mapa e o codigo ISO ("BR-SP").** E o valor do campo que
+  o mapa exige, nao o rotulo; por isso a tabela ao lado usa `cliente_uf`.
+- **Titulo nativo do grafico cai numa faixa fora do card** quando o fundo branco
+  vem do proprio grafico. Os titulos sao caixas de texto por cima, 20 px negrito.
+- **Forma retangulo nao tem raio de borda**, entao nao serve de card para combinar
+  com os graficos arredondados.
+- **Mover pelo teclado anda em saltos de cerca de 30 px** (ajuste a grade). Para
+  alinhar, agrupar cada card e usar Organizar > Distribuir.
 
 ---
 
@@ -284,7 +314,7 @@ contando como atrasado um pedido que ainda nem venceu o prazo. No Looker, filtre
 - **A senha esta no `.env`, que nao vai para o Git.** Se precisar troca-la,
   gere outra no painel do Neon (Roles -> Reset password) e atualize o `.env`.
 
-Link do dashboard publicado: _a preencher depois de publicar._
+Link do dashboard publicado: **[https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)**
 
 ## Power BI (Fase 4)
 

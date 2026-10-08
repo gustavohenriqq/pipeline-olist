@@ -41,8 +41,10 @@ carga: se a ingestão roda todo dia às 6h, um aviso às 8h já diz que algo tra
 `_carregado_em` é `timestamptz`, porque é metadado da ingestão e não dado da
 origem. Os models de staging selecionam colunas explicitamente e não a propagam.
 
-**Raw antiga.** Uma raw carregada antes dessa mudança não tem a coluna, e o
-freshness falha com erro de coluna. A correção é rodar a ingestão de novo.
+**Raw antiga.** Uma raw carregada antes dessa mudança não tem a coluna. O
+freshness falha com erro de coluna, e o `dbt build` também: os models são
+construídos, mas o hook de metadados quebra ao ler `_carregado_em` e o comando
+termina com erro. A correção é rodar a ingestão de novo.
 
 **O que pode dar errado em produção.** Freshness verde não quer dizer dado certo:
 uma carga que roda no horário mas traz o arquivo de ontem passa no teste. Ele mede
@@ -58,9 +60,9 @@ externo:
 
 | Tabela | Grão | Para que serve |
 |---|---|---|
-| `meta.execucoes_dbt` | uma linha por comando (`build`, `test`, `run`...) | quando rodou, quanto durou e quantos nós passaram, avisaram ou falharam |
+| `meta.execucoes_dbt` | uma linha por comando (`build`, `test`, `run`, `freshness`...) | quando rodou, quanto durou e quantos nós passaram, avisaram ou falharam |
 | `meta.resultados_dbt` | uma linha por model ou teste de cada comando | qual teste falhou, quantas linhas, quanto tempo, mensagem |
-| `marts.atualizacao_dados` | uma linha, reescrita a cada `dbt build` | o rodapé do dashboard |
+| `marts.atualizacao_dados` | uma linha, reescrita a cada `dbt build` completo | o rodapé do dashboard |
 
 Exemplo real, do build completo no dataset inteiro:
 
@@ -79,9 +81,12 @@ porque conta também os 3 hooks.
 schema `marts` inteiro e descobre tabelas novas sozinho. Assim a linha chega ao
 Looker sem mudar o script. O histórico (`meta.*`) fica só no Postgres local.
 
-**Por que só o `build` reescreve o rodapé.** O rodapé diz quando o dado foi
-processado. Um `dbt test` sozinho não processa nada: ele entra no histórico, mas
-não muda a linha do rodapé. O `validate_incremental.py` confere isso.
+**Por que só o `build` completo reescreve o rodapé.** O rodapé diz quando o
+projeto inteiro foi processado. Um `dbt test` sozinho não processa nada, e um
+build parcial (`--select`, como o `make reprocessar`) contaria só parte dos
+testes: os dois entram no histórico, mas não mudam a linha do rodapé. Num build
+completo com falha, o texto mostra os erros de qualquer model ou teste, e os nós
+pulados. O `validate_incremental.py` confere o `dbt test` e o build com janela.
 
 **Duas armadilhas pagas na montagem:**
 
@@ -119,8 +124,10 @@ março na origem, sem comparar o fato inteiro, e refletir inclusive exclusões.
 2. o model seleciona só os pedidos da janela, sem o `EXCEPT`;
 3. o `delete+insert` grava essas linhas.
 
-O hook roda na mesma transação do model: a janela é trocada inteira ou não é
-trocada. A janela é pela data da compra, que não muda depois do pedido, então
+O hook roda na mesma transação do model: em cada fato, a janela é trocada
+inteira ou não é trocada. Os dois fatos rodam em transações separadas; se um
+falhar e o outro não, eles ficam fora de sincronia naquela janela até a próxima
+execução, que deve ser repetida. A janela é pela data da compra, que não muda depois do pedido, então
 nenhum registro migra de uma janela para outra. Sem as vars, os fatos seguem a
 comparação completa de antes.
 
@@ -196,7 +203,9 @@ Depois de recarregar a raw, o `dbt build` travou por mais de 5 minutos no
   estatística: o planner supunha CEP repetido e multiplicava as linhas.
 
 Correção: `analyze` como `post-hook` das tabelas de `marts` e `ml`, e o CTE como
-`not materialized`. O model caiu de 74 para 13 segundos, com o mesmo conteúdo
+`not materialized`. Medido isolado, o model caiu de 74 para 13 segundos (a
+consulta sozinha, de 74 para 8); num build completo, em paralelo com outros
+models, ele leva de 20 a 45 segundos. O conteúdo é o mesmo
 (md5 da tabela idêntico antes e depois). Em produção, isso aparece como "o job
 que às vezes demora 10 vezes mais", porque depende de o autovacuum chegar antes ou
 depois.

@@ -153,7 +153,7 @@ para caber duas linhas:
   aviso faria o relatório parecer material oficial da empresa;
 - a linha de atualização, por exemplo "Dados processados em 08/10/2026 18:26
   (Brasília) · 81 testes ok, 3 avisos", lida de `marts.atualizacao_dados`. Ela é
-  reescrita a cada `dbt build` e chega ao Neon com as outras marts (ver
+  reescrita a cada `dbt build` completo (sem `--select`) e chega ao Neon com as outras marts (ver
   [docs/confiabilidade.md](../docs/confiabilidade.md)).
 
 ### Configuração geral

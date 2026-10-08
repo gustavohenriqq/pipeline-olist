@@ -6,6 +6,7 @@ Executar: python scripts/validate_incremental.py
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import uuid
@@ -131,6 +132,9 @@ def dbt(env, *args, check=True):
     proc = subprocess.run([sys.executable, "-m", "dbt.cli.main", *args, "--profiles-dir", "."],
                           cwd=ROOT / "dbt", env=env, capture_output=True, text=True,
                           encoding="utf-8", errors="replace")
+    # O dbt colore a saida mesmo capturada; sem os codigos ANSI, as assercoes
+    # podem procurar o texto exato da linha.
+    proc.stdout = re.sub(r"\x1b\[[0-9;]*m", "", proc.stdout)
     if check and proc.returncode != 0:
         print(proc.stdout[-3000:], proc.stderr[-3000:])
         raise AssertionError(f"dbt {' '.join(args)} falhou")
@@ -148,10 +152,12 @@ def check_freshness(database, env):
     assert proc.returncode == 0, "Freshness falhou logo depois da carga:\n" + proc.stdout[-2000:]
     idade("2 days")
     proc = dbt(env, "source", "freshness", check=False)
-    assert proc.returncode == 0 and "WARN" in proc.stdout, "Carga de 2 dias deveria avisar"
+    assert proc.returncode == 0 and "WARN freshness of raw.orders" in proc.stdout, \
+        "Carga de 2 dias deveria avisar em raw.orders"
     idade("8 days")
     proc = dbt(env, "source", "freshness", check=False)
-    assert proc.returncode != 0 and "ERROR" in proc.stdout, "Carga de 8 dias deveria dar erro"
+    assert proc.returncode != 0 and "ERROR STALE freshness of raw.orders" in proc.stdout, \
+        "Carga de 8 dias deveria dar erro em raw.orders"
     idade("0 days")
     print("OK: freshness passa na carga nova, avisa com 2 dias e falha com 8", flush=True)
 
@@ -235,7 +241,13 @@ def check_janela(database, env, build):
         cur.execute("update raw.orders set order_status = 'shipped' where order_id = %s", (fora,))
         conn.commit()
 
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("select processado_em, resumo from marts.atualizacao_dados")
+        rodape_antes = cur.fetchone()
     build("--select", "fato_pedidos", "fato_itens_pedido", "--vars", JANELA)
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("select processado_em, resumo from marts.atualizacao_dados")
+        assert cur.fetchone() == rodape_antes, "Build parcial (--select) reescreveu o rodape do dashboard"
     pedidos, itens = linhas_da_janela(database)
     with closing(connect(database)) as conn, conn.cursor() as cur:
         cur.execute("select count(*) from marts.fato_pedidos where order_id = %s", (alvo,))

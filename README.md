@@ -256,8 +256,7 @@ docker compose up -d
 python ingestion/ingest.py
 cd dbt
 dbt source freshness --profiles-dir .   # idade da carga
-dbt run  --profiles-dir .
-dbt test --profiles-dir .
+dbt build --profiles-dir .              # models + testes; atualiza o rodapé do dashboard
 cd ..
 python scripts/publicar_marts.py   # opcional: espelha as marts no Neon
 ```

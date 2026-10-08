@@ -64,7 +64,7 @@ análise usou para achar o problema.
 
 ---
 
-## Etapa 2 — Análise do atraso (concluída)
+## Etapa 2: Análise do atraso (concluída)
 
 **Objetivo:** transformar o achado em recomendação defensável, com número.
 
@@ -100,17 +100,34 @@ análise precisa controlar por esses fatores antes de afirmar causalidade.
 
 ---
 
-## Etapa 3 — Confiabilidade do lado do dbt (frente de engenharia)
+## Etapa 3: Confiabilidade do lado do dbt (concluída)
 
 **Objetivo:** tornar a transformação segura de rodar de novo, barata de testar e
 honesta sobre a idade do dado.
 
-**Entregas planejadas:**
-- **Models incrementais (entregue):** os dois fatos usam `delete+insert` por chave no Postgres, com delta por comparação de todas as colunas. Detalhes e limites em [incrementalidade](docs/incrementalidade.md).
-- **Idempotência (entregue):** CI valida build repetido, novas linhas com datas antigas, correções antigas e igualdade com full-refresh. **Janela por `--vars` continua planejada**; hoje a comparação completa detecta alterações independentemente da data de compra.
-- **Freshness:** `dbt source freshness` com limite de aviso e de erro sobre a camada raw.
-- **Metadados de execução persistidos:** resultado de cada build e de cada teste gravado numa tabela, para responder "quando esse número foi atualizado pela última vez?".
-- **CI enxuto:** rodar só o que mudou (`state:modified+`), em vez do projeto inteiro a cada push.
+**Entregue** (detalhes em [incrementalidade](docs/incrementalidade.md) e
+[confiabilidade](docs/confiabilidade.md)):
+- **Models incrementais:** os dois fatos usam `delete+insert` por chave no
+  Postgres, com delta por comparação de todas as colunas.
+- **Idempotência:** o CI valida build repetido, novas linhas com datas antigas,
+  correções antigas e igualdade com full-refresh.
+- **Reprocessamento por janela:** `--vars` com início e fim troca só as linhas
+  daquele período, numa transação, refletindo inclusive exclusões na origem. A
+  validação prova que o pedido apagado some, que o que está fora da janela não
+  muda e que o resultado iguala o full-refresh.
+- **Freshness:** `dbt source freshness` sobre a hora da carga (`_carregado_em`),
+  com aviso em 24 horas e erro em 7 dias. Mede a carga, não o dado: o Olist é
+  estático.
+- **Metadados de execução persistidos:** cada comando e cada model ou teste no
+  schema `meta`; `marts.atualizacao_dados` responde "quando esse número foi
+  atualizado pela última vez?" no rodapé do dashboard.
+- **CI enxuto:** um run por PR, construindo só `+state:modified+` contra a branch
+  base; a `main` roda tudo.
+
+**Achado do caminho.** Depois de recarregar a raw, um model que levava segundos
+travou: sem estatísticas nas tabelas recém-criadas, o planner estimou 418 bilhões
+de linhas. `analyze` depois de cada tabela e um CTE não materializado resolveram
+(74 para 13 segundos).
 
 **Por que esta etapa importa.** Carga full é a fraqueza que o próprio README já
 admite. Idempotência e reprocessamento por janela são o assunto que mais aparece
@@ -124,8 +141,9 @@ dado, e a pergunta "orquestrar o quê?" não teria boa resposta. É o mesmo
 raciocínio que tirou o PySpark.
 
 **Riscos em produção:** model incremental com lógica de janela errada perde ou
-duplica dado em silêncio. Por isso o teste de idempotência (build duplo, contagem
-igual) entra no CI, e não só na documentação.
+duplica dado em silêncio. Por isso os testes de idempotência e de janela rodam no
+CI, e não só na documentação. Sem `--defer` para um ambiente de produção, o CI do
+PR também constrói os ancestrais do que mudou.
 
 ---
 
@@ -178,7 +196,7 @@ de reavaliação periódica, senão degrada em silêncio.
 
 ---
 
-## Etapa 5 — Power BI avançado
+## Etapa 5: Power BI avançado
 
 **Objetivo:** dashboard executivo com os recursos que o mercado corporativo cobra de um relatório sério.
 
@@ -196,7 +214,7 @@ de reavaliação periódica, senão degrada em silêncio.
 
 ---
 
-## Etapa 6 — Agente de IA (opcional)
+## Etapa 6: Agente de IA (opcional)
 
 **Objetivo:** responder perguntas de negócio em linguagem natural sobre as marts.
 

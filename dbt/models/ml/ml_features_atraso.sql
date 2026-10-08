@@ -97,7 +97,10 @@ pagamento_principal as (
 -- PR cai na Espanha). Ponto fora da caixa do pais e descartado aqui, e a
 -- distancia desse pedido fica nula, como a de CEP sem coordenada. A dimensao
 -- nao e alterada: o mapa do dashboard agrega por UF e nao sofre com isso.
-geo as (
+-- "not materialized": usado duas vezes (cliente e vendedor), o CTE seria
+-- materializado sem estatisticas, e o planner suporia CEP repetido. Assim ele usa
+-- as estatisticas da dimensao (CEP unico): a consulta caiu de 74 s para 8 s.
+geo as not materialized (
     select zip_code_prefix, latitude::float8 as lat, longitude::float8 as lng
     from {{ ref('dim_geolocalizacao') }}
     where latitude between -33.8 and 5.3

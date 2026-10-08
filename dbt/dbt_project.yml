@@ -28,16 +28,33 @@ models:
     intermediate:
       +materialized: view
       +schema: intermediate
+    # analyze logo depois de materializar: o dbt consulta a tabela no model
+    # seguinte antes de o autovacuum gerar estatisticas, e sem elas o planner
+    # chegou a estimar 418 bilhoes de linhas no ml_features_atraso (build preso).
     marts:
       +materialized: table
       +schema: marts
+      +post-hook: "analyze {{ this }}"
     # Features do modelo de atraso. Schema proprio: nao vai para o Neon,
     # porque o publicador copia so o schema marts.
     ml:
       +materialized: table
       +schema: ml
+      +post-hook: "analyze {{ this }}"
+
+# Janela de reprocessamento dos fatos (data da compra, fim exclusivo). Nulas por
+# padrao: sem elas os fatos usam a comparacao completa. Ver macros/janela.sql.
+vars:
+  janela_inicio: null
+  janela_fim: null
 
 # Tabela de saida da previsao, escrita pelo Python e testada como source.
 # Ver macros/previsao_atraso.sql.
 on-run-start:
   - "{{ cria_tabela_previsao() }}"
+  - "{{ cria_tabelas_metadados() }}"
+
+# Registra cada invocacao e cada no em meta.*, e o rodape do dashboard em
+# marts.atualizacao_dados (so no build). Ver macros/metadados.sql.
+on-run-end:
+  - "{{ grava_metadados(results) }}"

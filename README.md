@@ -1,85 +1,85 @@
-# Atraso na entrega custa R$ 1,15 milhao ao ano
+# Atraso na entrega custa R$ 1,15 milhão ao ano
 
-Pipeline de dados de ponta a ponta sobre o e-commerce brasileiro (dataset publico
-da Olist, 99.441 pedidos reais), construido para responder uma pergunta de
-negocio especifica e agir sobre ela.
+Pipeline de dados de ponta a ponta sobre o e-commerce brasileiro (dataset público
+da Olist, 99.441 pedidos reais), construído para responder uma pergunta de
+negócio específica e agir sobre ela.
 
 ## O achado
 
 Atrasar a entrega em uma semana derruba a nota do cliente de **4,29 para 2,72**.
 Atrasar entre 8 e 30 dias derruba para **1,65**.
 
-| Situacao da entrega | Pedidos | Nota media |
+| Situação da entrega | Pedidos | Nota média |
 |---|---|---|
 | No prazo | 89.936 | **4,29** |
 | Atraso de 1 a 7 dias | 3.672 | 2,72 |
 | Atraso de 8 a 30 dias | 2.517 | **1,65** |
 | Atraso acima de 30 dias | 345 | 2,06 |
 
-Sao **6.534 pedidos atrasados, R$ 1.150.892 em receita, 7,3% do total**.
+São **6.534 pedidos atrasados, R$ 1.150.892 em receita, 7,3% do total**.
 
-E a leitura obvia sobre onde agir esta errada. O Sudeste concentra 62% dos
-atrasos e, como regiao, tem taxa **abaixo** da media nacional (6,1% contra 6,8%).
+E a leitura óbvia sobre onde agir está errada. O Sudeste concentra 62% dos
+atrasos e, como região, tem taxa **abaixo** da média nacional (6,1% contra 6,8%).
 Mas olhando estado por estado, o foco aparece: o **Rio de Janeiro sozinho gera
-659 atrasos em excesso**, mais que o Nordeste inteiro (537). Ele sumia na visao
-por regiao porque Sao Paulo, muito maior e com taxa de 4,5%, compensava o RJ
+659 atrasos em excesso**, mais que o Nordeste inteiro (537). Ele sumia na visão
+por região porque São Paulo, muito maior e com taxa de 4,5%, compensava o RJ
 dentro do mesmo balde. **RJ e Nordeste respondem por 86% do atraso em excesso**,
 associado a cerca de R$ 224 mil.
 
-> Uma versao anterior deste README dizia que o Nordeste respondia por 94% do
-> excesso. A conta estava certa por regiao e errada como conclusao. O erro
-> apareceu quando um mapa por estado pediu um grao mais fino, e esta documentado
-> na analise.
+> Uma versão anterior deste README dizia que o Nordeste respondia por 94% do
+> excesso. A conta estava certa por região e errada como conclusão. O erro
+> apareceu quando um mapa por estado pediu um grão mais fino, e está documentado
+> na análise.
 
-E a acao intuitiva tambem esta errada. Decompondo o tempo de entrega, **87% do
-atraso nasce no transporte e so 13% no vendedor**. Tanto no Nordeste quanto no
-RJ, o vendedor despacha **mais rapido** que a media nos pedidos atrasados, e o
-transporte e que demora. Cobrar SLA desses vendedores atacaria a parte que ja
-funciona melhor que a media. A acao e logistica, nao comercial.
+E a ação intuitiva também está errada. Decompondo o tempo de entrega, **87% do
+atraso nasce no transporte e só 13% no vendedor**. Tanto no Nordeste quanto no
+RJ, o vendedor despacha **mais rápido** que a média nos pedidos atrasados, e o
+transporte é que demora. Cobrar SLA desses vendedores atacaria a parte que já
+funciona melhor que a média. A ação é logística, não comercial.
 
-> Analise completa, com o controle por regiao, a decomposicao vendedor contra
-> transportadora, a investigacao da anomalia da cauda e as queries de
-> reproducao: **[docs/analise-atraso.md](docs/analise-atraso.md)**.
+> Análise completa, com o controle por região, a decomposição vendedor contra
+> transportadora, a investigação da anomalia da cauda e as queries de
+> reprodução: **[docs/analise-atraso.md](docs/analise-atraso.md)**.
 
 ## O que o projeto faz com isso
 
-Tres frentes atacam a mesma pergunta, e a conexao entre elas e o ponto do
+Três frentes atacam a mesma pergunta, e a conexão entre elas é o ponto do
 projeto:
 
 | Frente | Papel | Estado |
 |---|---|---|
-| **Analise** | Quantificar o problema e recomendar acao | Etapa 2 |
+| **Análise** | Quantificar o problema e recomendar ação | Etapa 2 |
 | **Engenharia** | Entregar o dado com confiabilidade, todo dia | Etapas 1 e 3 |
-| **ML** | Prever o atraso no momento do pedido | Etapa 4 (concluida) |
+| **ML** | Prever o atraso no momento do pedido | Etapa 4 (concluída) |
 
-O ciclo fecha quando a previsao do modelo aparece no mesmo dashboard que a
-analise usou para achar o problema. O plano completo, incluindo o que foi
-descartado e por que, esta no [ROADMAP.md](ROADMAP.md).
+O ciclo fecha quando a previsão do modelo aparece no mesmo dashboard que a
+análise usou para achar o problema. O plano completo, incluindo o que foi
+descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 
-> Status: **Etapas 1 (fundacao), 2 (analise) e 4 (ML) concluidas** no dataset
+> Status: **Etapas 1 (fundação), 2 (análise) e 4 (ML) concluídas** no dataset
 > completo, com o dashboard publicado. No dataset completo, `dbt build` com 104
 > PASS, 3 WARN propositais e 0 ERROR; no CI, a cada push, o mesmo build na
-> amostra e os 20 testes Python do modelo. A Etapa 3 (confiabilidade) esta em andamento.
+> amostra e os 20 testes Python do modelo. A Etapa 3 (confiabilidade) está em andamento.
 
-### Previsao de atraso (Etapa 4)
+### Previsão de atraso (Etapa 4)
 
-Um gradient boosting treinado so com o que existe no ato da compra (prazo
-prometido, geografia, frete, carga, pagamento), com separacao temporal, baseline
-antes do modelo e limiar escolhido por custo. A previsao volta ao warehouse em
+Um gradient boosting treinado só com o que existe no ato da compra (prazo
+prometido, geografia, frete, carga, pagamento), com separação temporal, baseline
+antes do modelo e limiar escolhido por custo. A previsão volta ao warehouse em
 `marts.previsao_atraso`, testada pelo dbt e publicada no Neon junto com as
 demais marts.
 
 - No teste (mai a ago/2018), PR-AUC **0,085** contra **0,049** da baseline por UF,
   numa base com 4,4% de atraso. Os 10% de pedidos mais arriscados atrasam 10 vezes
   mais que os 10% menos arriscados.
-- **O alerta nao se paga no periodo de teste:** o limiar escolhido num periodo de
-  crise (10,8% de atraso) erra demais num periodo calmo (4,4%). O documento
-  mostra o custo mes a mes e o que faria em producao.
-- A validacao expos um erro de desenho: o mes da compra decorava 2017 (o modelo
-  perdia ate para a baseline, e o PSI da coluna deu 4,92). A feature saiu, e a
-  primeira execucao continua versionada.
+- **O alerta não se paga no período de teste:** o limiar escolhido num período de
+  crise (10,8% de atraso) erra demais num período calmo (4,4%). O documento
+  mostra o custo mês a mês e o que faria em produção.
+- A validação expôs um erro de desenho: o mês da compra decorava 2017 (o modelo
+  perdia até para a baseline, e o PSI da coluna deu 4,92). A feature saiu, e a
+  primeira execução continua versionada.
 - Com vazamento proposital (`atraso_dias` como feature), o mesmo modelo chega a
-  ROC-AUC 1,000: o numero que um modelo inutil mostraria.
+  ROC-AUC 1,000: o número que um modelo inútil mostraria.
 
 Resultados, auditoria de features e limites: [docs/modelo-atraso.md](docs/modelo-atraso.md).
 
@@ -87,36 +87,36 @@ Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn e Power BI.**
 
 ---
 
-## 1. Problema de negocio
+## 1. Problema de negócio
 
 A Olist conecta pequenos lojistas aos grandes marketplaces do Brasil. Cada venda
-gera dados espalhados em varias tabelas (pedidos, itens, pagamentos, avaliacoes,
-clientes, vendedores, geolocalizacao). Sem um modelo central, cada pergunta de
-negocio vira um SQL manual e demorado.
+gera dados espalhados em várias tabelas (pedidos, itens, pagamentos, avaliações,
+clientes, vendedores, geolocalização). Sem um modelo central, cada pergunta de
+negócio vira um SQL manual e demorado.
 
 Este pipeline organiza esses dados em um **modelo dimensional (star schema)** que
-sustenta tanto o diagnostico quanto a acao:
+sustenta tanto o diagnóstico quanto a ação:
 
-- Onde o atraso se concentra, e quanto ele custa em receita e em satisfacao?
-- Qual regiao e estado mais vende? Qual o ticket medio por regiao?
-- Quais vendedores e categorias tem melhor desempenho?
-- Da para prever, no ato da compra, que um pedido vai atrasar?
+- Onde o atraso se concentra, e quanto ele custa em receita e em satisfação?
+- Qual região e estado mais vende? Qual o ticket médio por região?
+- Quais vendedores e categorias têm melhor desempenho?
+- Dá para prever, no ato da compra, que um pedido vai atrasar?
 
-### Numeros do modelo
+### Números do modelo
 
 | Indicador | Valor |
 |---|---|
 | Pedidos processados | 99.441 |
-| Receita total (itens + frete) | R$ 15,84 milhoes |
-| Ticket medio por pedido | R$ 159,33 |
-| Tempo medio de entrega | 12,5 dias |
+| Receita total (itens + frete) | R$ 15,84 milhões |
+| Ticket médio por pedido | R$ 159,33 |
+| Tempo médio de entrega | 12,5 dias |
 | Pedidos entregues no prazo | 93,2% |
-| Nota media de avaliacao | 4,09 de 5 |
-| Estado lider em receita | Sao Paulo (R$ 5,9 mi) |
-| Categoria lider em receita | health_beauty (R$ 1,44 mi) |
+| Nota média de avaliação | 4,09 de 5 |
+| Estado líder em receita | São Paulo (R$ 5,9 mi) |
+| Categoria líder em receita | health_beauty (R$ 1,44 mi) |
 
-Base: dataset completo. O tempo de entrega e o percentual no prazo consideram so
-os pedidos ja entregues, porque incluir os 2.963 em transito contaria como
+Base: dataset completo. O tempo de entrega e o percentual no prazo consideram só
+os pedidos já entregues, porque incluir os 2.963 em trânsito contaria como
 atrasado um pedido que ainda nem venceu o prazo.
 
 ---
@@ -125,34 +125,34 @@ atrasado um pedido que ainda nem venceu o prazo.
 
 ```mermaid
 flowchart TD
-    A["Olist CSV (Kaggle)<br/>9 arquivos"] --> B["Python + pandas<br/>ingestao (COPY)"]
+    A["Olist CSV (Kaggle)<br/>9 arquivos"] --> B["Python + pandas<br/>ingestão (COPY)"]
     B --> C["PostgreSQL<br/>schema raw (bronze)"]
     C --> D["dbt staging<br/>limpeza e casting (views)"]
-    D --> E["dbt intermediate<br/>joins e agregacoes (views)"]
+    D --> E["dbt intermediate<br/>joins e agregações (views)"]
     E --> F["dbt marts<br/>star schema (tables)"]
-    F --> P["publicar_marts.py<br/>espelha so as marts"]
+    F --> P["publicar_marts.py<br/>espelha só as marts"]
     P --> N["Neon<br/>Postgres serverless"]
-    N --> H["Looker Studio<br/>publico 24/7"]
+    N --> H["Looker Studio<br/>público 24/7"]
     F --> G["Power BI<br/>DAX + RLS"]
     F --> I["Agente IA<br/>LangChain + Streamlit"]
 ```
 
-O fluxo segue o padrao **Medallion** (bronze / silver / gold), que na fase cloud vira Bronze, Silver e Gold no Databricks:
+O fluxo segue o padrão **Medallion** (bronze / silver / gold), que na fase cloud vira Bronze, Silver e Gold no Databricks:
 
-- **raw (bronze):** dado como veio do CSV, tudo em texto. Nada de transformacao aqui. Se algo der errado depois, o bruto continua intacto para reprocessar.
-- **staging + intermediate (silver):** limpeza, conversao de tipos, joins e agregacoes. Sao views: leves e sempre atualizadas.
-- **marts (gold):** o star schema pronto para consumo. Sao tabelas materializadas, para o BI e o agente responderem rapido.
+- **raw (bronze):** dado como veio do CSV, tudo em texto. Nada de transformação aqui. Se algo der errado depois, o bruto continua intacto para reprocessar.
+- **staging + intermediate (silver):** limpeza, conversão de tipos, joins e agregações. São views: leves e sempre atualizadas.
+- **marts (gold):** o star schema pronto para consumo. São tabelas materializadas, para o BI e o agente responderem rápido.
 
 ### Modelo dimensional (marts)
 
-Dois fatos, porque existem dois graos diferentes:
+Dois fatos, porque existem dois grãos diferentes:
 
-- **fato_pedidos** (um por pedido): metricas de valor, pagamento, nota e entrega.
-- **fato_itens_pedido** (um por item): e onde produto e vendedor se conectam, ja que um pedido pode ter varios produtos e vendedores.
+- **fato_pedidos** (um por pedido): métricas de valor, pagamento, nota e entrega.
+- **fato_itens_pedido** (um por item): é onde produto e vendedor se conectam, já que um pedido pode ter vários produtos e vendedores.
 
-Dimensoes: `dim_clientes`, `dim_produtos`, `dim_vendedores`, `dim_tempo`, `dim_geolocalizacao`.
+Dimensões: `dim_clientes`, `dim_produtos`, `dim_vendedores`, `dim_tempo`, `dim_geolocalizacao`.
 
-Alem do star schema, a camada marts tem duas **tabelas largas (OBT, One Big Table)** derivadas dele: `obt_pedidos` (grao de pedido) e `obt_itens` (grao de item). Elas existem porque o Looker Studio trata cada tabela como fonte separada e so junta por "blend", que e limitado. A tabela larga elimina esse atrito no BI. O star schema continua sendo a fonte da verdade: e nele que os testes de integridade referencial rodam e e nele que o Power BI (Fase 4) e o agente de IA (Fase 6) vao ligar, porque tanto o VertiPaq quanto o texto-para-SQL trabalham melhor com modelo dimensional.
+Além do star schema, a camada marts tem duas **tabelas largas (OBT, One Big Table)** derivadas dele: `obt_pedidos` (grão de pedido) e `obt_itens` (grão de item). Elas existem porque o Looker Studio trata cada tabela como fonte separada e só junta por "blend", que é limitado. A tabela larga elimina esse atrito no BI. O star schema continua sendo a fonte da verdade: é nele que os testes de integridade referencial rodam e é nele que o Power BI (Etapa 5) e o agente de IA (Etapa 6) vão ligar, porque tanto o VertiPaq quanto o texto-para-SQL trabalham melhor com modelo dimensional.
 
 ```mermaid
 erDiagram
@@ -167,46 +167,46 @@ erDiagram
 
 ---
 
-## 3. Stack e o porque de cada escolha
+## 3. Stack e o porquê de cada escolha
 
-| Camada | Ferramenta | Por que |
+| Camada | Ferramenta | Por quê |
 |---|---|---|
-| Ingestao | Python + pandas | Le CSV bagunçado (virgulas e quebras de linha nas avaliacoes) e carrega em massa com `COPY`, muito mais rapido que INSERT. |
-| Camada raw | PostgreSQL schema `raw` | O proprio Postgres guarda o bruto, tudo em texto. Volume de 1,5 milhao de linhas nao justifica data lake separado. |
-| Transformacao | dbt (dbt-core) | Padrao de mercado para analytics engineering: SQL versionado, testes de qualidade, documentacao e linhagem automatica. |
-| Armazenamento | PostgreSQL | Banco relacional solido, gratuito e o que a maioria das vagas pede. |
-| Camada de servico | Neon (Postgres serverless) | Recebe so as marts testadas, para o BI ler 24/7 sem depender da maquina local. |
-| BI principal | Power BI (DAX, RLS, OLS) | Padrao de mercado em BI corporativo no Brasil. |
-| BI publico | Looker Studio | Dashboard online e gratuito, para portfolio 24/7. |
+| Ingestão | Python + pandas | Lê CSV bagunçado (vírgulas e quebras de linha nas avaliações) e carrega em massa com `COPY`, muito mais rápido que INSERT. |
+| Camada raw | PostgreSQL schema `raw` | O próprio Postgres guarda o bruto, tudo em texto. Volume de 1,5 milhão de linhas não justifica data lake separado. |
+| Transformação | dbt (dbt-core) | Padrão de mercado para analytics engineering: SQL versionado, testes de qualidade, documentação e linhagem automática. |
+| Armazenamento | PostgreSQL | Banco relacional sólido, gratuito e o que a maioria das vagas pede. |
+| Camada de serviço | Neon (Postgres serverless) | Recebe só as marts testadas, para o BI ler 24/7 sem depender da máquina local. |
+| BI principal | Power BI (DAX, RLS, OLS) | Padrão de mercado em BI corporativo no Brasil. |
+| BI público | Looker Studio | Dashboard online e gratuito, para portfólio 24/7. |
 | IA | LangChain + Streamlit | Perguntas em linguagem natural viram SQL sobre o warehouse. |
-| Container | Docker + Docker Compose | Sobe o ambiente inteiro com um comando, em qualquer maquina. |
+| Container | Docker + Docker Compose | Sobe o ambiente inteiro com um comando, em qualquer máquina. |
 
 ---
 
 ## 4. Como rodar localmente
 
-Pre requisitos: **Docker Desktop** e **Python 3.11+**.
+Pré-requisitos: **Docker Desktop** e **Python 3.11+**.
 
 ```bash
 # 1. Clonar e entrar na pasta
 git clone https://github.com/gustavohenriqq/pipeline-olist.git
 cd pipeline-olist
 
-# 2. Configurar variaveis (copie o exemplo e ajuste se quiser)
+# 2. Configurar variáveis (copie o exemplo e ajuste se quiser)
 cp .env.example .env
 
 # 3. Baixar o dataset do Kaggle e colocar os 9 CSVs em data/raw/
 #    (Brazilian E-Commerce Public Dataset by Olist)
 
-# 4. Instalar as dependencias Python (recomendado num ambiente virtual)
+# 4. Instalar as dependências Python (recomendado num ambiente virtual)
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scriptsctivate
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # 5. Subir o Postgres (e o pgAdmin em http://localhost:8080)
 docker compose up -d
 
-# 6. Rodar tudo de uma vez: ingestao + dbt build (models + testes)
+# 6. Rodar tudo de uma vez: ingestão + dbt build (models + testes)
 make pipeline
 
 # 7. Opcional: publicar as marts no Neon para o Looker Studio ler
@@ -214,14 +214,14 @@ make pipeline
 make publicar
 ```
 
-> **Windows.** Se o `dbt` na linha de comando for bloqueado pela politica de
-> Controle de Aplicativo, chame o modulo em vez do executavel:
-> `python -m dbt.cli.main build --profiles-dir .`. E o mesmo programa, sem o
-> atalho `.exe` que a politica barra.
+> **Windows.** Se o `dbt` na linha de comando for bloqueado pela política de
+> Controle de Aplicativo, chame o módulo em vez do executável:
+> `python -m dbt.cli.main build --profiles-dir .`. É o mesmo programa, sem o
+> atalho `.exe` que a política barra.
 
-### Rodar rapido, sem baixar o Kaggle (amostra)
+### Rodar rápido, sem baixar o Kaggle (amostra)
 
-O repositorio ja traz uma amostra pequena e coerente em `data/sample/` (800 pedidos, chaves preservadas). Da para rodar o pipeline inteiro so com ela:
+O repositório já traz uma amostra pequena e coerente em `data/sample/` (800 pedidos, chaves preservadas). Dá para rodar o pipeline inteiro só com ela:
 
 ```bash
 docker compose up -d
@@ -229,7 +229,7 @@ OLIST_DATA_DIR=data/sample python ingestion/ingest.py
 cd dbt && dbt build --profiles-dir .
 ```
 
-E exatamente o que o CI (GitHub Actions) roda a cada push. Para o dataset completo, use `data/raw/` como abaixo.
+É exatamente o que o CI (GitHub Actions) roda a cada push. Para o dataset completo, use `data/raw/` como abaixo.
 
 ### Passo a passo manual
 
@@ -245,7 +245,7 @@ cd ..
 python scripts/publicar_marts.py   # opcional: espelha as marts no Neon
 ```
 
-Para ver a documentacao e a linhagem do dbt no navegador:
+Para ver a documentação e a linhagem do dbt no navegador:
 
 ```bash
 cd dbt
@@ -256,121 +256,121 @@ dbt docs serve    --profiles-dir . --port 8081
 ### O que o pipeline entrega ao final
 
 - Schema `raw`: 9 tabelas cruas.
-- Schema `staging` e `intermediate`: views de limpeza e agregacao.
-- Schema `marts`: 5 dimensoes + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
-- Testes de qualidade dbt (unicidade, nao nulo, valores aceitos, integridade referencial e range): 74 na fundacao, mais os do modelo de atraso.
-- Rotulos em portugues gerados no dbt: status do pedido, situacao (entregue, em andamento, nao concluido) e categoria em 14 grupos comerciais.
-- Camada de servico no Neon com as marts publicadas, para o Looker Studio ler 24/7.
+- Schema `staging` e `intermediate`: views de limpeza e agregação.
+- Schema `marts`: 5 dimensões + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
+- Testes de qualidade dbt (unicidade, não nulo, valores aceitos, integridade referencial e range): 74 na fundação, mais os do modelo de atraso.
+- Rótulos em português gerados no dbt: status do pedido, situação (entregue, em andamento, não concluído) e categoria em 14 grupos comerciais.
+- Camada de serviço no Neon com as marts publicadas, para o Looker Studio ler 24/7.
 
 ---
 
-## 5. Estrutura do repositorio
+## 5. Estrutura do repositório
 
 ```
 pipeline-olist/
 ├── data/raw/                 # CSVs do Kaggle (ignorados no Git)
-├── ingestion/                # ingestao Python + pandas
-│   ├── config.py             # conexao e mapeamento CSV -> tabela
+├── ingestion/                # ingestão Python + pandas
+│   ├── config.py             # conexão e mapeamento CSV -> tabela
 │   └── ingest.py             # carga em massa via COPY
 ├── dbt/                      # projeto dbt
 │   ├── models/
 │   │   ├── staging/          # limpeza e casting (views)
-│   │   ├── intermediate/     # joins e agregacoes (views)
+│   │   ├── intermediate/     # joins e agregações (views)
 │   │   ├── marts/            # star schema (tables)
 │   │   └── ml/               # features do modelo de atraso (lista permitida)
-│   ├── macros/               # helpers proprios (surrogate key, calendario, regiao, rotulos, testes)
+│   ├── macros/               # helpers próprios (surrogate key, calendário, região, rótulos, testes)
 │   ├── tests/                # testes singulares
 │   ├── dbt_project.yml
 │   └── profiles.yml
-├── ml/                       # treino, avaliacao e inferencia do modelo de atraso
+├── ml/                       # treino, avaliação e inferência do modelo de atraso
 │   └── artefatos/            # metricas.json versionado (modelo.joblib fora do Git)
 ├── tests/                    # testes Python do modelo (pytest)
 ├── scripts/                  # gerar_amostra.py, publicar_marts.py
 ├── dashboards/               # guia do Looker Studio e notas de Power BI
-├── docs/                     # diagramas e decisoes
+├── docs/                     # diagramas e decisões
 ├── docker-compose.yml        # Postgres + pgAdmin
 ├── Makefile                  # atalhos (make pipeline, make dbt-run, ...)
 ├── requirements.txt
-├── requirements-ml.txt       # dependencias do modelo (scikit-learn, pytest)
-└── ROADMAP.md                # plano por etapas e decisoes descartadas
+├── requirements-ml.txt       # dependências do modelo (scikit-learn, pytest)
+└── ROADMAP.md                # plano por etapas e decisões descartadas
 ```
 
 ---
 
-## 6. Decisoes tecnicas (o porque, nao so o como)
+## 6. Decisões técnicas (o porquê, não só o como)
 
-**Raw em texto puro.** A camada raw guarda tudo como TEXT e nao converte nada. O casting fica no staging do dbt, versionado no Git. Assim, mudar uma regra de conversao e uma alteracao rastreavel, e o dado bruto nunca e perdido.
+**Raw em texto puro.** A camada raw guarda tudo como TEXT e não converte nada. O casting fica no staging do dbt, versionado no Git. Assim, mudar uma regra de conversão é uma alteração rastreável, e o dado bruto nunca é perdido.
 
-**COPY em vez de INSERT linha a linha.** A tabela de geolocalizacao tem 1 milhao de linhas. `df.to_sql` seria lento demais. O `COPY` nativo do Postgres carrega tudo em segundos.
+**COPY em vez de INSERT linha a linha.** A tabela de geolocalização tem 1 milhão de linhas. `df.to_sql` seria lento demais. O `COPY` nativo do Postgres carrega tudo em segundos.
 
-**Cliente no grao de pessoa.** Na base do Olist, `customer_id` muda a cada pedido. Quem identifica a pessoa e o `customer_unique_id`. A `dim_clientes` usa a pessoa, senao a contagem de clientes ficaria inflada.
+**Cliente no grão de pessoa.** Na base do Olist, `customer_id` muda a cada pedido. Quem identifica a pessoa é o `customer_unique_id`. A `dim_clientes` usa a pessoa, senão a contagem de clientes ficaria inflada.
 
-**Dois fatos, dois graos.** Nao da para colocar produto e vendedor no fato de pedido, porque um pedido tem varios. Por isso existe o `fato_itens_pedido` no grao de item. Esse e o jeito certo de star schema quando ha graos diferentes.
+**Dois fatos, dois grãos.** Não dá para colocar produto e vendedor no fato de pedido, porque um pedido tem vários. Por isso existe o `fato_itens_pedido` no grão de item. Esse é o jeito certo de star schema quando há grãos diferentes.
 
-**Sem dependencia de pacote externo no dbt.** Em vez do `dbt_utils`, o projeto traz macros proprias (surrogate key, calendario, testes). Assim ele roda em qualquer ambiente, mesmo sem acesso ao hub do dbt. A troca pelo `dbt_utils` e simples se um dia for desejada.
+**Sem dependência de pacote externo no dbt.** Em vez do `dbt_utils`, o projeto traz macros próprias (surrogate key, calendário, testes). Assim ele roda em qualquer ambiente, mesmo sem acesso ao hub do dbt. A troca pelo `dbt_utils` é simples se um dia for desejada.
 
-**Testes desde o inicio.** Qualidade de dado nao e opcional. Cada modelo tem testes de unicidade, nao nulo, valores aceitos e integridade referencial. O pipeline so e confiavel se os testes passam.
+**Testes desde o início.** Qualidade de dado não é opcional. Cada modelo tem testes de unicidade, não nulo, valores aceitos e integridade referencial. O pipeline só é confiável se os testes passam.
 
-### O que pode dar problema em producao real
+### O que pode dar problema em produção real
 
-- **Schemas fixos (`staging`, `marts`).** Otimo local, mas num warehouse compartilhado por varios devs isso causa colisao. Em producao, o padrao `<ambiente>_<schema>` (comportamento default do dbt) e mais seguro.
-- **Geolocalizacao incompleta.** 278 CEPs de cliente nao existem na base de geolocalizacao. O teste de integridade esta como **aviso**, nao erro, de proposito. Em producao, decidir: enriquecer com outra fonte de CEP ou aceitar o gap.
-- **Incrementalidade parcial.** Os dois fatos escrevem apenas linhas novas ou alteradas, com idempotencia validada no CI. A ingestao raw, dimensoes e OBTs continuam full; os fatos ainda leem o resultado inteiro para detectar correcoes antigas sem `updated_at`. Exclusoes da origem exigem `--full-refresh`. Ver [incrementalidade](docs/incrementalidade.md).
-- **Segredos.** O `.env` nunca vai para o Git. Em producao, usar um cofre de segredos (Azure Key Vault, AWS Secrets Manager).
+- **Schemas fixos (`staging`, `marts`).** Ótimo local, mas num warehouse compartilhado por vários devs isso causa colisão. Em produção, o padrão `<ambiente>_<schema>` (comportamento default do dbt) é mais seguro.
+- **Geolocalização incompleta.** 278 CEPs de cliente não existem na base de geolocalização. O teste de integridade está como **aviso**, não erro, de propósito. Em produção, decidir: enriquecer com outra fonte de CEP ou aceitar o gap.
+- **Incrementalidade parcial.** Os dois fatos escrevem apenas linhas novas ou alteradas, com idempotência validada no CI. A ingestão raw, dimensões e OBTs continuam full; os fatos ainda leem o resultado inteiro para detectar correções antigas sem `updated_at`. Exclusões da origem exigem `--full-refresh`. Ver [incrementalidade](docs/incrementalidade.md).
+- **Segredos.** O `.env` nunca vai para o Git. Em produção, usar um cofre de segredos (Azure Key Vault, AWS Secrets Manager).
 
 ---
 
 ## 7. Dashboards
 
-O Looker Studio precisa alcancar o banco pela internet, e um Postgres em `localhost` so responde enquanto a maquina esta ligada. Por isso as marts sao espelhadas no **Neon**, um Postgres serverless gratuito, que funciona como camada de servico do BI:
+O Looker Studio precisa alcançar o banco pela internet, e um Postgres em `localhost` só responde enquanto a máquina está ligada. Por isso as marts são espelhadas no **Neon**, um Postgres serverless gratuito, que funciona como camada de serviço do BI:
 
 ```bash
-cd dbt && dbt build --profiles-dir . && cd ..   # constroi e testa local
+cd dbt && dbt build --profiles-dir . && cd ..   # constrói e testa local
 python scripts/publicar_marts.py                # espelha as marts no Neon
 ```
 
-**Sobe so a camada marts, nunca a raw.** O free tier do Neon da 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhao de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse tambem e o desenho correto em producao: ferramenta de BI nunca le a camada crua, le o modelo ja testado. Nada e publicado sem antes passar nos testes do dbt.
+**Sobe só a camada marts, nunca a raw.** O free tier do Neon dá 0,5 GB e a tabela crua `geolocation` sozinha tem 1 milhão de linhas. Com apenas as marts, o banco na nuvem ocupa 147 MB (cerca de 29% do limite). Esse também é o desenho correto em produção: ferramenta de BI nunca lê a camada crua, lê o modelo já testado. Nada é publicado sem antes passar nos testes do dbt.
 
-O passo a passo completo de conexao, as paginas sugeridas e os numeros de conferencia estao em [dashboards/README.md](dashboards/README.md).
+O passo a passo completo de conexão, as páginas sugeridas e os números de conferência estão em [dashboards/README.md](dashboards/README.md).
 
-- **Looker Studio (publico):** **[Visao Geral Comercial](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)**. Cards, evolucao de vendas, taxa de atraso por regiao, receita por categoria, distribuicao das notas e mapa de receita por estado, todos conferidos contra o banco. A configuracao de cada componente e as armadilhas do Looker encontradas no caminho estao em [dashboards/README.md](dashboards/README.md).
-- **Power BI (Fase 4):** dashboard executivo com DAX avancado, RLS por regiao e vendedor e OLS para metricas sensiveis. Ali o consumo e do star schema, nao das OBTs.
+- **Looker Studio (público):** **[Visão Geral Comercial](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)**. Cards, evolução de vendas, taxa de atraso por região, receita por categoria, distribuição das notas e mapa de receita por estado, todos conferidos contra o banco. A configuração de cada componente e as armadilhas do Looker encontradas no caminho estão em [dashboards/README.md](dashboards/README.md).
+- **Power BI (Etapa 5):** dashboard executivo com DAX avançado, RLS por região e vendedor e OLS para métricas sensíveis. Ali o consumo é do star schema, não das OBTs.
 
-[![Visao Geral Comercial no Looker Studio](docs/prints/visao-geral-comercial.png)](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)
+[![Visão Geral Comercial no Looker Studio](docs/prints/visao-geral-comercial.png)](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)
 
-*Pagina inicial do relatorio, janela de jan/2017 a ago/2018. Clique na imagem para abrir a versao interativa.*
+*Página inicial do relatório, janela de jan/2017 a ago/2018. Clique na imagem para abrir a versão interativa.*
 
 ---
 
-## 8. Proximos passos
+## 8. Próximos passos
 
-O plano completo, com as decisoes descartadas e a evidencia por tras de cada
-uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
+O plano completo, com as decisões descartadas e a evidência por trás de cada
+uma, está no [ROADMAP.md](ROADMAP.md). Resumo:
 
-1. **Fundacao** (concluida, com o dashboard publicado): ingestao, Postgres, dbt, 74 testes e camada de servico no Neon.
-2. **Analise do atraso:** documento com recomendacao e numero, investigando por que a curva de nota nao e monotona.
-3. **Confiabilidade no dbt:** models incrementais, idempotencia, reprocessamento por janela, freshness e CI enxuto.
-4. **Previsao de atraso** (concluida): classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts. Resultados em [docs/modelo-atraso.md](docs/modelo-atraso.md).
-5. **Power BI avancado:** DAX, RLS por regiao e vendedor, OLS.
-6. **Agente de IA** (opcional): LangChain sobre as marts, com usuario somente leitura.
+1. **Fundação** (concluída, com o dashboard publicado): ingestão, Postgres, dbt, 74 testes e camada de serviço no Neon.
+2. **Análise do atraso** (concluída): documento com recomendação e número, investigando por que a curva de nota não é monótona.
+3. **Confiabilidade no dbt:** models incrementais, idempotência, reprocessamento por janela, freshness e CI enxuto.
+4. **Previsão de atraso** (concluída): classificador treinado só com informação disponível no ato da compra, com inferência escrita de volta nas marts. Resultados em [docs/modelo-atraso.md](docs/modelo-atraso.md).
+5. **Power BI avançado:** DAX, RLS por região e vendedor, OLS.
+6. **Agente de IA** (opcional): LangChain sobre as marts, com usuário somente leitura.
 
-Duas mudancas de rota, ambas por evidencia nos dados:
+Três mudanças de rota, todas por evidência nos dados:
 
-- **PySpark foi cortado.** 1,5 milhao de linhas roda em 23 segundos num Postgres em container. Volume nao justifica computacao distribuida.
-- **Airflow saiu deste projeto.** Fonte estatica nao tem o que agendar, e orquestracao sem necessidade real vira enfeite.
-- **Previsao de demanda virou previsao de atraso.** A serie tem 20 meses uteis, 1,7 ciclo anual. Nao da para validar sazonalidade com menos de dois ciclos.
+- **PySpark foi cortado.** 1,5 milhão de linhas roda em 23 segundos num Postgres em container. Volume não justifica computação distribuída.
+- **Airflow saiu deste projeto.** Fonte estática não tem o que agendar, e orquestração sem necessidade real vira enfeite.
+- **Previsão de demanda virou previsão de atraso.** A série tem 20 meses úteis, 1,7 ciclo anual. Não dá para validar sazonalidade com menos de dois ciclos.
 
-### O que este projeto nao demonstra
+### O que este projeto não demonstra
 
-Nao ha ingestao de fonte viva (e um dump estatico de CSV), nem escala real, nem
-streaming. Essas competencias pedem um projeto de forma diferente, com dado
-coletado ao longo do tempo de uma fonte que muda. E a lacuna consciente deste
-repositorio.
+Não há ingestão de fonte viva (é um dump estático de CSV), nem escala real, nem
+streaming. Essas competências pedem um projeto de forma diferente, com dado
+coletado ao longo do tempo de uma fonte que muda. É a lacuna consciente deste
+repositório.
 
 ---
 
 ## Sobre
 
-Projeto de portfolio de **Gustavo Henrique Silva Nascimento**, estudante de Ciencia da Computacao e profissional de dados, focado na trajetoria Analista de Dados, Analytics Engineer e Engenharia de Dados.
+Projeto de portfólio de **Gustavo Henrique Silva Nascimento**, estudante de Ciência da Computação e profissional de dados, focado na trajetória Analista de Dados, Analytics Engineer e Engenharia de Dados.
 
 GitHub: [@gustavohenriqq](https://github.com/gustavohenriqq) · Dataset: [Brazilian E-Commerce Public Dataset by Olist (Kaggle)](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)

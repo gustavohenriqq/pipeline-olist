@@ -309,7 +309,9 @@ O passo a passo completo de conexao, as paginas sugeridas e os numeros de confer
 - **Looker Studio (publico):** **[Visao Geral Comercial](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)**. Cards, evolucao de vendas, taxa de atraso por regiao, receita por categoria, distribuicao das notas e mapa de receita por estado, todos conferidos contra o banco. A configuracao de cada componente e as armadilhas do Looker encontradas no caminho estao em [dashboards/README.md](dashboards/README.md).
 - **Power BI (Fase 4):** dashboard executivo com DAX avancado, RLS por regiao e vendedor e OLS para metricas sensiveis. Ali o consumo e do star schema, nao das OBTs.
 
-Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.
+[![Visao Geral Comercial no Looker Studio](docs/prints/visao-geral-comercial.png)](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)
+
+*Pagina inicial do relatorio, janela de jan/2017 a ago/2018. Clique na imagem para abrir a versao interativa.*
 
 ---
 

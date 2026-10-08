@@ -47,3 +47,11 @@ def test_modelos_aceitam_categoria_nova_e_nulos():
         prob = modelo.predict_proba(matriz(novos))[:, 1]
         assert len(prob) == 5
         assert ((prob >= 0) & (prob <= 1)).all()
+
+
+def test_calendario_anual_fora_do_modelo():
+    # Com um so ano de treino, ano e mes do ano so identificam eventos de 2017
+    # (ex: Black Friday), nao sazonalidade. A primeira execucao provou: PSI 4,9.
+    for campo in ("ano_compra", "mes_compra"):
+        assert campo not in PERMITIDAS
+        assert campo in PROIBIDAS

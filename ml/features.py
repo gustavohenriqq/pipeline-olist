@@ -23,7 +23,7 @@ NUMERICAS = (
     "prazo_prometido_dias", "distancia_km", "valor_itens", "valor_frete",
     "frete_sobre_valor", "qtd_itens", "qtd_vendedores_distintos",
     "qtd_produtos_distintos", "peso_total_g", "volume_total_cm3", "max_parcelas",
-    "mes_compra", "dia_semana_compra", "hora_compra",
+    "dia_semana_compra", "hora_compra",
 )
 CATEGORICAS = (
     "cliente_uf", "cliente_regiao", "vendedor_uf", "vendedor_regiao",
@@ -33,13 +33,15 @@ PERMITIDAS = NUMERICAS + CATEGORICAS
 ALVO = "atrasou"
 
 # Campos que existem no warehouse mas so depois da compra (ou sao o alvo).
+# ano_compra e mes_compra existem na compra, mas com um so ano de treino
+# identificam eventos de 2017 (Black Friday), nao sazonalidade.
 # Motivo de cada um em dbt/models/ml/ml_features_atraso.sql.
 PROIBIDAS = (
     "approved_at", "delivered_carrier_at", "dias_ate_transportadora",
     "delivered_customer_at", "tempo_entrega_dias", "dias_em_transporte",
     "atraso_dias", "entregue_no_prazo", "nota_avaliacao", "order_status",
     "status_pedido", "situacao_pedido", "valor_pago", "qtd_pagamentos",
-    "ano_compra",
+    "ano_compra", "mes_compra",
 )
 
 

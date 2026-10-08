@@ -126,6 +126,36 @@ def assert_updated(database, old_order):
         assert score in {row[0] for row in cur.fetchall()}, "Avaliacao antiga nao atualizada"
 
 
+def dbt(env, *args, check=True):
+    """Roda um comando dbt no banco descartavel e devolve o processo (saida capturada)."""
+    proc = subprocess.run([sys.executable, "-m", "dbt.cli.main", *args, "--profiles-dir", "."],
+                          cwd=ROOT / "dbt", env=env, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace")
+    if check and proc.returncode != 0:
+        print(proc.stdout[-3000:], proc.stderr[-3000:])
+        raise AssertionError(f"dbt {' '.join(args)} falhou")
+    return proc
+
+
+def check_freshness(database, env):
+    """A carga recem-feita passa; com 2 dias avisa; com 8 dias da erro."""
+    def idade(intervalo):
+        with closing(connect(database)) as conn, conn.cursor() as cur:
+            cur.execute(f"update raw.orders set _carregado_em = now() - interval '{intervalo}'")
+            conn.commit()
+
+    proc = dbt(env, "source", "freshness", check=False)
+    assert proc.returncode == 0, "Freshness falhou logo depois da carga:\n" + proc.stdout[-2000:]
+    idade("2 days")
+    proc = dbt(env, "source", "freshness", check=False)
+    assert proc.returncode == 0 and "WARN" in proc.stdout, "Carga de 2 dias deveria avisar"
+    idade("8 days")
+    proc = dbt(env, "source", "freshness", check=False)
+    assert proc.returncode != 0 and "ERROR" in proc.stdout, "Carga de 8 dias deveria dar erro"
+    idade("0 days")
+    print("OK: freshness passa na carga nova, avisa com 2 dias e falha com 8", flush=True)
+
+
 def main():
     database = "olist_incremental_check_" + uuid.uuid4().hex
     env = dict(os.environ, POSTGRES_DB=database, OLIST_DATA_DIR=str(ROOT / "data/sample"))
@@ -144,6 +174,7 @@ def main():
         try:
             subprocess.run([sys.executable, str(ROOT / "ingestion/ingest.py")],
                            cwd=ROOT, env=env, check=True)
+            check_freshness(database, env)
             build()
             baseline = snapshot(database, physical=True)
             build()

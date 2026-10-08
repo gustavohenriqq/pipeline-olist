@@ -59,7 +59,11 @@ def create_schema(cur) -> None:
 
 def load_table(cur, table: str, df: pd.DataFrame) -> None:
     cols = list(df.columns)
+    # _carregado_em e a unica coluna que nao e TEXT: e metadado da carga, nao
+    # dado da origem. Recebe o default (hora da transacao) porque o COPY abaixo
+    # lista so as colunas do CSV. O dbt usa essa coluna para o source freshness.
     cols_ddl = ", ".join(f'"{c}" TEXT' for c in cols)
+    cols_ddl += ', "_carregado_em" timestamptz not null default now()'
 
     # CASCADE porque as views de staging do dbt dependem das tabelas raw.
     # Ao reingerir, derrubamos as views junto; o proximo "dbt run" as recria.

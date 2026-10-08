@@ -7,13 +7,14 @@
 PYTHON ?= python
 DBT = $(PYTHON) -m dbt.cli.main
 
-.PHONY: help up down logs ingest dbt-run dbt-test dbt-docs ml-testes ml-treinar ml-inferir publicar pipeline clean
+.PHONY: help up down logs ingest freshness dbt-run dbt-test dbt-docs ml-testes ml-treinar ml-inferir publicar pipeline clean
 
 help:
 	@echo "Alvos disponiveis:"
 	@echo "  up         - sobe o Postgres (e pgAdmin) via Docker Compose"
 	@echo "  down       - derruba os containers"
 	@echo "  ingest     - carrega os CSVs crus no schema raw do Postgres"
+	@echo "  freshness  - confere a idade da carga da camada raw (dbt source freshness)"
 	@echo "  dbt-run    - roda os modelos dbt (staging -> intermediate -> marts)"
 	@echo "  dbt-test   - roda os testes de qualidade dbt"
 	@echo "  dbt-docs   - gera e serve a documentacao dbt em http://localhost:8081"
@@ -35,6 +36,10 @@ logs:
 
 ingest:
 	$(PYTHON) ingestion/ingest.py
+
+# Idade da CARGA (coluna _carregado_em da raw), nao do dado de negocio.
+freshness:
+	cd dbt && $(DBT) source freshness --profiles-dir .
 
 dbt-run:
 	cd dbt && $(DBT) run --profiles-dir .

@@ -306,7 +306,7 @@ python scripts/publicar_marts.py                # espelha as marts no Neon
 
 O passo a passo completo de conexao, as paginas sugeridas e os numeros de conferencia estao em [dashboards/README.md](dashboards/README.md).
 
-- **Looker Studio (publico):** em montagem. A pagina inicial (cards, evolucao de vendas e taxa de atraso por regiao) ja esta conferida contra o banco; o link entra aqui quando o relatorio for publicado. A configuracao de cada componente e as armadilhas do Looker encontradas no caminho estao em [dashboards/README.md](dashboards/README.md).
+- **Looker Studio (publico):** **[Visao Geral Comercial](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)**. Cards, evolucao de vendas, taxa de atraso por regiao, receita por categoria, distribuicao das notas e mapa de receita por estado, todos conferidos contra o banco. A configuracao de cada componente e as armadilhas do Looker encontradas no caminho estao em [dashboards/README.md](dashboards/README.md).
 - **Power BI (Fase 4):** dashboard executivo com DAX avancado, RLS por regiao e vendedor e OLS para metricas sensiveis. Ali o consumo e do star schema, nao das OBTs.
 
 Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.
@@ -318,7 +318,7 @@ Prints serao adicionados em `docs/prints/` conforme cada dashboard ficar pronto.
 O plano completo, com as decisoes descartadas e a evidencia por tras de cada
 uma, esta no [ROADMAP.md](ROADMAP.md). Resumo:
 
-1. **Fundacao** (concluida, menos a publicacao do dashboard): ingestao, Postgres, dbt, 74 testes e camada de servico no Neon.
+1. **Fundacao** (concluida, com o dashboard publicado): ingestao, Postgres, dbt, 74 testes e camada de servico no Neon.
 2. **Analise do atraso:** documento com recomendacao e numero, investigando por que a curva de nota nao e monotona.
 3. **Confiabilidade no dbt:** models incrementais, idempotencia, reprocessamento por janela, freshness e CI enxuto.
 4. **Previsao de atraso:** classificador treinado so com informacao disponivel no ato da compra, com inferencia escrita de volta nas marts.

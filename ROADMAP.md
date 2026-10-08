@@ -37,7 +37,7 @@ análise usou para achar o problema.
 
 ---
 
-## Etapa 1 — Fundação (concluída, exceto a publicação do dashboard)
+## Etapa 1: Fundação (concluída)
 
 **Objetivo:** ter o pipeline rodando fim a fim, com qualidade testada.
 
@@ -49,11 +49,9 @@ análise usou para achar o problema.
 - Camada de serviço no Neon (Postgres serverless) com as marts publicadas.
 - CI no GitHub Actions rodando o pipeline inteiro sobre uma amostra versionada.
 
-**Pendente:** publicar o relatório no Looker Studio e colar o link aqui e no
-README. A página inicial está em montagem: cards, evolução de vendas e taxa de
-atraso por região já foram conferidos contra o banco. A configuração de cada
-componente e os números de conferência estão em
-[dashboards/README.md](dashboards/README.md).
+- Dashboard no Looker Studio publicado: [Visão Geral Comercial](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7).
+  A configuração de cada componente e os números de conferência estão em
+  [dashboards/README.md](dashboards/README.md).
 
 **Decisões e alternativas:**
 - **dbt-core (CLI) vs dbt Cloud.** Escolhido o core, gratuito e local. O dbt Cloud tem agendador e IDE web, mas custa e não agrega para portfólio.

@@ -42,6 +42,12 @@ models:
       +schema: ml
       +post-hook: "analyze {{ this }}"
 
+# Janela de reprocessamento dos fatos (data da compra, fim exclusivo). Nulas por
+# padrao: sem elas os fatos usam a comparacao completa. Ver macros/janela.sql.
+vars:
+  janela_inicio: null
+  janela_fim: null
+
 # Tabela de saida da previsao, escrita pelo Python e testada como source.
 # Ver macros/previsao_atraso.sql.
 on-run-start:

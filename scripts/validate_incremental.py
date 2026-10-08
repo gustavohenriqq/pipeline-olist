@@ -156,6 +156,50 @@ def check_freshness(database, env):
     print("OK: freshness passa na carga nova, avisa com 2 dias e falha com 8", flush=True)
 
 
+def execucoes(database):
+    """Quantas invocacoes do dbt ja foram registradas (0 antes da primeira)."""
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("select to_regclass('meta.execucoes_dbt') is not null")
+        if not cur.fetchone()[0]:
+            return 0
+        cur.execute("select count(*) from meta.execucoes_dbt")
+        return cur.fetchone()[0]
+
+
+def check_metadados(database, antes, comando="build"):
+    """Uma linha nova por invocacao, com contagens coerentes com os resultados por no."""
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("select count(*) from meta.execucoes_dbt")
+        assert cur.fetchone()[0] == antes + 1, "Execucao do dbt nao registrada (ou registrada em dobro)"
+        cur.execute("""
+            select invocation_id, comando, nos, sucesso + aviso + erro + pulados
+            from meta.execucoes_dbt order by terminado_em desc limit 1
+        """)
+        invocacao, cmd, nos, soma = cur.fetchone()
+        assert cmd == comando, f"Comando registrado {cmd!r}, esperado {comando!r}"
+        assert nos == soma, "Contagens por status nao somam o total de nos"
+        cur.execute("select count(*) from meta.resultados_dbt where invocation_id = %s", (invocacao,))
+        assert cur.fetchone()[0] == nos, "resultados_dbt nao tem uma linha por no"
+        cur.execute("select count(*), min(resumo) from marts.atualizacao_dados")
+        linhas, resumo = cur.fetchone()
+        assert linhas == 1 and resumo.startswith("Dados processados em"), "atualizacao_dados invalida"
+
+
+def check_metadados_extras(database, env):
+    """dbt test sozinho nao mexe no rodape; texto com aspas e escapado."""
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("select processado_em from marts.atualizacao_dados")
+        processado = cur.fetchone()[0]
+    antes = execucoes(database)
+    dbt(env, "test")
+    check_metadados(database, antes, comando="test")
+    with closing(connect(database)) as conn, conn.cursor() as cur:
+        cur.execute("select processado_em from marts.atualizacao_dados")
+        assert cur.fetchone()[0] == processado, "dbt test alterou atualizacao_dados"
+    dbt(env, "run-operation", "testa_texto_sql")
+    print("OK: metadados por invocacao; dbt test nao altera o rodape; aspas escapadas", flush=True)
+
+
 def main():
     database = "olist_incremental_check_" + uuid.uuid4().hex
     env = dict(os.environ, POSTGRES_DB=database, OLIST_DATA_DIR=str(ROOT / "data/sample"))
@@ -164,8 +208,10 @@ def main():
                POSTGRES_USER=PG["user"], POSTGRES_PASSWORD=PG["password"])
 
     def build(*args):
+        antes = execucoes(database)
         subprocess.run([sys.executable, "-m", "dbt.cli.main", "build", "--profiles-dir", ".", *args],
                        cwd=ROOT / "dbt", env=env, check=True)
+        check_metadados(database, antes)
 
     with closing(connect(PG["dbname"])) as admin:
         admin.autocommit = True
@@ -175,11 +221,14 @@ def main():
             subprocess.run([sys.executable, str(ROOT / "ingestion/ingest.py")],
                            cwd=ROOT, env=env, check=True)
             check_freshness(database, env)
-            build()
+            # Parse completo num build: os hooks sao renderizados sem o grafo
+            # carregado, e uma macro que use graph/results sem "execute" quebra aqui.
+            build("--no-partial-parse")
             baseline = snapshot(database, physical=True)
             build()
             assert snapshot(database, physical=True) == baseline, "Reexecucao reescreveu/duplicou fatos"
             print("OK: build repetido conserva linhas e versoes fisicas", flush=True)
+            check_metadados_extras(database, env)
 
             old_order, new_order, cloned_items = change_sample(database)
             build()

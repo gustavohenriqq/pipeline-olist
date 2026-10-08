@@ -46,3 +46,9 @@ models:
 # Ver macros/previsao_atraso.sql.
 on-run-start:
   - "{{ cria_tabela_previsao() }}"
+  - "{{ cria_tabelas_metadados() }}"
+
+# Registra cada invocacao e cada no em meta.*, e o rodape do dashboard em
+# marts.atualizacao_dados (so no build). Ver macros/metadados.sql.
+on-run-end:
+  - "{{ grava_metadados(results) }}"

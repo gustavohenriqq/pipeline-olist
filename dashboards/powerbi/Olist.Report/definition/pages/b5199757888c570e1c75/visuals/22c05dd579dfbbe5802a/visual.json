@@ -76,5 +76,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "8f23ca50c38267fd9358",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_clientes"
+              }
+            },
+            "Property": "regiao"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
   }
 }

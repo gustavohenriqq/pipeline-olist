@@ -351,10 +351,7 @@ Link do dashboard publicado: **[https://datastudio.google.com/reporting/f66379d8
 
 ## Power BI (Etapa 5)
 
-- Conectar via Import ao Postgres/Azure SQL.
-- Diferente do Looker, o Power BI trabalha bem com star schema: ligue
-  `fato_pedidos` e `fato_itens_pedido` às dimensões pelas chaves `_sk` e ignore
-  as OBTs. O motor VertiPaq foi feito para modelo dimensional.
-- Medidas DAX, RLS por região/vendedor e OLS para métricas sensíveis.
-
-Os arquivos `.pbix` e os prints ficam nesta pasta e em `docs/prints/`.
+O relatório do Power BI é um projeto PBIP versionado em
+[dashboards/powerbi/](powerbi/README.md): modelo em TMDL, relatório em PBIR, prints
+e PDF em `docs/prints/`. Diferente do Looker, ele liga direto no star schema
+(`fato_pedidos` e `fato_itens_pedido` com as dimensões) e ignora as OBTs.

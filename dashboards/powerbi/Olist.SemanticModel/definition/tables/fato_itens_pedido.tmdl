@@ -1,0 +1,79 @@
+/// Fato no grao de item: e onde produto e vendedor se ligam.
+table fato_itens_pedido
+	lineageTag: 5e395a75-40c3-4597-afdd-a377851bad0d
+
+	column item_sk
+		dataType: string
+		isHidden
+		lineageTag: bdd54a52-6e42-4ea0-84ea-de09d870b670
+		summarizeBy: none
+		sourceColumn: item_sk
+
+	column order_id
+		dataType: string
+		isHidden
+		lineageTag: 30046145-0d0b-40fe-ac04-52d9f407cb81
+		summarizeBy: none
+		sourceColumn: order_id
+
+	column produto_sk
+		dataType: string
+		isHidden
+		lineageTag: 39080476-acbc-4e88-a196-ad3adc452d6c
+		summarizeBy: none
+		sourceColumn: produto_sk
+
+	column vendedor_sk
+		dataType: string
+		isHidden
+		lineageTag: ff0593c2-4744-42d4-8ec4-919602e8aba5
+		summarizeBy: none
+		sourceColumn: vendedor_sk
+
+	column cliente_sk
+		dataType: string
+		isHidden
+		lineageTag: f35ab7cc-d391-49d8-bcaf-6e3a1d959720
+		summarizeBy: none
+		sourceColumn: cliente_sk
+
+	column tempo_sk_compra
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b38f97a0-2b54-409e-8ef3-50f9ad3a5e40
+		summarizeBy: none
+		sourceColumn: tempo_sk_compra
+
+	column valor_produto
+		dataType: decimal
+		formatString: \R$ #,0.00
+		lineageTag: 133d974f-3542-4417-a249-19aa6eb17337
+		summarizeBy: sum
+		sourceColumn: valor_produto
+
+	column valor_frete
+		dataType: decimal
+		formatString: \R$ #,0.00
+		lineageTag: 95471d02-16ee-44cf-8e55-28862a181529
+		summarizeBy: sum
+		sourceColumn: valor_frete
+
+	column valor_item
+		dataType: decimal
+		formatString: \R$ #,0.00
+		lineageTag: cab6a2a6-a279-4313-9361-1c767529b321
+		summarizeBy: sum
+		sourceColumn: valor_item
+
+	partition fato_itens_pedido = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "fato_itens_pedido"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"item_sk", "order_id", "produto_sk", "vendedor_sk", "cliente_sk", "tempo_sk_compra", "valor_produto", "valor_frete", "valor_item"}),
+				    Tipos = Table.TransformColumnTypes(Colunas, {{"valor_produto", Currency.Type}, {"valor_frete", Currency.Type}, {"valor_item", Currency.Type}})
+				in
+				    Tipos
+

@@ -114,7 +114,7 @@
         when 'telefonia' then 'Telefonia'
         when 'telefonia_fixa' then 'Telefonia Fixa'
         when 'utilidades_domesticas' then 'Utilidades Domésticas'
-        else coalesce(initcap(replace({{ coluna }}, '_', ' ')), 'Não informada')
+        else coalesce(initcap(replace({{ coluna }}, '_', ' ')), 'Sem categoria')
     end
 {% endmacro %}
 
@@ -132,12 +132,12 @@
   telefonia fica com eletronicos, e nao sozinha, e as cinco variacoes de
   construcao viram um grupo so.
 
-  Os 1.603 itens sem categoria na origem viram 'Não informada' em vez de nulo,
+  Os 1.603 itens sem categoria na origem viram 'Sem categoria' em vez de nulo,
   para aparecerem no relatorio em vez de sumirem silenciosamente.
 #}
 {% macro categoria_macro(coluna) %}
     case
-        when {{ coluna }} is null then 'Não informada'
+        when {{ coluna }} is null then 'Sem categoria'
 
         when {{ coluna }} in (
             'cama_mesa_banho', 'utilidades_domesticas', 'casa_conforto', 'casa_conforto_2',

@@ -1,0 +1,28 @@
+relationship fato_pedidos_dim_tempo
+	fromColumn: fato_pedidos.tempo_sk_compra
+	toColumn: dim_tempo.tempo_sk
+
+relationship fato_itens_pedido_dim_tempo
+	fromColumn: fato_itens_pedido.tempo_sk_compra
+	toColumn: dim_tempo.tempo_sk
+
+relationship fato_pedidos_dim_clientes
+	fromColumn: fato_pedidos.cliente_sk
+	toColumn: dim_clientes.cliente_sk
+
+relationship fato_itens_pedido_dim_clientes
+	fromColumn: fato_itens_pedido.cliente_sk
+	toColumn: dim_clientes.cliente_sk
+
+relationship fato_itens_pedido_dim_produtos
+	fromColumn: fato_itens_pedido.produto_sk
+	toColumn: dim_produtos.produto_sk
+
+relationship fato_itens_pedido_dim_vendedores
+	fromColumn: fato_itens_pedido.vendedor_sk
+	toColumn: dim_vendedores.vendedor_sk
+
+relationship previsao_atraso_fato_pedidos
+	fromColumn: previsao_atraso.pedido_sk
+	toColumn: fato_pedidos.pedido_sk
+

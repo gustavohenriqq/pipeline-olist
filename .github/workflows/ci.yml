@@ -80,17 +80,20 @@ jobs:
           cd "$RUNNER_TEMP/base/dbt"
           dbt parse --profiles-dir . --target-path "$RUNNER_TEMP/estado_base"
 
-      # "+state:modified+": o que mudou, o que depende disso e tambem os
-      # ancestrais. Os ancestrais entram porque o banco do CI comeca vazio e nao
-      # existe ambiente de producao para --defer. Num warehouse de verdade, o
-      # certo seria "state:modified+ --defer --state <manifest de producao>".
+      # "@state:modified": o que mudou, o que depende disso e todos os
+      # ancestrais desses dependentes. O banco do CI comeca vazio e nao existe
+      # producao para --defer, entao cada model selecionado precisa ter todos os
+      # pais construidos. "+state:modified+" nao basta: mudar dim_produtos
+      # seleciona obt_itens, que tambem le fato_itens_pedido, e o fato ficava de
+      # fora. Num warehouse de verdade, o certo seria
+      # "state:modified+ --defer --state <manifest de producao>".
       - name: Selecao do dbt (PR)
         if: github.event_name == 'pull_request'
         id: selecao
         working-directory: dbt
         run: |
           set -o pipefail   # sem isso, uma falha do dbt ls some atras do tee
-          dbt --quiet ls --profiles-dir . --select +state:modified+ \
+          dbt --quiet ls --profiles-dir . --select @state:modified \
             --state "$RUNNER_TEMP/estado_base" --resource-type model --output name \
             | tee "$RUNNER_TEMP/selecao.txt"
           echo "models selecionados: $(grep -c . "$RUNNER_TEMP/selecao.txt" || true)"
@@ -101,7 +104,7 @@ jobs:
       - name: dbt build so do que mudou (PR)
         if: github.event_name == 'pull_request'
         working-directory: dbt
-        run: dbt build --profiles-dir . --select +state:modified+ --state "$RUNNER_TEMP/estado_base"
+        run: dbt build --profiles-dir . --select @state:modified --state "$RUNNER_TEMP/estado_base"
 
       # ---- Push na main: tudo ----
 

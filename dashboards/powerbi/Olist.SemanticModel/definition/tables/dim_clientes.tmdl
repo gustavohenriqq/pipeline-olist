@@ -1,0 +1,52 @@
+/// Cliente no grao de pessoa. Identificacao protegida por OLS no papel Vendedor.
+table dim_clientes
+	lineageTag: 0aff9529-fc9c-4701-9d53-b789f9233ffc
+
+	column cliente_sk
+		dataType: string
+		isHidden
+		lineageTag: 2f0f49b5-f650-4bf4-85c0-d2842c7eaae3
+		summarizeBy: none
+		sourceColumn: cliente_sk
+
+	column customer_unique_id
+		dataType: string
+		lineageTag: 68efb084-4a6a-433b-b7ee-246fa9276721
+		summarizeBy: none
+		sourceColumn: customer_unique_id
+
+	column zip_code_prefix
+		dataType: int64
+		formatString: 0
+		lineageTag: c93a41ad-9986-493d-abfc-5beb336d6e2e
+		summarizeBy: none
+		sourceColumn: zip_code_prefix
+
+	column cidade
+		dataType: string
+		lineageTag: 6baf82fd-dcbf-45cc-9bfb-73d1046394ca
+		summarizeBy: none
+		sourceColumn: cidade
+
+	column uf
+		dataType: string
+		lineageTag: 45969726-1a97-4726-b49f-82b23b7b97a7
+		summarizeBy: none
+		sourceColumn: uf
+
+	column regiao
+		dataType: string
+		lineageTag: fbac294d-6520-4acc-b9bd-69e2fe91f173
+		summarizeBy: none
+		sourceColumn: regiao
+
+	partition dim_clientes = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "dim_clientes"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"cliente_sk", "customer_unique_id", "zip_code_prefix", "cidade", "uf", "regiao"})
+				in
+				    Colunas
+

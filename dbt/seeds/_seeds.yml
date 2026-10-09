@@ -1,0 +1,40 @@
+version: 2
+
+seeds:
+  - name: seguranca_bi
+    description: >
+      Usuarios ficticios (@exemplo.com.br) do RLS dinamico do Power BI: quem ve
+      qual regiao ou quais vendedores. Uma linha por usuario e recorte; um
+      vendedor com duas contas tem duas linhas. Ver dashboards/powerbi/README.md.
+    config:
+      column_types:
+        email: text
+        perfil: text
+        regiao: text
+        seller_id: text
+    data_tests:
+      - combinacao_unica:
+          arguments:
+            combination_of_columns: [email, regiao, seller_id]
+    columns:
+      - name: email
+        data_tests: [not_null]
+      - name: perfil
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Diretoria", "Gerente regional", "Vendedor"]
+      - name: regiao
+        description: Preenchida so no perfil Gerente regional.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"]
+      - name: seller_id
+        description: Preenchido so no perfil Vendedor; precisa existir em dim_vendedores.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_vendedores')
+                field: seller_id

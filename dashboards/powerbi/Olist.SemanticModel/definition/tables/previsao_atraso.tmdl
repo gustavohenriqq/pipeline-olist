@@ -1,25 +1,30 @@
 /// Previsao de atraso da Etapa 4. So teste e em_andamento sao honestos.
 table previsao_atraso
+	lineageTag: 71c0a9dd-5bfe-464d-9f0f-e96c1c8f92d2
 
 	column pedido_sk
 		dataType: string
 		isHidden
+		lineageTag: 3b5d1afb-12e5-4aca-b688-c1e7c2a6c13d
 		summarizeBy: none
 		sourceColumn: pedido_sk
 
 	column prob_atraso
 		dataType: double
 		formatString: 0.0%
+		lineageTag: 1e0ccee2-8a03-4475-90e7-7dd85663b856
 		summarizeBy: none
 		sourceColumn: prob_atraso
 
 	column alerta
 		dataType: boolean
+		lineageTag: a267bc97-7e28-4b32-8418-fa034cad26f6
 		summarizeBy: none
 		sourceColumn: alerta
 
 	column conjunto
 		dataType: string
+		lineageTag: 5c6caece-567d-4df4-a5b2-78516f383b23
 		summarizeBy: none
 		sourceColumn: conjunto
 
@@ -33,3 +38,4 @@ table previsao_atraso
 				    Tipos = Table.TransformColumnTypes(Colunas, {{"prob_atraso", type number}})
 				in
 				    Tipos
+

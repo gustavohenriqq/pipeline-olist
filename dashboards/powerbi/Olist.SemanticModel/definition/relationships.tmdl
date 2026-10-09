@@ -25,3 +25,4 @@ relationship fato_itens_pedido_dim_vendedores
 relationship previsao_atraso_fato_pedidos
 	fromColumn: previsao_atraso.pedido_sk
 	toColumn: fato_pedidos.pedido_sk
+

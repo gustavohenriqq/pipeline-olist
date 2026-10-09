@@ -1,11 +1,13 @@
 /// Calendario. Marcada como tabela de datas pela coluna data.
 table dim_tempo
+	lineageTag: 4ee0a67b-0a44-4ade-9e75-811c1fd74ae6
 	dataCategory: Time
 
 	column tempo_sk
 		dataType: int64
 		isHidden
 		formatString: 0
+		lineageTag: e4975e2b-e585-4790-b821-9cba0c83182a
 		summarizeBy: none
 		sourceColumn: tempo_sk
 
@@ -13,34 +15,42 @@ table dim_tempo
 		dataType: dateTime
 		isKey
 		formatString: dd/mm/yyyy
+		lineageTag: 5d3fb3bc-2dde-4955-ae5a-a0f3c8d08710
 		summarizeBy: none
 		sourceColumn: data
+
+		annotation UnderlyingDateTimeDataType = Date
 
 	column ano
 		dataType: int64
 		formatString: 0
+		lineageTag: 454e9b57-f998-4792-b491-9f81098102af
 		summarizeBy: none
 		sourceColumn: ano
 
 	column mes
 		dataType: int64
 		formatString: 0
+		lineageTag: d6b9ab5c-3c2e-4a39-8b43-9438ab174778
 		summarizeBy: none
 		sourceColumn: mes
 
 	column trimestre
 		dataType: int64
 		formatString: 0
+		lineageTag: 6904d741-f2ff-4b75-b56f-e68b2ab2909e
 		summarizeBy: none
 		sourceColumn: trimestre
 
 	column nome_mes
 		dataType: string
+		lineageTag: 59d4afaa-8178-465f-95d5-8d32daf1614e
 		summarizeBy: none
 		sourceColumn: nome_mes
 
 	column ano_mes
 		dataType: string
+		lineageTag: 0103a6d1-b33c-4081-9b07-457823fc6202
 		summarizeBy: none
 		sourceColumn: ano_mes
 
@@ -53,3 +63,4 @@ table dim_tempo
 				    Colunas = Table.SelectColumns(Tabela, {"tempo_sk", "data", "ano", "mes", "trimestre", "nome_mes", "ano_mes"})
 				in
 				    Colunas
+

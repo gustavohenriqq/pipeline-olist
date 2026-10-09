@@ -1,29 +1,35 @@
 /// Vendedor, filtrado pelo RLS no papel Vendedor.
 table dim_vendedores
+	lineageTag: 69543ca4-7482-4f58-946e-1049e5605429
 
 	column vendedor_sk
 		dataType: string
 		isHidden
+		lineageTag: ce7186de-6b70-41b8-91cd-5549389f1ff0
 		summarizeBy: none
 		sourceColumn: vendedor_sk
 
 	column seller_id
 		dataType: string
+		lineageTag: a8bfdc3f-c276-4a68-b187-977c61a4fe98
 		summarizeBy: none
 		sourceColumn: seller_id
 
 	column cidade
 		dataType: string
+		lineageTag: 0aa16429-6313-4f3b-8b61-6976e6d7eb8d
 		summarizeBy: none
 		sourceColumn: cidade
 
 	column uf
 		dataType: string
+		lineageTag: d7cbf4fb-789d-4b3f-a1ae-6414f2f8f9e5
 		summarizeBy: none
 		sourceColumn: uf
 
 	column regiao
 		dataType: string
+		lineageTag: 88293a88-afa7-4dcc-ab65-ad95bbcb1ace
 		summarizeBy: none
 		sourceColumn: regiao
 
@@ -36,3 +42,4 @@ table dim_vendedores
 				    Colunas = Table.SelectColumns(Tabela, {"vendedor_sk", "seller_id", "cidade", "uf", "regiao"})
 				in
 				    Colunas
+

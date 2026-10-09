@@ -26,16 +26,21 @@ $Pasta = $PSScriptRoot
 $Raiz = (Resolve-Path (Join-Path $Pasta "..\..\..")).Path
 
 # --- Motor local do Power BI Desktop -----------------------------------------
-$espacos = Join-Path $env:LOCALAPPDATA "Packages\Microsoft.MicrosoftPowerBIDesktop_8wekyb3d8bbwe\LocalState\AnalysisServicesWorkspaces"
+# A pasta de trabalho do motor muda entre a versao da loja e a instalada; o
+# caminho certo esta na linha de comando do msmdsrv (-s "<pasta>\Data").
 $portas = @()
-if (Test-Path $espacos) {
-    $portas = Get-ChildItem $espacos -Directory |
-        Sort-Object LastWriteTime -Descending |
-        ForEach-Object { Join-Path $_.FullName "Data\msmdsrv.port.txt" } |
-        Where-Object { Test-Path $_ }
+foreach ($p in Get-CimInstance Win32_Process -Filter "Name='msmdsrv.exe'") {
+    if ($p.CommandLine -match '-s\s+"([^"]+)"') {
+        $arquivo = Join-Path $Matches[1] "msmdsrv.port.txt"
+        if (Test-Path $arquivo) { $portas += $arquivo }
+    }
 }
-if (-not $portas -or -not (Get-Process msmdsrv -ErrorAction SilentlyContinue)) {
+if (-not $portas) {
     Write-Host "Power BI Desktop nao esta aberto com o modelo (motor local nao encontrado)."
+    exit 1
+}
+if ($portas.Count -gt 1) {
+    Write-Host "Mais de um Power BI Desktop aberto; feche os outros e deixe so o Olist.pbip."
     exit 1
 }
 $porta = (Get-Content $portas[0] -Encoding Unicode | Select-Object -First 1).Trim()

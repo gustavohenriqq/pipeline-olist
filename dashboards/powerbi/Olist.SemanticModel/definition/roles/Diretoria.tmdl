@@ -1,0 +1,8 @@
+/// Ve tudo. Existe como papel para ficar explicito quem tem acesso total.
+role Diretoria
+	modelPermission: read
+
+	tablePermission seguranca_bi = [email] = USERPRINCIPALNAME ()
+
+	annotation PBI_Id = 9085f5c8da094c42a8b211a9dd55f112
+

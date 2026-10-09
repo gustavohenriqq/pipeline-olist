@@ -1,0 +1,38 @@
+/// Ve so os proprios itens e os pedidos que os contem. OLS: sem as colunas que identificam
+/// o cliente (cliente_sk segue nos fatos, oculto: e um pseudonimo, nao um dado direto).
+role Vendedor
+	modelPermission: read
+
+	tablePermission seguranca_bi = [email] = USERPRINCIPALNAME ()
+
+	tablePermission dim_vendedores =
+			[seller_id]
+			    IN CALCULATETABLE (
+			        VALUES ( seguranca_bi[seller_id] ),
+			        seguranca_bi[email] = USERPRINCIPALNAME ()
+			    )
+
+	tablePermission fato_pedidos =
+			VAR vendedores =
+			    CALCULATETABLE (
+			        VALUES ( seguranca_bi[seller_id] ),
+			        seguranca_bi[email] = USERPRINCIPALNAME ()
+			    )
+			VAR pedidos =
+			    CALCULATETABLE (
+			        VALUES ( fato_itens_pedido[order_id] ),
+			        TREATAS ( vendedores, dim_vendedores[seller_id] )
+			    )
+			RETURN
+			    [order_id] IN pedidos
+
+	tablePermission dim_clientes
+
+		columnPermission customer_unique_id = none
+
+		columnPermission zip_code_prefix = none
+
+		columnPermission cidade = none
+
+	annotation PBI_Id = 0f25a731146d4b0785cb70a564bf334f
+

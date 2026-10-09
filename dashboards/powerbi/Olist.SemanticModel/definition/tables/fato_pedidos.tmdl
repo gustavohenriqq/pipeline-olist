@@ -1,0 +1,125 @@
+/// Fato no grao de pedido: receita, entrega e nota.
+table fato_pedidos
+	lineageTag: d300906d-f239-4b98-96b4-4a5f61604242
+
+	column pedido_sk
+		dataType: string
+		isHidden
+		lineageTag: fc184f22-d2ac-43f3-af97-5dd6189ba463
+		summarizeBy: none
+		sourceColumn: pedido_sk
+
+	column order_id
+		dataType: string
+		isHidden
+		lineageTag: b107bf2e-2615-4ea5-921e-f7430d300534
+		summarizeBy: none
+		sourceColumn: order_id
+
+	column cliente_sk
+		dataType: string
+		isHidden
+		lineageTag: d42c57bb-bf60-4edf-bf57-eaca18a7a8fd
+		summarizeBy: none
+		sourceColumn: cliente_sk
+
+	column tempo_sk_compra
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b19f4b01-dab8-4562-abb5-c4b958197dd5
+		summarizeBy: none
+		sourceColumn: tempo_sk_compra
+
+	column valor_total
+		dataType: decimal
+		formatString: \R$ #,0.00
+		lineageTag: 59155e84-b984-4d69-acdc-8da807da4042
+		summarizeBy: sum
+		sourceColumn: valor_total
+
+	column valor_itens
+		dataType: decimal
+		formatString: \R$ #,0.00
+		lineageTag: 09bd697a-451e-4e91-ba48-8a1f31693d2c
+		summarizeBy: sum
+		sourceColumn: valor_itens
+
+	column valor_frete
+		dataType: decimal
+		formatString: \R$ #,0.00
+		lineageTag: c70cd949-5a60-435e-b896-870d0a1ae07e
+		summarizeBy: sum
+		sourceColumn: valor_frete
+
+	column qtd_itens
+		dataType: int64
+		formatString: 0
+		lineageTag: 1cd35b1b-8daa-4a13-9556-1b9db60bc311
+		summarizeBy: sum
+		sourceColumn: qtd_itens
+
+	column entregue_no_prazo
+		dataType: boolean
+		lineageTag: 55081b28-fa52-4080-8362-c90c9c3c64ad
+		summarizeBy: none
+		sourceColumn: entregue_no_prazo
+
+	column nota_avaliacao
+		dataType: int64
+		formatString: 0
+		lineageTag: 4391edbd-cba9-4950-baed-81d9782e3949
+		summarizeBy: none
+		sourceColumn: nota_avaliacao
+
+	column atraso_dias
+		dataType: int64
+		formatString: 0
+		lineageTag: 03bbcfdb-8ff6-4996-b4b9-ecce3daffd75
+		summarizeBy: none
+		sourceColumn: atraso_dias
+
+	column situacao_pedido
+		dataType: string
+		lineageTag: e98f9a97-5d54-4b1f-b31a-ab0ad54dd22d
+		summarizeBy: none
+		sourceColumn: situacao_pedido
+
+	/// Codigo curto do pedido para leitura (o order_id tem 32 caracteres).
+	column pedido_codigo
+		dataType: string
+		lineageTag: 222de9cf-6017-4982-bde5-f8f0ad9ac9b9
+		summarizeBy: none
+		sourceColumn: pedido_codigo
+
+	column data_compra
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 4b36b6fd-95cc-449d-b7c0-3837df2f4855
+		summarizeBy: none
+		sourceColumn: data_compra
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column entrega_prevista
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 41b82d7e-31f2-4158-a711-a770d1bc2ece
+		summarizeBy: none
+		sourceColumn: entrega_prevista
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition fato_pedidos = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "fato_pedidos"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"pedido_sk", "order_id", "cliente_sk", "tempo_sk_compra", "valor_total", "valor_itens", "valor_frete", "qtd_itens", "entregue_no_prazo", "nota_avaliacao", "atraso_dias", "situacao_pedido", "purchased_at", "estimated_delivery_at"}),
+				    Codigo = Table.AddColumn(Colunas, "pedido_codigo", each "#" & Text.Start([order_id], 10), type text),
+				    Nomes = Table.RenameColumns(Codigo, {{"purchased_at", "data_compra"}, {"estimated_delivery_at", "entrega_prevista"}}),
+				    Tipos = Table.TransformColumnTypes(Nomes, {{"data_compra", type date}, {"entrega_prevista", type date}, {"valor_total", Currency.Type}, {"valor_itens", Currency.Type}, {"valor_frete", Currency.Type}})
+				in
+				    Tipos
+

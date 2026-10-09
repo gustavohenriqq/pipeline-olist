@@ -1,0 +1,31 @@
+model Model
+	culture: pt-BR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: pt-BR
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+annotation PBI_QueryOrder = ["dim_clientes","dim_produtos","dim_tempo","dim_vendedores","fato_itens_pedido","fato_pedidos","previsao_atraso","seguranca_bi","ServidorPostgres","BancoPostgres"]
+
+ref table dim_clientes
+ref table dim_produtos
+ref table dim_tempo
+ref table dim_vendedores
+ref table fato_itens_pedido
+ref table fato_pedidos
+ref table previsao_atraso
+ref table seguranca_bi
+ref table _Medidas
+
+ref role Diretoria
+ref role 'Gerente regional'
+ref role Vendedor
+
+ref cultureInfo pt-BR
+

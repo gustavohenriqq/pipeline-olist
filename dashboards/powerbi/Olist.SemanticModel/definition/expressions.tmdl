@@ -1,0 +1,12 @@
+/// Servidor do Postgres com as marts (host:porta). Para o Neon, trocar aqui.
+expression ServidorPostgres = "localhost:5432" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 9a056d5a-d595-4e93-801f-c097e27c7159
+
+	annotation PBI_ResultType = Text
+
+/// Banco do Postgres com o schema marts.
+expression BancoPostgres = "olist" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: ff42ef00-fa01-43cf-be7f-8539dacbde2b
+
+	annotation PBI_ResultType = Text
+

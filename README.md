@@ -56,9 +56,10 @@ O ciclo fecha quando a previsão do modelo aparece no mesmo dashboard que a
 análise usou para achar o problema. O plano completo, incluindo o que foi
 descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 
-> Status: **Etapas 1 a 4 concluídas** no dataset completo, com o dashboard
-> publicado. `dbt build` com 103 nós ok, 3 avisos propositais e 0 erro (22
-> models e 84 testes), e cada execução fica registrada no próprio banco. No CI,
+> Status: **Etapas 1 a 5 concluídas** no dataset completo, com o dashboard
+> publicado e o relatório do Power BI versionado. `dbt build` com 0 erro (22
+> models, 1 seed e 93 testes, 3 deles avisos propositais), e cada execução fica
+> registrada no próprio banco. No CI,
 > cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
 > validação de idempotência, janela e metadados.
 
@@ -98,6 +99,24 @@ demais marts.
   ROC-AUC 1,000: o número que um modelo inútil mostraria.
 
 Resultados, auditoria de features e limites: [docs/modelo-atraso.md](docs/modelo-atraso.md).
+
+### Power BI (Etapa 5)
+
+Relatório executivo em três páginas sobre o star schema, versionado em texto
+(modelo em TMDL, relatório em PBIR) e conferido contra o SQL por um teste
+automático que consulta o modelo por DAX.
+
+- **DAX de inteligência de tempo e de risco:** variação mensal, acumulado no ano,
+  ano anterior, atraso em excesso contra a taxa nacional (RJ em +659, o mesmo da
+  Etapa 2) e receita em risco a partir da previsão da Etapa 4.
+- **RLS dinâmico:** os acessos vêm de uma tabela de usuários (seed do dbt), não de
+  um papel por região. Gerente vê as próprias regiões, vendedor vê os próprios
+  itens, e quem não está na tabela não vê nada.
+- **OLS:** no papel Vendedor, as colunas que identificam o cliente não existem.
+- **O teste pegou um erro real:** em DAX, `BLANK() = FALSE()` é verdadeiro, e a
+  medida de atrasos contava os 2.965 pedidos ainda sem entrega.
+
+Como abrir, segurança, conferência e armadilhas: [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 
 Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn e Power BI.**
 
@@ -304,7 +323,7 @@ pipeline-olist/
 │   └── artefatos/            # metricas.json versionado (modelo.joblib fora do Git)
 ├── tests/                    # testes Python do modelo (pytest)
 ├── scripts/                  # gerar_amostra.py, publicar_marts.py
-├── dashboards/               # guia do Looker Studio e notas de Power BI
+├── dashboards/               # guia do Looker Studio e projeto Power BI (PBIP)
 ├── docs/                     # diagramas e decisões
 ├── docker-compose.yml        # Postgres + pgAdmin
 ├── Makefile                  # atalhos (make pipeline, make dbt-run, ...)
@@ -352,11 +371,15 @@ python scripts/publicar_marts.py                # espelha as marts no Neon
 O passo a passo completo de conexão, as páginas sugeridas e os números de conferência estão em [dashboards/README.md](dashboards/README.md).
 
 - **Looker Studio (público):** **[Visão Geral Comercial](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)**. Cards, evolução de vendas, taxa de atraso por região, receita por categoria, distribuição das notas e mapa de receita por estado, todos conferidos contra o banco. A configuração de cada componente e as armadilhas do Looker encontradas no caminho estão em [dashboards/README.md](dashboards/README.md).
-- **Power BI (Etapa 5):** dashboard executivo com DAX avançado, RLS por região e vendedor e OLS para métricas sensíveis. Ali o consumo é do star schema, não das OBTs.
+- **Power BI (versionado, não publicado):** relatório executivo em três páginas com DAX de inteligência de tempo, RLS dinâmico por região e vendedor e OLS sobre os dados do cliente. Consome o star schema, não as OBTs. Projeto, prints e PDF em [dashboards/powerbi/](dashboards/powerbi/README.md).
 
 [![Visão Geral Comercial no Looker Studio](docs/prints/visao-geral-comercial.png)](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)
 
 *Página inicial do relatório, janela de jan/2017 a ago/2018. Clique na imagem para abrir a versão interativa.*
+
+![Visão executiva no Power BI](docs/prints/powerbi-executivo.png)
+
+*Visão executiva do Power BI, na mesma janela. As outras páginas: [Entrega e risco](docs/prints/powerbi-entrega-risco.png) e [Vendedores](docs/prints/powerbi-vendedores.png).*
 
 ---
 
@@ -369,7 +392,7 @@ uma, está no [ROADMAP.md](ROADMAP.md). Resumo:
 2. **Análise do atraso** (concluída): documento com recomendação e número, investigando por que a curva de nota não é monótona.
 3. **Confiabilidade no dbt** (concluída): models incrementais, idempotência, reprocessamento por janela, freshness, metadados de execução e CI enxuto. Detalhes em [docs/confiabilidade.md](docs/confiabilidade.md).
 4. **Previsão de atraso** (concluída): classificador treinado só com informação disponível no ato da compra, com inferência escrita de volta nas marts. Resultados em [docs/modelo-atraso.md](docs/modelo-atraso.md).
-5. **Power BI avançado:** DAX, RLS por região e vendedor, OLS.
+5. **Power BI avançado** (concluída): DAX de inteligência de tempo, RLS dinâmico por região e vendedor e OLS, conferidos contra o SQL. Detalhes em [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 6. **Agente de IA** (opcional): LangChain sobre as marts, com usuário somente leitura.
 
 Três mudanças de rota, todas por evidência nos dados:

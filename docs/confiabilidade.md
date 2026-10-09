@@ -170,18 +170,22 @@ cada PR rodava duas vezes, e todo push reconstruía o projeto inteiro.
 
 | Evento | O que roda |
 |---|---|
-| `pull_request` | pytest, ingestão, freshness; `dbt build --select +state:modified+` contra o manifest da branch base; validação incremental só se os fatos estiverem na seleção |
+| `pull_request` | pytest, ingestão, freshness; `dbt build --select @state:modified` contra o manifest da branch base; validação incremental só se os fatos estiverem na seleção |
 | `push` na `main` | pytest, ingestão, freshness, `dbt build` completo e validação incremental |
 
 O manifest da base vem de um `git worktree` da branch base com `dbt parse`, que
 não precisa de banco. Um PR que só mexe em documentação, no dashboard ou no Python
 do modelo seleciona zero models e não reconstrói nada.
 
-**Por que `+state:modified+` e não `--defer`.** O padrão em produção é
+**Por que `@state:modified` e não `--defer`.** O padrão em produção é
 `state:modified+ --defer`: constrói só o que mudou e lê o resto do ambiente de
 produção. Aqui o banco do CI começa vazio a cada execução e não existe produção
-para onde adiar, então os ancestrais do que mudou também entram (o `+` da
-esquerda). Com este projeto pequeno, o ganho real é o caso de seleção vazia.
+para onde adiar, então cada model selecionado precisa ter todos os pais
+construídos. O `@` faz isso: pega o que mudou, os dependentes e todos os
+ancestrais desses dependentes. A primeira versão usava `+state:modified+`, que só
+traz os ancestrais do que mudou; na Etapa 5, mudar `dim_produtos` selecionou
+`obt_itens`, que também lê `fato_itens_pedido`, e o fato ficou de fora. Com este
+projeto pequeno, o ganho real é o caso de seleção vazia.
 
 **O que pode dar errado.** Uma mudança que quebra algo fora da seleção, como um
 hook do projeto ou uma tabela criada por hook, só aparece no build completo da

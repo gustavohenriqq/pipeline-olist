@@ -1,0 +1,39 @@
+/// Usuarios ficticios do RLS dinamico. Oculta e sem relacao.
+table seguranca_bi
+	isHidden
+	lineageTag: d96d6457-c059-405e-8dec-f8f049769ae5
+
+	column email
+		dataType: string
+		lineageTag: 6867a146-8da1-4615-a8ff-16932a82a2d3
+		summarizeBy: none
+		sourceColumn: email
+
+	column perfil
+		dataType: string
+		lineageTag: 7c88b2d8-657c-4fe1-ba3d-28796b1708b8
+		summarizeBy: none
+		sourceColumn: perfil
+
+	column regiao
+		dataType: string
+		lineageTag: 9e985cde-1895-46e2-bffb-3a37c2b2d593
+		summarizeBy: none
+		sourceColumn: regiao
+
+	column seller_id
+		dataType: string
+		lineageTag: 59154451-b013-4604-aa83-11721de4ed07
+		summarizeBy: none
+		sourceColumn: seller_id
+
+	partition seguranca_bi = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
+				    Tabela = Fonte{[Schema = "marts", Item = "seguranca_bi"]}[Data],
+				    Colunas = Table.SelectColumns(Tabela, {"email", "perfil", "regiao", "seller_id"})
+				in
+				    Colunas
+

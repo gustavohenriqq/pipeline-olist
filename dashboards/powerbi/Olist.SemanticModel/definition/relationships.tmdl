@@ -1,6 +1,3 @@
-/// Todas um para muitos, com filtro numa direcao: da dimensao para o fato.
-/// produto e vendedor so ligam no fato de itens (um pedido tem varios).
-
 relationship fato_pedidos_dim_tempo
 	fromColumn: fato_pedidos.tempo_sk_compra
 	toColumn: dim_tempo.tempo_sk
@@ -25,8 +22,6 @@ relationship fato_itens_pedido_dim_vendedores
 	fromColumn: fato_itens_pedido.vendedor_sk
 	toColumn: dim_vendedores.vendedor_sk
 
-/// Um para um no dado; modelada a partir do fato para o filtro das dimensoes
-/// chegar a previsao passando pelo fato_pedidos.
 relationship previsao_atraso_fato_pedidos
 	fromColumn: previsao_atraso.pedido_sk
 	toColumn: fato_pedidos.pedido_sk

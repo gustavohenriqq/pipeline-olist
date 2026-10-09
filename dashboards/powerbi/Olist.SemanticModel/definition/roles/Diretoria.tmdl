@@ -3,3 +3,4 @@ role Diretoria
 	modelPermission: read
 
 	tablePermission seguranca_bi = [email] = USERPRINCIPALNAME ()
+

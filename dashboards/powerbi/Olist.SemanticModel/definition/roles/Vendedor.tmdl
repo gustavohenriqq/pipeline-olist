@@ -32,3 +32,4 @@ role Vendedor
 		columnPermission zip_code_prefix = none
 
 		columnPermission cidade = none
+

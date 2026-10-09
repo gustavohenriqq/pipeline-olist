@@ -1,0 +1,5 @@
+/// Ve tudo. Existe como papel para ficar explicito quem tem acesso total.
+role Diretoria
+	modelPermission: read
+
+	tablePermission seguranca_bi = [email] = USERPRINCIPALNAME ()

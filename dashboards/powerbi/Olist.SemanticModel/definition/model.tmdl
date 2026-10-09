@@ -23,5 +23,9 @@ ref table previsao_atraso
 ref table seguranca_bi
 ref table _Medidas
 
+ref role Diretoria
+ref role 'Gerente regional'
+ref role Vendedor
+
 ref cultureInfo pt-BR
 

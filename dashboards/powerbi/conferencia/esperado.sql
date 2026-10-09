@@ -92,6 +92,15 @@ union all select 'variacao_mensal_2018_03',
     ((select receita from receita_mes where mes = '2018-03')
       / (select receita from receita_mes where mes = '2018-02') - 1)::text
 union all select 'variacao_mensal_2016_09', 'vazio'
+-- Destaques dos cartoes na janela padrao: ago/2018 contra jul/2018.
+union all select 'delta_receita_janela',
+    ((select receita from receita_mes where mes = '2018-08')
+      / (select receita from receita_mes where mes = '2018-07') - 1)::text
+union all select 'delta_pct_no_prazo_janela',
+    (((select avg(case when entregue_no_prazo then 1.0 else 0.0 end) from marts.fato_pedidos
+       where entregue_no_prazo is not null and to_char(purchased_at, 'YYYY-MM') = '2018-08')
+      - (select avg(case when entregue_no_prazo then 1.0 else 0.0 end) from marts.fato_pedidos
+       where entregue_no_prazo is not null and to_char(purchased_at, 'YYYY-MM') = '2018-07')) * 100)::text
 union all select 'pedidos_alerta', count(*)::text from honestas
 union all select 'receita_risco', sum(valor_total)::text from honestas
 union all select 'pedidos@' || email, count(distinct order_id)::text from visiveis group by email

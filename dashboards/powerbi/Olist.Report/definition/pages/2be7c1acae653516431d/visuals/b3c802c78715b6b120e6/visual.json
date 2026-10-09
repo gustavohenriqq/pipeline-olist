@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "b3c802c78715b6b120e6",
   "position": {
-    "x": 944,
-    "y": 288,
-    "z": 4000,
-    "height": 776,
-    "width": 952,
-    "tabOrder": 4000
+    "x": 940,
+    "y": 366,
+    "z": 9000,
+    "height": 690,
+    "width": 956,
+    "tabOrder": 9000
   },
   "visual": {
     "visualType": "tableEx",
@@ -110,9 +110,6 @@
                   "Value": "'Receita e atraso por vendedor'"
                 }
               }
-            },
-            "fontColor": {
-              "solid": {}
             }
           }
         }

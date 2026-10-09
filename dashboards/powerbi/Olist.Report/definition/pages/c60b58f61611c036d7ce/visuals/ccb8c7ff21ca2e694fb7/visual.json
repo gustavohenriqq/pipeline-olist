@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "ccb8c7ff21ca2e694fb7",
   "position": {
-    "x": 644,
-    "y": 288,
-    "z": 4000,
-    "height": 776,
+    "x": 640,
+    "y": 366,
+    "z": 9000,
+    "height": 690,
     "width": 600,
-    "tabOrder": 4000
+    "tabOrder": 9000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -70,6 +70,39 @@
         ]
       }
     },
+    "objects": {
+      "dataPoint": [
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Medidas"
+                        }
+                      },
+                      "Property": "Cor Atraso em Excesso"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
     "visualContainerObjects": {
       "title": [
         {
@@ -84,12 +117,9 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Atraso em excesso por UF (acima da taxa nacional)'"
+                  "Value": "'Atraso em excesso por UF (acima da taxa nacional em vermelho)'"
                 }
               }
-            },
-            "fontColor": {
-              "solid": {}
             }
           }
         }

@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "7ac353f3a0c57a90e2da",
   "position": {
-    "x": 1264,
-    "y": 288,
-    "z": 5000,
-    "height": 776,
-    "width": 632,
-    "tabOrder": 5000
+    "x": 1256,
+    "y": 366,
+    "z": 10000,
+    "height": 690,
+    "width": 640,
+    "tabOrder": 10000
   },
   "visual": {
     "visualType": "tableEx",
@@ -126,6 +126,53 @@
         ]
       }
     },
+    "objects": {
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Medidas"
+                        }
+                      },
+                      "Property": "Cor Prob. de Atraso"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "previsao_atraso.prob_atraso"
+          }
+        }
+      ]
+    },
     "visualContainerObjects": {
       "title": [
         {
@@ -143,9 +190,6 @@
                   "Value": "'Pedidos em andamento comprados no período, por probabilidade de atraso'"
                 }
               }
-            },
-            "fontColor": {
-              "solid": {}
             }
           }
         }

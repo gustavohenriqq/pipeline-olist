@@ -96,19 +96,7 @@ cultureInfo pt-BR
 			          "ConceptualProperty": "order_id"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Pedido": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "fato_pedidos.valor_total": {
 			      "Definition": {
@@ -180,10 +168,28 @@ cultureInfo pt-BR
 			          "ConceptualProperty": "seller_id"
 			        }
 			      },
+			      "State": "Generated"
+			    },
+			    "dim_vendedores.uf": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dim_vendedores",
+			          "ConceptualProperty": "uf"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "fato_pedidos.pedido_codigo": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "fato_pedidos",
+			          "ConceptualProperty": "pedido_codigo"
+			        }
+			      },
 			      "State": "Generated",
 			      "Terms": [
 			        {
-			          "Vendedor": {
+			          "Pedido": {
 			            "State": "Suggested",
 			            "Source": {
 			              "Type": "External",
@@ -194,17 +200,59 @@ cultureInfo pt-BR
 			        }
 			      ]
 			    },
-			    "dim_vendedores.uf": {
+			    "fato_pedidos.data_compra": {
 			      "Definition": {
 			        "Binding": {
-			          "ConceptualEntity": "dim_vendedores",
-			          "ConceptualProperty": "uf"
+			          "ConceptualEntity": "fato_pedidos",
+			          "ConceptualProperty": "data_compra"
 			        }
 			      },
 			      "State": "Generated",
 			      "Terms": [
 			        {
-			          "UF": {
+			          "Compra": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "fato_pedidos.entrega_prevista": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "fato_pedidos",
+			          "ConceptualProperty": "entrega_prevista"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Entrega prevista": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dim_vendedores.vendedor_rotulo": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dim_vendedores",
+			          "ConceptualProperty": "vendedor_rotulo"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Vendedor": {
 			            "State": "Suggested",
 			            "Source": {
 			              "Type": "External",

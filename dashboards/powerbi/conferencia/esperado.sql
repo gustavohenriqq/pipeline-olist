@@ -74,7 +74,8 @@ union all select 'linhas_previsao_atraso', count(*)::text from marts.previsao_at
 union all select 'linhas_seguranca_bi', count(*)::text from marts.seguranca_bi
 union all select 'pedidos', count(distinct order_id)::text from marts.fato_pedidos
 union all select 'receita', sum(valor_total)::text from marts.fato_pedidos
-union all select 'ticket_medio', (sum(valor_total) / count(distinct order_id))::text from marts.fato_pedidos
+-- Moeda no Power BI e decimal fixo de 4 casas: moeda / inteiro sai arredondado ali.
+union all select 'ticket_medio', round(sum(valor_total) / count(distinct order_id), 4)::text from marts.fato_pedidos
 union all select 'pct_no_prazo',
     avg(case when entregue_no_prazo then 1.0 else 0.0 end)::text
     from marts.fato_pedidos where entregue_no_prazo is not null
@@ -83,8 +84,10 @@ union all select 'excesso_rj',
     (sum(case when not e.entregue_no_prazo then 1 else 0 end) - count(*) * max(n.taxa))::text
     from entregas e cross join nacional n
     where e.uf = 'RJ' and e.entregue_no_prazo is not null
-union all select 'receita_2018', sum(valor_total)::text
-    from marts.fato_pedidos where purchased_at >= '2018-01-01' and purchased_at < '2019-01-01'
+-- Acumulado no ano em marco: jan a mar/2018. No ano cheio o TOTALYTD seria igual
+-- a receita do ano e o caso nao testaria nada.
+union all select 'receita_acumulada_2018_03', sum(valor_total)::text
+    from marts.fato_pedidos where purchased_at >= '2018-01-01' and purchased_at < '2018-04-01'
 union all select 'variacao_mensal_2018_03',
     ((select receita from receita_mes where mes = '2018-03')
       / (select receita from receita_mes where mes = '2018-02') - 1)::text

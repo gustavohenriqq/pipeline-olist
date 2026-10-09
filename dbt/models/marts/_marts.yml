@@ -23,6 +23,12 @@ models:
         data_tests: [unique, not_null]
       - name: seller_id
         data_tests: [unique, not_null]
+      - name: vendedor_rotulo
+        description: >
+          Rotulo de leitura do vendedor: cidade/UF e os 6 primeiros caracteres
+          do seller_id. Unico porque o prefixo de 6 caracteres e unico na base;
+          o teste avisa se um vendedor novo colidir.
+        data_tests: [unique, not_null]
 
   - name: dim_produtos
     description: Dimensao de produtos com categoria PT/EN e rotulos de leitura.

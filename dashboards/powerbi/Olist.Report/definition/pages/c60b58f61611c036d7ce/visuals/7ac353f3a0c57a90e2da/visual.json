@@ -23,12 +23,42 @@
                       "Entity": "fato_pedidos"
                     }
                   },
-                  "Property": "order_id"
+                  "Property": "pedido_codigo"
                 }
               },
-              "queryRef": "fato_pedidos.order_id",
-              "nativeQueryRef": "order_id",
+              "queryRef": "fato_pedidos.pedido_codigo",
+              "nativeQueryRef": "pedido_codigo",
               "displayName": "Pedido"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fato_pedidos"
+                    }
+                  },
+                  "Property": "data_compra"
+                }
+              },
+              "queryRef": "fato_pedidos.data_compra",
+              "nativeQueryRef": "data_compra",
+              "displayName": "Compra"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fato_pedidos"
+                    }
+                  },
+                  "Property": "entrega_prevista"
+                }
+              },
+              "queryRef": "fato_pedidos.entrega_prevista",
+              "nativeQueryRef": "entrega_prevista",
+              "displayName": "Entrega prevista"
             },
             {
               "field": {
@@ -110,7 +140,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Pedidos em andamento por probabilidade de atraso'"
+                  "Value": "'Pedidos em andamento comprados no período, por probabilidade de atraso'"
                 }
               }
             },

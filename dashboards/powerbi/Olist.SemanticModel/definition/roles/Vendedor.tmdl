@@ -33,3 +33,5 @@ role Vendedor
 
 		columnPermission cidade = none
 
+	annotation PBI_Id = 0f25a731146d4b0785cb70a564bf334f
+

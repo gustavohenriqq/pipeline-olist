@@ -33,6 +33,7 @@ table _Medidas
 		lineageTag: 7f9fa11a-a24f-4efc-80c4-1373171f3929
 
 	/// Em branco quando nao ha mes anterior com venda (DIVIDE nunca gera erro).
+	/// Jan/2017 compara com dez/2016, que teve um pedido so: o valor e alto e real.
 	measure 'Variação Mensal %' = DIVIDE ( [Receita] - [Receita Mês Anterior], [Receita Mês Anterior] )
 		formatString: 0.0%
 		displayFolder: Tempo

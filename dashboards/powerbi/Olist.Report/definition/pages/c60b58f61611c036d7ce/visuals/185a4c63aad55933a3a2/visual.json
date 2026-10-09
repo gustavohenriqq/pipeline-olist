@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "185a4c63aad55933a3a2",
+  "position": {
+    "x": 24,
+    "y": 12,
+    "z": 0,
+    "height": 84,
+    "width": 1100,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "textbox",
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Entrega e risco",
+                    "textStyle": {
+                      "fontSize": "20pt",
+                      "color": "#0F172A",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Atraso por região e UF, e pedidos em andamento com maior risco previsto.",
+                    "textStyle": {
+                      "fontSize": "11pt",
+                      "color": "#475569"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

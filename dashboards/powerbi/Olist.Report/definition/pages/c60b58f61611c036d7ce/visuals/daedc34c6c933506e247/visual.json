@@ -1,0 +1,66 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "daedc34c6c933506e247",
+  "position": {
+    "x": 24,
+    "y": 112,
+    "z": 2000,
+    "height": 160,
+    "width": 1872,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "drillFilterOtherVisuals": true,
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Taxa de Atraso"
+                }
+              },
+              "queryRef": "_Medidas.Taxa de Atraso",
+              "nativeQueryRef": "Taxa de Atraso"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Pedidos em Alerta"
+                }
+              },
+              "queryRef": "_Medidas.Pedidos em Alerta",
+              "nativeQueryRef": "Pedidos em Alerta"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Receita em Risco"
+                }
+              },
+              "queryRef": "_Medidas.Receita em Risco",
+              "nativeQueryRef": "Receita em Risco"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

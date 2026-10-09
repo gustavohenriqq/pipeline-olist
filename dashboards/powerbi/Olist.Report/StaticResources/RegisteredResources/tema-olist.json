@@ -1,0 +1,44 @@
+{
+  "name": "Olist",
+  "dataColors": [
+    "#0F52BA",
+    "#60A5FA",
+    "#475569",
+    "#93C5FD",
+    "#1E3A8A",
+    "#94A3B8"
+  ],
+  "foreground": "#0F172A",
+  "background": "#FFFFFF",
+  "tableAccent": "#0F52BA",
+  "visualStyles": {
+    "page": {
+      "*": {
+        "background": [
+          {
+            "color": {
+              "solid": {
+                "color": "#F1F5F9"
+              }
+            },
+            "transparency": 0
+          }
+        ]
+      }
+    },
+    "*": {
+      "*": {
+        "background": [
+          {
+            "color": {
+              "solid": {
+                "color": "#FFFFFF"
+              }
+            },
+            "transparency": 0
+          }
+        ]
+      }
+    }
+  }
+}

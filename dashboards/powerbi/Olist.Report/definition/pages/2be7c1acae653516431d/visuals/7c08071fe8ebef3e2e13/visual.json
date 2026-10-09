@@ -1,0 +1,66 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "7c08071fe8ebef3e2e13",
+  "position": {
+    "x": 24,
+    "y": 112,
+    "z": 2000,
+    "height": 160,
+    "width": 1872,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "drillFilterOtherVisuals": true,
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Receita de Itens"
+                }
+              },
+              "queryRef": "_Medidas.Receita de Itens",
+              "nativeQueryRef": "Receita de Itens"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Itens"
+                }
+              },
+              "queryRef": "_Medidas.Itens",
+              "nativeQueryRef": "Itens"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Taxa de Atraso dos Itens"
+                }
+              },
+              "queryRef": "_Medidas.Taxa de Atraso dos Itens",
+              "nativeQueryRef": "Taxa de Atraso dos Itens"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

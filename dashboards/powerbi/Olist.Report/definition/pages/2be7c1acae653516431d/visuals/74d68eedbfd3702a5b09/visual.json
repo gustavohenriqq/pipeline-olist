@@ -1,0 +1,100 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "74d68eedbfd3702a5b09",
+  "position": {
+    "x": 24,
+    "y": 288,
+    "z": 3000,
+    "height": 776,
+    "width": 900,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_produtos"
+                    }
+                  },
+                  "Property": "categoria_grupo"
+                }
+              },
+              "queryRef": "dim_produtos.categoria_grupo",
+              "nativeQueryRef": "categoria_grupo",
+              "active": true,
+              "displayName": "Grupo de categoria"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Receita de Itens"
+                }
+              },
+              "queryRef": "_Medidas.Receita de Itens",
+              "nativeQueryRef": "Receita de Itens"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Medidas"
+                  }
+                },
+                "Property": "Receita de Itens"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Receita de itens por grupo de categoria'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {}
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

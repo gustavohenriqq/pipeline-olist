@@ -1,0 +1,138 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "b3c802c78715b6b120e6",
+  "position": {
+    "x": 944,
+    "y": 288,
+    "z": 4000,
+    "height": 776,
+    "width": 952,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_vendedores"
+                    }
+                  },
+                  "Property": "seller_id"
+                }
+              },
+              "queryRef": "dim_vendedores.seller_id",
+              "nativeQueryRef": "seller_id",
+              "displayName": "Vendedor"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_vendedores"
+                    }
+                  },
+                  "Property": "uf"
+                }
+              },
+              "queryRef": "dim_vendedores.uf",
+              "nativeQueryRef": "uf",
+              "displayName": "UF"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Receita de Itens"
+                }
+              },
+              "queryRef": "_Medidas.Receita de Itens",
+              "nativeQueryRef": "Receita de Itens"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Itens"
+                }
+              },
+              "queryRef": "_Medidas.Itens",
+              "nativeQueryRef": "Itens"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Taxa de Atraso dos Itens"
+                }
+              },
+              "queryRef": "_Medidas.Taxa de Atraso dos Itens",
+              "nativeQueryRef": "Taxa de Atraso dos Itens"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Medidas"
+                  }
+                },
+                "Property": "Receita de Itens"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Receita e atraso por vendedor'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {}
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

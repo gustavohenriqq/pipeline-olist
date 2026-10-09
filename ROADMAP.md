@@ -206,13 +206,13 @@ de um relatório sério, versionado e testado como código.
   medida, papel e visual aparece no diff do PR.
 - **Três páginas:** visão executiva, entrega e risco (com a previsão da Etapa 4)
   e vendedores, no tema do dashboard do Looker e na mesma janela padrão.
-- **DAX:** 21 medidas, com variação mensal, acumulado no ano, ano anterior,
+- **DAX:** 30 medidas, com variação mensal, acumulado no ano, ano anterior,
   atraso em excesso contra a taxa nacional e receita em risco.
 - **RLS dinâmico** por região e por vendedor, a partir de uma tabela de usuários
   versionada como seed do dbt, e **OLS** sobre as colunas que identificam o
   cliente no papel Vendedor.
 - **Conferência automática:** um script consulta o modelo aberto por DAX e
-  compara 27 casos com o mesmo número em SQL; os usuários do seed são conferidos
+  compara 29 casos com o mesmo número em SQL; os usuários do seed são conferidos
   pelo "Exibir como".
 
 **Achado do caminho.** A conferência falhou na primeira execução: em DAX,

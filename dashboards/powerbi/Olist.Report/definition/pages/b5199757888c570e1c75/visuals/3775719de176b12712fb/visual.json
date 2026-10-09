@@ -56,7 +56,50 @@
                 }
               },
               "queryRef": "_Medidas.Variação Mensal %",
-              "nativeQueryRef": "Variação Mensal %"
+              "nativeQueryRef": "Variação Mensal %",
+              "displayName": "Var. mensal"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Pedidos"
+                }
+              },
+              "queryRef": "_Medidas.Pedidos",
+              "nativeQueryRef": "Pedidos"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Ticket Médio"
+                }
+              },
+              "queryRef": "_Medidas.Ticket Médio",
+              "nativeQueryRef": "Ticket Médio"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "% no Prazo"
+                }
+              },
+              "queryRef": "_Medidas.% no Prazo",
+              "nativeQueryRef": "% no Prazo"
             }
           ]
         }
@@ -93,6 +136,92 @@
           }
         }
       ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "86D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_tempo.ano_mes"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "150D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Medidas.Receita"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "104D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Medidas.Variação Mensal %"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "96D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Medidas.Pedidos"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "118D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Medidas.Ticket Médio"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "104D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Medidas.% no Prazo"
+          }
+        }
+      ],
       "values": [
         {
           "properties": {
@@ -124,6 +253,11 @@
             "metadata": "_Medidas.Variação Mensal %"
           }
         }
+      ],
+      "columnHeaders": [
+        {
+          "properties": {}
+        }
       ]
     },
     "visualContainerObjects": {
@@ -140,7 +274,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Receita e variação sobre o mês anterior (dez/2016 teve 1 pedido)'"
+                  "Value": "'Placar mensal (a variação de jan/2017 compara com dez/2016, que teve 1 pedido)'"
                 }
               }
             }

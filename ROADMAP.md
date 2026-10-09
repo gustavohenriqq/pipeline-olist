@@ -196,21 +196,50 @@ de reavaliação periódica, senão degrada em silêncio.
 
 ---
 
-## Etapa 5: Power BI avançado
+## Etapa 5: Power BI avançado (concluída)
 
-**Objetivo:** dashboard executivo com os recursos que o mercado corporativo cobra de um relatório sério.
+**Objetivo:** relatório executivo com os recursos que o mercado corporativo cobra
+de um relatório sério, versionado e testado como código.
 
-**Entregas planejadas:**
-- Dashboard executivo conectado ao DW.
-- **DAX avançado:** medidas de receita, ticket médio, % no prazo, variação mês a mês.
-- **RLS (Row Level Security)** por região e por vendedor.
-- **OLS (Object Level Security)** para métricas sensíveis.
+**Entregue** (detalhes em [dashboards/powerbi](dashboards/powerbi/README.md)):
+- **Projeto em texto:** PBIP com o modelo em TMDL e o relatório em PBIR. Cada
+  medida, papel e visual aparece no diff do PR.
+- **Três páginas:** visão executiva, entrega e risco (com a previsão da Etapa 4)
+  e vendedores, no tema do dashboard do Looker e na mesma janela padrão.
+- **DAX:** 21 medidas, com variação mensal, acumulado no ano, ano anterior,
+  atraso em excesso contra a taxa nacional e receita em risco.
+- **RLS dinâmico** por região e por vendedor, a partir de uma tabela de usuários
+  versionada como seed do dbt, e **OLS** sobre as colunas que identificam o
+  cliente no papel Vendedor.
+- **Conferência automática:** um script consulta o modelo aberto por DAX e
+  compara 27 casos com o mesmo número em SQL; os usuários do seed são conferidos
+  pelo "Exibir como".
+
+**Achado do caminho.** A conferência falhou na primeira execução: em DAX,
+`BLANK() = FALSE()` é verdadeiro, e a medida de atrasos contava os 2.965 pedidos
+sem entrega (o % no prazo caía de 93,2% para 90,2%). Um cartão com 90,2% parece
+plausível; só a comparação com o SQL mostrou o erro.
 
 **Decisões e alternativas:**
-- **Import vs DirectQuery.** Import (dado em memória) é mais rápido para dashboard; DirectQuery consulta o banco ao vivo, bom para dado que muda toda hora. Para portfólio, Import.
-- Aqui o consumo é do **star schema**, não das OBTs: o motor VertiPaq foi feito para modelo dimensional.
+- **Import, não DirectQuery.** O dado é estático e o modelo cabe em memória com
+  folga. DirectQuery faria sentido para dado que muda a toda hora.
+- **Star schema, não as OBTs.** O VertiPaq foi feito para modelo dimensional; as
+  OBTs existem só pela limitação de blend do Looker.
+- **Sem publicação no Service.** Exigiria uma conta corporativa. O projeto fica
+  versionado, com prints e PDF.
+- **RLS por tabela, não um papel por região.** Incluir alguém é uma linha nova
+  no seed, sem mexer no modelo.
 
-**Riscos em produção:** RLS mal configurado vaza dado entre regiões; sempre testar com "View as role".
+**Limites registrados:** no papel Vendedor, a receita dos 1.278 pedidos (1,3%)
+com itens de mais de um vendedor aparece inteira nas medidas de pedido; as de
+item são as exatas e a página Vendedores usa só elas. Para um gerente regional, a
+"taxa nacional" vira a taxa da própria região, porque `REMOVEFILTERS` não
+atravessa o RLS.
+
+**Riscos em produção:** RLS errado não dá erro, só mostra dado a quem não devia.
+Por isso o caso "usuário fora da tabela vê zero" é testado em cada papel. O
+motor local do Desktop não personifica e-mails fictícios; num modelo publicado,
+o teste por usuário pode ser automatizado.
 
 ---
 

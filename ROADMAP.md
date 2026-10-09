@@ -121,7 +121,7 @@ honesta sobre a idade do dado.
 - **Metadados de execução persistidos:** cada comando e cada model ou teste no
   schema `meta`; `marts.atualizacao_dados` responde "quando esse número foi
   atualizado pela última vez?" no rodapé do dashboard.
-- **CI enxuto:** um run por PR, construindo só `+state:modified+` contra a branch
+- **CI enxuto:** um run por PR, construindo só `@state:modified` contra a branch
   base; a `main` roda tudo.
 
 **Achado do caminho.** Depois de recarregar a raw, um model que levava segundos

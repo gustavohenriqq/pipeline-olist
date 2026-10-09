@@ -10,3 +10,4 @@ role 'Gerente regional'
 			        VALUES ( seguranca_bi[regiao] ),
 			        seguranca_bi[email] = USERPRINCIPALNAME ()
 			    )
+

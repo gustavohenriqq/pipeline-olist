@@ -16,8 +16,9 @@ Com o Postgres local de pé e o `Olist.pbip` aberto e atualizado no Desktop:
 ```powershell
 .\conferir.ps1                                   # contagens de linhas e medidas
 .\conferir.ps1 -Grupos modelo                    # só as contagens de linhas
-.\conferir.ps1 -Papel "Gerente regional" -Usuario gerente.nordeste@exemplo.com.br
-.\conferir.ps1 -Papel Vendedor -Usuario vendedor.a@exemplo.com.br
+.\conferir.ps1 -Papel Diretoria                  # segurança de cada papel
+.\conferir.ps1 -Papel "Gerente regional"
+.\conferir.ps1 -Papel Vendedor
 ```
 
 O script acha sozinho a porta do motor local do Desktop e usa a biblioteca de
@@ -34,10 +35,36 @@ algum caso falhar.
   - variação mensal de mar/2018 e de set/2016 (o primeiro mês, que deve sair em
     branco, não em erro);
   - pedidos em alerta e receita em risco, só com teste e pedidos em andamento.
-- **Segurança:** para cada usuário do seed, pedidos e itens visíveis no papel
-  dele, comparados com a mesma regra escrita em SQL. Um e-mail fora do seed deve
-  ver zero. No papel Vendedor, as colunas de identificação do cliente precisam
-  falhar por permissão (OLS).
+- **Segurança:** pedidos e itens visíveis em cada papel, e o OLS do Vendedor
+  (as colunas de identificação do cliente precisam falhar por permissão). Veja a
+  seção seguinte.
+
+## Segurança: o que é automático e o que é pelo "Exibir como"
+
+O motor local do Desktop não aceita `EffectiveUserName` com um e-mail que não
+seja conta do Windows (`O nome fornecido não é um nome de conta corretamente
+formado`). Então o script entra só com o papel (`Roles`), e `USERPRINCIPALNAME()`
+devolve o usuário do Windows, que não está em `seguranca_bi`. Isso testa
+automaticamente o caso mais perigoso: **quem não está no seed vê zero** nos papéis
+Gerente regional e Vendedor. Na Diretoria vê tudo, por desenho (quem controla o
+acesso é a lista de membros do papel).
+
+Os números de cada usuário do seed são conferidos no Desktop, em Modelagem >
+Exibir como > "Outro usuário" com o e-mail e o papel, olhando um visual com as
+medidas Pedidos e Itens. O esperado sai do mesmo `esperado.sql` (linhas
+`pedidos@<email>` e `itens@<email>`). Última conferência, em 09/10/2026:
+
+| Usuário | Papel | Pedidos | Itens |
+|---|---|---|---|
+| diretoria@exemplo.com.br | Diretoria | 99.441 | 112.650 |
+| gerente.nordeste@exemplo.com.br | Gerente regional | 9.399 | 10.413 |
+| gerente.sudeste@exemplo.com.br | Gerente regional | 68.257 | 77.407 |
+| vendedor.a@exemplo.com.br | Vendedor | 1.854 | 2.033 |
+| vendedor.b@exemplo.com.br | Vendedor | 3.209 | 3.918 |
+| fora@exemplo.com.br | Vendedor | vazio | vazio |
+
+Todos iguais ao SQL. É o único passo manual da conferência: refazer quando mudar
+um papel ou o seed.
 
 ## Por que um teste e não só olhar o visual
 

@@ -1,19 +1,23 @@
 /// Produto, com o rotulo da categoria e o grupo comercial.
 table dim_produtos
+	lineageTag: 12aeac2a-6170-4914-bea9-6d9a390fb4d9
 
 	column produto_sk
 		dataType: string
 		isHidden
+		lineageTag: d63b1e70-48ab-47ea-890e-abff80ad0cce
 		summarizeBy: none
 		sourceColumn: produto_sk
 
 	column categoria_nome
 		dataType: string
+		lineageTag: 0f7b177d-0731-4147-a35a-103d0da1300d
 		summarizeBy: none
 		sourceColumn: categoria_nome
 
 	column categoria_grupo
 		dataType: string
+		lineageTag: 32d3316f-45ab-4d3a-a679-e6c5ac43baa5
 		summarizeBy: none
 		sourceColumn: categoria_grupo
 
@@ -26,3 +30,4 @@ table dim_produtos
 				    Colunas = Table.SelectColumns(Tabela, {"produto_sk", "categoria_nome", "categoria_grupo"})
 				in
 				    Colunas
+

@@ -58,14 +58,14 @@ table _Medidas
 		lineageTag: 440a10d7-7491-481b-8415-f9bb15e17105
 
 	/// Pedidos com data de entrega: a base de toda medida de prazo.
-	measure Entregues = CALCULATE ( COUNTROWS ( fato_pedidos ), NOT ISBLANK ( fato_pedidos[entregue_no_prazo] ) )
+	measure Entregues = CALCULATE ( COUNTROWS ( fato_pedidos ), KEEPFILTERS ( NOT ISBLANK ( fato_pedidos[entregue_no_prazo] ) ) )
 		formatString: #,0
 		displayFolder: Entrega
 		lineageTag: 7a1f4773-7bf7-42b8-8be3-7e87cef4d253
 
 	/// Pedidos entregues depois da data estimada. Usa == porque em DAX
 	/// BLANK() = FALSE() e verdadeiro: com = os pedidos sem entrega entrariam.
-	measure Atrasos = CALCULATE ( COUNTROWS ( fato_pedidos ), fato_pedidos[entregue_no_prazo] == FALSE () )
+	measure Atrasos = CALCULATE ( COUNTROWS ( fato_pedidos ), KEEPFILTERS ( fato_pedidos[entregue_no_prazo] == FALSE () ) )
 		formatString: #,0
 		displayFolder: Entrega
 		lineageTag: f9209078-7623-49f1-b6a3-8ad83839be22
@@ -102,11 +102,12 @@ table _Medidas
 		lineageTag: 432b83f1-2d3c-41db-a4b8-1bc682312635
 
 	/// So teste e em_andamento: previsoes sobre treino e validacao sao otimistas.
+	/// KEEPFILTERS intersecta com o filtro do visual em vez de substituir.
 	measure 'Pedidos em Alerta' =
 			CALCULATE (
 			    COUNTROWS ( previsao_atraso ),
-			    previsao_atraso[alerta] = TRUE (),
-			    previsao_atraso[conjunto] IN { "teste", "em_andamento" }
+			    KEEPFILTERS ( previsao_atraso[alerta] = TRUE () ),
+			    KEEPFILTERS ( previsao_atraso[conjunto] IN { "teste", "em_andamento" } )
 			)
 		formatString: #,0
 		displayFolder: Risco

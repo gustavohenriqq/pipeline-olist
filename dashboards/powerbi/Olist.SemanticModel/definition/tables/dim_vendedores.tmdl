@@ -11,6 +11,7 @@ table dim_vendedores
 
 	column seller_id
 		dataType: string
+		isHidden
 		lineageTag: a8bfdc3f-c276-4a68-b187-977c61a4fe98
 		summarizeBy: none
 		sourceColumn: seller_id
@@ -33,13 +34,20 @@ table dim_vendedores
 		summarizeBy: none
 		sourceColumn: regiao
 
+	/// Cidade/UF e os 6 primeiros caracteres do seller_id (o Olist anonimiza o vendedor).
+	column vendedor_rotulo
+		dataType: string
+		lineageTag: a8cfca9d-f258-4487-a3ed-e758bfa663d4
+		summarizeBy: none
+		sourceColumn: vendedor_rotulo
+
 	partition dim_vendedores = m
 		mode: import
 		source =
 				let
 				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
 				    Tabela = Fonte{[Schema = "marts", Item = "dim_vendedores"]}[Data],
-				    Colunas = Table.SelectColumns(Tabela, {"vendedor_sk", "seller_id", "cidade", "uf", "regiao"})
+				    Colunas = Table.SelectColumns(Tabela, {"vendedor_sk", "seller_id", "vendedor_rotulo", "cidade", "uf", "regiao"})
 				in
 				    Colunas
 

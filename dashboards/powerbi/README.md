@@ -59,6 +59,12 @@ tempo, `previsao_atraso` (Etapa 4) e `seguranca_bi` (oculta). As OBTs ficam de f
 elas existem porque o Looker só junta fontes por blend, e o VertiPaq trabalha
 melhor com o star schema.
 
+O Olist anonimiza vendedores e pedidos com hashes de 32 caracteres. Para leitura,
+o dbt gera `vendedor_rotulo` em `dim_vendedores` (cidade/UF e os 6 primeiros
+caracteres, por exemplo `Ibitinga/SP · 4a3ca9`, com a cidade da origem limpa) e o
+Power Query recorta o pedido em `#` mais 10 caracteres. As colunas de valor são
+tipadas como moeda no M.
+
 Não existe relação entre os dois fatos. Produto e vendedor só existem no grão de
 item, e é o RLS do Vendedor que leva o filtro de itens para os pedidos (ver
 Segurança).
@@ -98,11 +104,17 @@ papel filtra pela linha do próprio usuário (`USERPRINCIPALNAME()`):
 
 Incluir alguém é uma linha nova no seed: quem administra acesso não mexe no
 modelo, e um papel por região ou por vendedor não precisa existir. Um e-mail fora
-do seed, nos papéis Gerente regional e Vendedor, não vê nada.
+do seed, nos papéis Gerente regional e Vendedor, não vê nenhum pedido nem item (as
+dimensões sem filtro, como a lista de vendedores para um gerente, continuam
+visíveis). Um teste do dbt garante que cada linha do seed é coerente com o perfil.
+Um mesmo usuário não pode estar ao mesmo tempo num papel com OLS e em outro: o
+Power BI não combina OLS e RLS entre papéis e devolve erro.
 
 **OLS.** No papel Vendedor, `customer_unique_id`, `zip_code_prefix` e `cidade` de
 `dim_clientes` ficam com permissão `none`. O vendedor vê quanto vendeu e para qual
-UF, não quem comprou. Nenhuma medida depende dessas colunas, e todas as 21 foram
+UF, não quem comprou. A chave `cliente_sk` continua nos fatos, oculta: é um md5
+de `customer_unique_id`, um pseudônimo. Pela LGPD pseudônimo ainda é dado
+pessoal; em produção, a chave teria sal ou o OLS cobriria a coluna também. Nenhuma medida depende dessas colunas, e todas as 21 foram
 avaliadas no papel Vendedor sem erro.
 
 **Duas consequências registradas:**
@@ -124,9 +136,9 @@ por DAX e compara com o mesmo número calculado em SQL.
 | Grupo | Casos | Resultado |
 |---|---|---|
 | Linhas de cada tabela | 8 | iguais ao banco |
-| Medidas (receita, ticket, % no prazo, nota, excesso do RJ, acumulado de 2018, variações, risco) | 11 | iguais até o centavo |
+| Medidas (receita, ticket, % no prazo, nota, excesso do RJ, acumulado no ano até mar/2018, variações, risco) | 11 | diferença abaixo de 0,000001 |
 | Papéis (usuário fora do seed e OLS) | 8 | ok nos três papéis |
-| Usuários do seed, pelo "Exibir como" | 6 | iguais ao SQL |
+| Usuários do seed e um e-mail fora dele, pelo "Exibir como" | 6 | iguais ao SQL |
 
 O motor local do Desktop não aceita personificar um e-mail que não é conta do
 Windows, então os usuários do seed são conferidos pelo "Exibir como". O
@@ -142,8 +154,12 @@ R$ 15,84 mi.
 - **Salvar no Desktop sobrescreve o TMDL** com o que está na memória. Editou um
   arquivo por fora? Use **Apply external changes** na barra que o Desktop mostra,
   nunca salve antes.
-- **O Desktop reescreve tipos ao salvar.** As colunas de valor, que o Power Query
-  não tipava, viraram `double`. A conferência passa no centavo, mas o certo para
-  dinheiro é tipar como moeda (`Currency.Type`) no M.
+- **Coluna sem tipo no Power Query vira `double` ao salvar.** Para dinheiro, o
+  certo é `Currency.Type` no M. Efeito colateral: moeda é decimal fixo de 4 casas,
+  e moeda dividida por inteiro sai arredondada ali (o ticket médio é 159,3262, não
+  159,32616...). A conferência compara na mesma precisão.
+- **`CALCULATE` com predicado substitui o filtro da coluna.** As medidas de
+  entrega e de risco usam `KEEPFILTERS`, para um visual por `conjunto` ou por
+  `entregue_no_prazo` mostrar a interseção, não o total.
 - **Exportar PDF sob "Exibir como"** gera uma imagem cortada da tela. Os prints
   saem do PDF exportado sem papel nenhum.

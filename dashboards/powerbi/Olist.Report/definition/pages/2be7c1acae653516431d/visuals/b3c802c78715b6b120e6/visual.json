@@ -23,27 +23,12 @@
                       "Entity": "dim_vendedores"
                     }
                   },
-                  "Property": "seller_id"
+                  "Property": "vendedor_rotulo"
                 }
               },
-              "queryRef": "dim_vendedores.seller_id",
-              "nativeQueryRef": "seller_id",
+              "queryRef": "dim_vendedores.vendedor_rotulo",
+              "nativeQueryRef": "vendedor_rotulo",
               "displayName": "Vendedor"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_vendedores"
-                    }
-                  },
-                  "Property": "uf"
-                }
-              },
-              "queryRef": "dim_vendedores.uf",
-              "nativeQueryRef": "uf",
-              "displayName": "UF"
             },
             {
               "field": {

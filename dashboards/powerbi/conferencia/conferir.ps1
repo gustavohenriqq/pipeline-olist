@@ -32,10 +32,11 @@ $Raiz = (Resolve-Path (Join-Path $Pasta "..\..\..")).Path
 # A pasta de trabalho do motor muda entre a versao da loja e a instalada; o
 # caminho certo esta na linha de comando do msmdsrv (-s "<pasta>\Data").
 $portas = @()
+$motores = @()
 foreach ($p in Get-CimInstance Win32_Process -Filter "Name='msmdsrv.exe'") {
     if ($p.CommandLine -match '-s\s+"([^"]+)"') {
         $arquivo = Join-Path $Matches[1] "msmdsrv.port.txt"
-        if (Test-Path $arquivo) { $portas += $arquivo }
+        if (Test-Path $arquivo) { $portas += $arquivo; $motores += $p.ExecutablePath }
     }
 }
 if (-not $portas) {
@@ -48,14 +49,14 @@ if ($portas.Count -gt 1) {
 }
 $porta = (Get-Content $portas[0] -Encoding Unicode | Select-Object -First 1).Trim()
 
-$instalacao = (Get-AppxPackage -Name "Microsoft.MicrosoftPowerBIDesktop").InstallLocation
-Add-Type -Path (Join-Path $instalacao "bin\Microsoft.PowerBI.AdomdClient.dll")
+# A biblioteca de cliente fica na mesma pasta bin do msmdsrv, nas duas instalacoes.
+Add-Type -Path (Join-Path (Split-Path $motores[0]) "Microsoft.PowerBI.AdomdClient.dll")
 
 # --- Valores esperados (SQL) ---------------------------------------------------
 Push-Location $Raiz
 try {
     $linhas = Get-Content (Join-Path $Pasta "esperado.sql") -Raw |
-        docker compose exec -T postgres psql -U olist -d olist -At -F "|"
+        docker compose exec -T postgres psql -U olist -d olist -At -F "|" -v ON_ERROR_STOP=1
 } finally {
     Pop-Location
 }
@@ -63,7 +64,10 @@ if ($LASTEXITCODE -ne 0) { Write-Host "Falha ao calcular os valores esperados no
 $esperado = @{}
 foreach ($linha in $linhas) {
     $partes = $linha -split "\|", 2
-    if ($partes.Count -eq 2) { $esperado[$partes[0]] = $partes[1] }
+    # Valor nulo no SQL (ex.: soma sem linhas) conta como medida em branco.
+    if ($partes.Count -eq 2) {
+        $esperado[$partes[0]] = if ($partes[1] -eq "") { "vazio" } else { $partes[1] }
+    }
 }
 
 # --- Casos ---------------------------------------------------------------------
@@ -105,26 +109,44 @@ if ($Papel) {
 }
 $conn = New-Object Microsoft.AnalysisServices.AdomdClient.AdomdConnection($conexao)
 $conn.Open()
+# Conexao de controle, sem papel: o caso de OLS so vale se a mesma consulta
+# funciona fora do papel (senao um erro de digitacao passaria por bloqueio).
+$controle = New-Object Microsoft.AnalysisServices.AdomdClient.AdomdConnection("Data Source=localhost:$porta")
+$controle.Open()
+
+function Consultar($conexaoAberta, [string]$dax) {
+    $r = @{ valor = $null; erro = $null }
+    $leitor = $null
+    try {
+        $cmd = $conexaoAberta.CreateCommand()
+        $cmd.CommandText = $dax
+        $leitor = $cmd.ExecuteReader()
+        if ($leitor.Read()) { $r.valor = $leitor.GetValue(0) }
+    } catch {
+        $r.erro = $_.Exception.Message
+    } finally {
+        if ($leitor) { $leitor.Close() }
+    }
+    return $r
+}
 
 $cultura = [System.Globalization.CultureInfo]::InvariantCulture
 $falhas = 0
 foreach ($c in $casos) {
-    $valor = $null
-    $erroMsg = $null
-    try {
-        $cmd = $conn.CreateCommand()
-        $cmd.CommandText = $c.dax
-        $leitor = $cmd.ExecuteReader()
-        if ($leitor.Read()) { $valor = $leitor.GetValue(0) }
-        $leitor.Close()
-    } catch {
-        $erroMsg = $_.Exception.Message
-    }
+    $r = Consultar $conn $c.dax
+    $valor = $r.valor
+    $erroMsg = $r.erro
 
     if ($c.erro) {
-        $ok = [bool]$erroMsg
-        $mostrar = if ($ok) { "bloqueado" } else { "retornou $valor" }
+        $base = Consultar $controle $c.dax
         $alvo = "erro de permissao"
+        if ($base.erro) {
+            $ok = $false
+            $mostrar = "consulta falha ate sem papel"
+        } else {
+            $ok = [bool]$erroMsg
+            $mostrar = if ($ok) { "bloqueado" } else { "retornou $valor" }
+        }
     } elseif ($erroMsg) {
         $ok = $false
         $mostrar = "ERRO: " + $erroMsg.Split([Environment]::NewLine)[0]
@@ -145,7 +167,9 @@ foreach ($c in $casos) {
                 $mostrar = "vazio"
             } else {
                 $a = [double]$valor
-                $ok = [Math]::Abs($a - $e) -le (1e-6 * [Math]::Max(1.0, [Math]::Abs($e)) + 0.005)
+                # Medidas de dinheiro sao decimais fixos (somas exatas); as razoes
+                # vem em double. A folga cobre so o arredondamento do double.
+                $ok = [Math]::Abs($a - $e) -le (1e-6 + 1e-12 * [Math]::Abs($e))
                 $mostrar = $a.ToString("0.######", $cultura)
             }
         }
@@ -155,6 +179,7 @@ foreach ($c in $casos) {
     Write-Host ("{0} {1,-40} modelo={2,-22} esperado={3}" -f $estado, $c.caso, $mostrar, $alvo)
 }
 $conn.Close()
+$controle.Close()
 
 $contexto = if ($Papel) { " (papel $Papel, esperado como $Usuario)" } else { "" }
 if ($falhas -gt 0) {

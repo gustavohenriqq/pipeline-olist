@@ -46,21 +46,21 @@ table fato_itens_pedido
 		sourceColumn: tempo_sk_compra
 
 	column valor_produto
-		dataType: double
+		dataType: decimal
 		formatString: \R$ #,0.00
 		lineageTag: 133d974f-3542-4417-a249-19aa6eb17337
 		summarizeBy: sum
 		sourceColumn: valor_produto
 
 	column valor_frete
-		dataType: double
+		dataType: decimal
 		formatString: \R$ #,0.00
 		lineageTag: 95471d02-16ee-44cf-8e55-28862a181529
 		summarizeBy: sum
 		sourceColumn: valor_frete
 
 	column valor_item
-		dataType: double
+		dataType: decimal
 		formatString: \R$ #,0.00
 		lineageTag: cab6a2a6-a279-4313-9361-1c767529b321
 		summarizeBy: sum
@@ -72,7 +72,8 @@ table fato_itens_pedido
 				let
 				    Fonte = PostgreSQL.Database(ServidorPostgres, BancoPostgres),
 				    Tabela = Fonte{[Schema = "marts", Item = "fato_itens_pedido"]}[Data],
-				    Colunas = Table.SelectColumns(Tabela, {"item_sk", "order_id", "produto_sk", "vendedor_sk", "cliente_sk", "tempo_sk_compra", "valor_produto", "valor_frete", "valor_item"})
+				    Colunas = Table.SelectColumns(Tabela, {"item_sk", "order_id", "produto_sk", "vendedor_sk", "cliente_sk", "tempo_sk_compra", "valor_produto", "valor_frete", "valor_item"}),
+				    Tipos = Table.TransformColumnTypes(Colunas, {{"valor_produto", Currency.Type}, {"valor_frete", Currency.Type}, {"valor_item", Currency.Type}})
 				in
-				    Colunas
+				    Tipos
 

@@ -1,4 +1,5 @@
-/// Ve so os proprios itens e os pedidos que os contem. OLS: sem identificacao do cliente (LGPD).
+/// Ve so os proprios itens e os pedidos que os contem. OLS: sem as colunas que identificam
+/// o cliente (cliente_sk segue nos fatos, oculto: e um pseudonimo, nao um dado direto).
 role Vendedor
 	modelPermission: read
 

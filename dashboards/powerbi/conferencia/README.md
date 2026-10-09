@@ -31,12 +31,15 @@ algum caso falhar.
 - **Medidas:**
   - receita, pedidos, ticket médio, % no prazo e nota média;
   - atraso em excesso do RJ;
-  - receita acumulada de 2018;
+  - receita acumulada no ano até mar/2018 (no ano cheio o acumulado seria igual à
+    receita e o caso não testaria nada);
   - variação mensal de mar/2018 e de set/2016 (o primeiro mês, que deve sair em
     branco, não em erro);
   - pedidos em alerta e receita em risco, só com teste e pedidos em andamento.
 - **Segurança:** pedidos e itens visíveis em cada papel, e o OLS do Vendedor
-  (as colunas de identificação do cliente precisam falhar por permissão). Veja a
+  (as colunas de identificação do cliente precisam falhar no papel, e a mesma
+  consulta precisa funcionar sem papel, para um erro de digitação não passar por
+  bloqueio). Veja a
   seção seguinte.
 
 ## Segurança: o que é automático e o que é pelo "Exibir como"
@@ -49,7 +52,7 @@ automaticamente o caso mais perigoso: **quem não está no seed vê zero** nos p
 Gerente regional e Vendedor. Na Diretoria vê tudo, por desenho (quem controla o
 acesso é a lista de membros do papel).
 
-Os números de cada usuário do seed são conferidos no Desktop, em Modelagem >
+Os números de cada usuário do seed (e de um e-mail fora dele) são conferidos no Desktop, em Modelagem >
 Exibir como > "Outro usuário" com o e-mail e o papel, olhando um visual com as
 medidas Pedidos e Itens. O esperado sai do mesmo `esperado.sql` (linhas
 `pedidos@<email>` e `itens@<email>`). Última conferência, em 09/10/2026:

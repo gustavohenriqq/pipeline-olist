@@ -101,7 +101,12 @@ jobs:
       - name: dbt build so do que mudou (PR)
         if: github.event_name == 'pull_request'
         working-directory: dbt
-        run: dbt build --profiles-dir . --select +state:modified+ --state "$RUNNER_TEMP/estado_base"
+        # buildable: teste que le um model fora da selecao nao entra. Sem isso, um
+        # PR que muda so uma dimensao seleciona o relationships do fato, que
+        # aponta para ela, e o teste falha porque o fato nao foi construido.
+        run: >-
+          dbt build --profiles-dir . --select +state:modified+
+          --state "$RUNNER_TEMP/estado_base" --indirect-selection buildable
 
       # ---- Push na main: tudo ----
 

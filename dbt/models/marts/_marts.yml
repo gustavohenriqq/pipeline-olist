@@ -40,12 +40,12 @@ models:
       - name: categoria_nome
         description: >
           Nome da categoria formatado para leitura. Nunca nulo: produto sem
-          categoria na origem vira 'Nao informada'.
+          categoria na origem vira 'Sem categoria'.
         data_tests: [not_null]
       - name: categoria_grupo
         description: >
           Macro-categoria comercial. Agrupa as 73 categorias da origem em 14
-          grupos mais 'Nao informada'. O teste de valores aceitos e a trava:
+          grupos mais 'Sem categoria'. O teste de valores aceitos e a trava:
           categoria nova na origem cai em 'Diversos' e o teste avisa, em vez de
           o relatorio mostrar um grupo generico crescendo em silencio.
         data_tests:
@@ -67,7 +67,7 @@ models:
                   - "Escritório e Papelaria"
                   - "Indústria e Serviços"
                   - "Diversos"
-                  - "Não informada"
+                  - "Sem categoria"
               config:
                 severity: warn
 

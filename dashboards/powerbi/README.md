@@ -10,11 +10,20 @@ em `docs/prints/`.
 
 | Página | O que mostra |
 |---|---|
-| [Visão executiva](../../docs/prints/powerbi-executivo.png) | receita, pedidos, ticket médio, % no prazo e nota; receita por mês contra o mesmo mês do ano anterior; variação mensal |
+| [Visão executiva](../../docs/prints/powerbi-executivo.png) | receita, pedidos, ticket médio, % no prazo e nota, cada um com a variação do último mês; receita por mês contra o mesmo mês do ano anterior; placar mensal |
 | [Entrega e risco](../../docs/prints/powerbi-entrega-risco.png) | taxa de atraso por região contra a nacional; atraso em excesso por UF (RJ no topo); pedidos em andamento por probabilidade de atraso; pedidos em alerta e receita em risco |
 | [Vendedores](../../docs/prints/powerbi-vendedores.png) | receita de itens por grupo de categoria e por vendedor, com a taxa de atraso de cada um. É a página do perfil Vendedor |
 
 PDF com as três páginas: [docs/prints/powerbi-olist.pdf](../../docs/prints/powerbi-olist.pdf).
+
+**Visual.** Faixa azul-marinho com navegação entre as páginas, cartões com barra de
+destaque, cantos arredondados e sombra leve, nas cores do dashboard do Looker. A
+cor só aparece quando diz algo: ▲ verde e ▼ vermelho na variação do último mês
+(na taxa de atraso, subir é vermelho), atraso em excesso acima da taxa nacional
+em vermelho e probabilidade de atraso com fundo âmbar (30%+) ou vermelho (40%+).
+Quase todo o estilo fica no tema (`tema-olist.json`), não em cada visual. No
+Desktop, em modo de edição, o navegador de páginas responde a Ctrl + clique; no
+modo de leitura e no PDF, a um clique.
 
 ## Como abrir
 
@@ -71,9 +80,10 @@ Segurança).
 
 ## Medidas
 
-21 medidas na tabela `_Medidas`, em pastas: Vendas, Tempo, Entrega, Satisfação,
-Risco e Vendedores. Cada uma tem descrição no próprio modelo. Três pontos que
-valem a leitura:
+30 medidas na tabela `_Medidas`, em pastas: Vendas, Tempo, Entrega, Satisfação,
+Risco, Vendedores e Destaques, mais 10 medidas de cor ocultas (pasta Cores), que
+devolvem o hex usado na formatação condicional. Cada uma tem descrição no próprio
+modelo. Pontos que valem a leitura:
 
 - **`Atrasos` usa `==`, não `=`.** Em DAX, `BLANK() = FALSE()` é verdadeiro: com `=`,
   os 2.965 pedidos sem entrega entravam como atraso (9.500 em vez de 6.535), e o %
@@ -85,6 +95,12 @@ valem a leitura:
   (R$ 19,62). O número é real e o título da tabela explica. Uma versão que
   deixava em branco o mês cujo anterior está fora do período foi descartada: com
   um único mês selecionado, ela apagava a variação daquele mês.
+
+- **Destaques dos cartões** (`Δ Receita`, `Δ % no Prazo` e outras) comparam o
+  último mês com venda dentro do período (`Mês de Referência`, ago/2018 na janela
+  padrão) com o mês anterior. Variação do período inteiro contra o período
+  deslocado não diz nada; a do último mês é a que um gestor lê. Taxas variam em
+  pontos percentuais, não em %. A seta faz parte do formato da medida.
 
 As medidas de risco (`Pedidos em Alerta`, `Receita em Risco`) só contam os
 conjuntos `teste` e `em_andamento`, porque as previsões sobre treino e validação
@@ -114,8 +130,9 @@ Power BI não combina OLS e RLS entre papéis e devolve erro.
 `dim_clientes` ficam com permissão `none`. O vendedor vê quanto vendeu e para qual
 UF, não quem comprou. A chave `cliente_sk` continua nos fatos, oculta: é um md5
 de `customer_unique_id`, um pseudônimo. Pela LGPD pseudônimo ainda é dado
-pessoal; em produção, a chave teria sal ou o OLS cobriria a coluna também. Nenhuma medida depende dessas colunas, e todas as 21 foram
-avaliadas no papel Vendedor sem erro.
+pessoal; em produção, a chave teria sal ou o OLS cobriria a coluna também.
+Nenhuma medida depende dessas colunas, e todas as 40 foram avaliadas no papel
+Vendedor sem erro.
 
 **Duas consequências registradas:**
 
@@ -136,7 +153,7 @@ por DAX e compara com o mesmo número calculado em SQL.
 | Grupo | Casos | Resultado |
 |---|---|---|
 | Linhas de cada tabela | 8 | iguais ao banco |
-| Medidas (receita, ticket, % no prazo, nota, excesso do RJ, acumulado no ano até mar/2018, variações, risco) | 11 | diferença abaixo de 0,000001 |
+| Medidas (receita, ticket, % no prazo, nota, excesso do RJ, acumulado no ano até mar/2018, variações, destaques do último mês, risco) | 13 | diferença abaixo de 0,000001 |
 | Papéis (usuário fora do seed e OLS) | 8 | ok nos três papéis |
 | Usuários do seed e um e-mail fora dele, pelo "Exibir como" | 6 | iguais ao SQL |
 

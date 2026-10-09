@@ -2763,6 +2763,16 @@ cultureInfo pt-BR
 			            },
 			            "Weight": 0.739
 			          }
+			        },
+			        {
+			          "Var. mensal": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
 			        }
 			      ]
 			    },

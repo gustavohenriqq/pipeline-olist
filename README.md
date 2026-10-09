@@ -58,7 +58,7 @@ descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 
 > Status: **Etapas 1 a 5 concluídas** no dataset completo, com o dashboard
 > publicado e o relatório do Power BI versionado. `dbt build` com 0 erro (22
-> models, 1 seed e 90 testes, 3 deles avisos propositais), e cada execução fica
+> models, 1 seed e 93 testes, 3 deles avisos propositais), e cada execução fica
 > registrada no próprio banco. No CI,
 > cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
 > validação de idempotência, janela e metadados.

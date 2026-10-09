@@ -35,6 +35,8 @@ algum caso falhar.
     receita e o caso não testaria nada);
   - variação mensal de mar/2018 e de set/2016 (o primeiro mês, que deve sair em
     branco, não em erro);
+  - destaques dos cartões na janela padrão: receita e % no prazo de ago/2018
+    contra jul/2018;
   - pedidos em alerta e receita em risco, só com teste e pedidos em andamento.
 - **Segurança:** pedidos e itens visíveis em cada papel, e o OLS do Vendedor
   (as colunas de identificação do cliente precisam falhar no papel, e a mesma

@@ -140,6 +140,12 @@
               }
             }
           }
+        ],
+        "outline": [
+          {
+            "$id": "default",
+            "show": false
+          }
         ]
       }
     },

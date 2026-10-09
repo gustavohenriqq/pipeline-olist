@@ -11,3 +11,5 @@ role 'Gerente regional'
 			        seguranca_bi[email] = USERPRINCIPALNAME ()
 			    )
 
+	annotation PBI_Id = 3ea603fd6afe4622b6dec2956799d5a5
+

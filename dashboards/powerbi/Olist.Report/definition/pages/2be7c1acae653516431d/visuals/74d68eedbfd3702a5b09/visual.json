@@ -3,11 +3,11 @@
   "name": "74d68eedbfd3702a5b09",
   "position": {
     "x": 24,
-    "y": 288,
-    "z": 3000,
-    "height": 776,
+    "y": 366,
+    "z": 8000,
+    "height": 690,
     "width": 900,
-    "tabOrder": 3000
+    "tabOrder": 8000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -87,9 +87,6 @@
                   "Value": "'Receita de itens por grupo de categoria'"
                 }
               }
-            },
-            "fontColor": {
-              "solid": {}
             }
           }
         }

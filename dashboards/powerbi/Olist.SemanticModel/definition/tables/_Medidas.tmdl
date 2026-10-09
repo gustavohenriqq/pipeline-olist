@@ -149,6 +149,189 @@ table _Medidas
 		displayFolder: Vendedores
 		lineageTag: 526f4fb1-14e4-41bb-b478-6a3523ae6d1c
 
+	/// Ultimo mes com venda dentro do periodo selecionado (ex.: "2018-08"). Base
+	/// dos destaques dos cartoes: o mes contra o anterior, nao o periodo inteiro.
+	measure 'Mês de Referência' =
+			MAXX (
+			    FILTER ( VALUES ( dim_tempo[ano_mes] ), NOT ISBLANK ( [Receita] ) ),
+			    dim_tempo[ano_mes]
+			)
+		displayFolder: Destaques
+		lineageTag: dba78a3b-b621-4afb-91ca-2ef7b7caab9e
+
+	/// Texto do rodape dos cartoes, ex.: "ago/2018 contra o mês anterior".
+	measure 'Rótulo do Destaque' =
+			VAR mes = [Mês de Referência]
+			RETURN
+			    IF (
+			        NOT ISBLANK ( mes ),
+			        FORMAT ( DATEVALUE ( mes & "-01" ), "mmm/yyyy" ) & " contra o mês anterior"
+			    )
+		displayFolder: Destaques
+		lineageTag: 76050e49-3d99-41dd-91ac-e4580c936b9c
+
+	/// Variacao da receita no mes de referencia contra o mes anterior.
+	measure 'Δ Receita' =
+			VAR mes = [Mês de Referência]
+			VAR atual = CALCULATE ( [Receita], dim_tempo[ano_mes] = mes )
+			VAR anterior =
+			    CALCULATE (
+			        CALCULATE ( [Receita], DATEADD ( dim_tempo[data], -1, MONTH ) ),
+			        dim_tempo[ano_mes] = mes
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( anterior ), DIVIDE ( atual - anterior, anterior ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: Destaques
+		lineageTag: 1541b18a-7b62-44b3-9bf7-f3d2245e0930
+
+	/// Variacao dos pedidos no mes de referencia contra o mes anterior.
+	measure 'Δ Pedidos' =
+			VAR mes = [Mês de Referência]
+			VAR atual = CALCULATE ( [Pedidos], dim_tempo[ano_mes] = mes )
+			VAR anterior =
+			    CALCULATE (
+			        CALCULATE ( [Pedidos], DATEADD ( dim_tempo[data], -1, MONTH ) ),
+			        dim_tempo[ano_mes] = mes
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( anterior ), DIVIDE ( atual - anterior, anterior ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: Destaques
+		lineageTag: 153c1d73-ef77-4139-9cd8-f9459169f098
+
+	/// Variacao do ticket medio no mes de referencia contra o mes anterior.
+	measure 'Δ Ticket Médio' =
+			VAR mes = [Mês de Referência]
+			VAR atual = CALCULATE ( [Ticket Médio], dim_tempo[ano_mes] = mes )
+			VAR anterior =
+			    CALCULATE (
+			        CALCULATE ( [Ticket Médio], DATEADD ( dim_tempo[data], -1, MONTH ) ),
+			        dim_tempo[ano_mes] = mes
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( anterior ), DIVIDE ( atual - anterior, anterior ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: Destaques
+		lineageTag: 4a04f19b-4316-4753-8217-8dcd5884dbec
+
+	/// Diferenca do % no prazo, em pontos percentuais, contra o mes anterior.
+	measure 'Δ % no Prazo' =
+			VAR mes = [Mês de Referência]
+			VAR atual = CALCULATE ( [% no Prazo], dim_tempo[ano_mes] = mes )
+			VAR anterior =
+			    CALCULATE (
+			        CALCULATE ( [% no Prazo], DATEADD ( dim_tempo[data], -1, MONTH ) ),
+			        dim_tempo[ano_mes] = mes
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( anterior ), ( atual - anterior ) * 100 )
+		formatString: ▲ 0.0 \p\p;▼ 0.0 \p\p;0.0 \p\p
+		displayFolder: Destaques
+		lineageTag: e673f7db-7f05-44f3-b52c-2ae94a75ea97
+
+	/// Diferenca da nota media contra o mes anterior.
+	measure 'Δ Nota Média' =
+			VAR mes = [Mês de Referência]
+			VAR atual = CALCULATE ( [Nota Média], dim_tempo[ano_mes] = mes )
+			VAR anterior =
+			    CALCULATE (
+			        CALCULATE ( [Nota Média], DATEADD ( dim_tempo[data], -1, MONTH ) ),
+			        dim_tempo[ano_mes] = mes
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( anterior ), atual - anterior )
+		formatString: ▲ 0.00;▼ 0.00;0.00
+		displayFolder: Destaques
+		lineageTag: 7acdac82-a0ae-4769-b470-049b77b28934
+
+	/// Diferenca da taxa de atraso, em pontos percentuais, contra o mes anterior.
+	measure 'Δ Taxa de Atraso' =
+			VAR mes = [Mês de Referência]
+			VAR atual = CALCULATE ( [Taxa de Atraso], dim_tempo[ano_mes] = mes )
+			VAR anterior =
+			    CALCULATE (
+			        CALCULATE ( [Taxa de Atraso], DATEADD ( dim_tempo[data], -1, MONTH ) ),
+			        dim_tempo[ano_mes] = mes
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( anterior ), ( atual - anterior ) * 100 )
+		formatString: ▲ 0.0 \p\p;▼ 0.0 \p\p;0.0 \p\p
+		displayFolder: Destaques
+		lineageTag: 738f080f-b05a-468a-91ab-ec4cdfd9bea3
+
+	/// Variacao da receita de itens no mes de referencia contra o mes anterior.
+	measure 'Δ Receita de Itens' =
+			VAR mes = [Mês de Referência]
+			VAR atual = CALCULATE ( [Receita de Itens], dim_tempo[ano_mes] = mes )
+			VAR anterior =
+			    CALCULATE (
+			        CALCULATE ( [Receita de Itens], DATEADD ( dim_tempo[data], -1, MONTH ) ),
+			        dim_tempo[ano_mes] = mes
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( anterior ), DIVIDE ( atual - anterior, anterior ) )
+		formatString: ▲ 0.0%;▼ 0.0%;0.0%
+		displayFolder: Destaques
+		lineageTag: 2cf62822-a2e6-4c53-b645-fd15ccf7ca3f
+
+	/// Medidas de cor (hex) para a formatacao condicional por valor de campo.
+	/// Verde quando a mudanca e boa, vermelho quando e ruim.
+	measure 'Cor Δ Receita' = IF ( [Δ Receita] >= 0, "#15803D", "#B91C1C" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 657b4e0a-809e-4235-a08e-888703d0cc5f
+
+	measure 'Cor Δ Pedidos' = IF ( [Δ Pedidos] >= 0, "#15803D", "#B91C1C" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 99db71ad-35ec-4091-a59f-6244d8665336
+
+	measure 'Cor Δ Ticket Médio' = IF ( [Δ Ticket Médio] >= 0, "#15803D", "#B91C1C" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 0c5d8e36-08ae-431e-801b-d6ab6abfb0c2
+
+	measure 'Cor Δ % no Prazo' = IF ( [Δ % no Prazo] >= 0, "#15803D", "#B91C1C" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 6e8fefdd-7e6a-4d9e-91b2-d5eefed9b860
+
+	measure 'Cor Δ Nota Média' = IF ( [Δ Nota Média] >= 0, "#15803D", "#B91C1C" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 86c6d831-5222-436b-a250-0055cca5af83
+
+	measure 'Cor Δ Receita de Itens' = IF ( [Δ Receita de Itens] >= 0, "#15803D", "#B91C1C" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: b7f431fc-06c5-4f01-acc5-c85f089838a5
+
+	measure 'Cor Δ Taxa de Atraso' = IF ( [Δ Taxa de Atraso] >= 0, "#B91C1C", "#15803D" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 5c816cd0-e702-4200-8b20-b445a666099e
+
+	measure 'Cor Variação Mensal' = IF ( [Variação Mensal %] >= 0, "#15803D", "#B91C1C" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 88b1b6f1-0001-4296-b0b9-b3e21a83fc22
+
+	/// Atraso acima do esperado em vermelho; abaixo, no azul do tema.
+	measure 'Cor Atraso em Excesso' = IF ( [Atraso em Excesso] > 0, "#B91C1C", "#0F52BA" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 370d360e-b2fc-4afa-a464-bcfbe64a6886
+
+	/// Fundo da probabilidade de atraso: vermelho claro a partir de 40%, ambar a partir de 30%.
+	measure 'Cor Prob. de Atraso' =
+			VAR p = MAX ( previsao_atraso[prob_atraso] )
+			RETURN
+			    SWITCH ( TRUE (), p >= 0.4, "#FEE2E2", p >= 0.3, "#FEF3C7" )
+		isHidden
+		displayFolder: Cores
+		lineageTag: 9ec5f75b-1bea-4808-b7fd-0cdebaa41b31
+
 	column Coluna
 		isHidden
 		lineageTag: 37c6b28b-c0ed-4d92-a8b3-687101d8ad85

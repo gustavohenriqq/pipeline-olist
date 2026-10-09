@@ -3,11 +3,11 @@
   "name": "0ce56f0a7fd423ac4a3d",
   "position": {
     "x": 24,
-    "y": 288,
-    "z": 3000,
-    "height": 776,
+    "y": 366,
+    "z": 8000,
+    "height": 690,
     "width": 600,
-    "tabOrder": 3000
+    "tabOrder": 8000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -101,9 +101,6 @@
                   "Value": "'Taxa de atraso por região e a nacional'"
                 }
               }
-            },
-            "fontColor": {
-              "solid": {}
             }
           }
         }

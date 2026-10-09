@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "3775719de176b12712fb",
   "position": {
-    "x": 1196,
-    "y": 288,
-    "z": 5000,
-    "height": 776,
-    "width": 700,
-    "tabOrder": 5000
+    "x": 1190,
+    "y": 366,
+    "z": 16000,
+    "height": 690,
+    "width": 706,
+    "tabOrder": 16000
   },
   "visual": {
     "visualType": "tableEx",
@@ -79,6 +79,53 @@
         ]
       }
     },
+    "objects": {
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Medidas"
+                        }
+                      },
+                      "Property": "Cor Variação Mensal"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Medidas.Variação Mensal %"
+          }
+        }
+      ]
+    },
     "visualContainerObjects": {
       "title": [
         {
@@ -96,9 +143,6 @@
                   "Value": "'Receita e variação sobre o mês anterior (dez/2016 teve 1 pedido)'"
                 }
               }
-            },
-            "fontColor": {
-              "solid": {}
             }
           }
         }

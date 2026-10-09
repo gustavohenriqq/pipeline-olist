@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "22c05dd579dfbbe5802a",
   "position": {
-    "x": 1580,
-    "y": 12,
-    "z": 2000,
-    "height": 90,
-    "width": 316,
-    "tabOrder": 2000
+    "x": 420,
+    "y": 108,
+    "z": 3000,
+    "height": 80,
+    "width": 300,
+    "tabOrder": 3000
   },
   "visual": {
     "visualType": "slicer",
@@ -29,7 +29,7 @@
               "queryRef": "dim_clientes.regiao",
               "nativeQueryRef": "regiao",
               "active": true,
-              "displayName": "Região"
+              "displayName": "Região do cliente"
             }
           ]
         }
@@ -57,19 +57,43 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
-            },
-            "text": {
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "left": {
               "expr": {
                 "Literal": {
-                  "Value": "'Região do cliente'"
+                  "Value": "14D"
                 }
               }
             },
-            "fontColor": {
-              "solid": {}
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "14D"
+                }
+              }
+            },
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
             }
           }
         }

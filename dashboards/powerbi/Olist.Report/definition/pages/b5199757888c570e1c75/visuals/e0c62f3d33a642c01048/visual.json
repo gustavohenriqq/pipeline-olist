@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "e0c62f3d33a642c01048",
   "position": {
-    "x": 1180,
-    "y": 12,
-    "z": 1000,
-    "height": 90,
+    "x": 24,
+    "y": 108,
+    "z": 2000,
+    "height": 80,
     "width": 380,
-    "tabOrder": 1000
+    "tabOrder": 2000
   },
   "visual": {
     "visualType": "slicer",
@@ -29,7 +29,7 @@
               "queryRef": "dim_tempo.data",
               "nativeQueryRef": "data",
               "active": true,
-              "displayName": "Data"
+              "displayName": "Período"
             }
           ]
         }
@@ -137,19 +137,43 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
-            },
-            "text": {
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "left": {
               "expr": {
                 "Literal": {
-                  "Value": "'Período'"
+                  "Value": "14D"
                 }
               }
             },
-            "fontColor": {
-              "solid": {}
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "14D"
+                }
+              }
+            },
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
             }
           }
         }

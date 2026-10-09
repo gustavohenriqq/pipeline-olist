@@ -19,6 +19,8 @@
     {"caso": "receita_acumulada_2018_03", "dax": "EVALUATE ROW(\"v\", CALCULATE([Receita Acumulada no Ano], dim_tempo[ano_mes] = \"2018-03\"))"},
     {"caso": "variacao_mensal_2018_03", "dax": "EVALUATE ROW(\"v\", CALCULATE([Variação Mensal %], dim_tempo[ano_mes] = \"2018-03\"))"},
     {"caso": "variacao_mensal_2016_09", "dax": "EVALUATE ROW(\"v\", CALCULATE([Variação Mensal %], dim_tempo[ano_mes] = \"2016-09\"))"},
+    {"caso": "delta_receita_janela", "dax": "EVALUATE ROW(\"v\", CALCULATE([Δ Receita], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))"},
+    {"caso": "delta_pct_no_prazo_janela", "dax": "EVALUATE ROW(\"v\", CALCULATE([Δ % no Prazo], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))"},
     {"caso": "pedidos_alerta", "dax": "EVALUATE ROW(\"v\", [Pedidos em Alerta])"},
     {"caso": "receita_risco", "dax": "EVALUATE ROW(\"v\", [Receita em Risco])"}
   ],

@@ -8,17 +8,20 @@ calculado direto nas marts do Postgres local.
 Uso (com o Olist.pbip aberto e atualizado no Desktop):
   .\conferir.ps1                                   # modelo e medidas
   .\conferir.ps1 -Grupos modelo                    # so contagens de linhas
-  .\conferir.ps1 -Papel Vendedor -Usuario vendedor.a@exemplo.com.br
+  .\conferir.ps1 -Papel Vendedor                   # RLS e OLS do papel
 
-Com -Papel e -Usuario, a conexao entra no modelo como aquele papel e aquele
-usuario (Roles e EffectiveUserName), e confere o que o RLS deixa ver. No papel
-Vendedor tambem confere o OLS: as colunas de identificacao do cliente devem
-falhar. Sai com 1 se algum caso falhar.
+Com -Papel, a conexao entra no modelo como aquele papel (Roles). O motor local
+do Desktop nao aceita EffectiveUserName com um e-mail que nao seja conta do
+Windows, entao USERPRINCIPALNAME() devolve o usuario do Windows, que nao esta em
+seguranca_bi: nos papeis Gerente regional e Vendedor ele deve ver zero (o caso
+"fora do seed"); na Diretoria, tudo. No papel Vendedor tambem confere o OLS: as
+colunas de identificacao do cliente devem falhar. Os numeros de cada usuario do
+seed sao conferidos pelo "Exibir como" do Desktop (ver README.md desta pasta).
+Sai com 1 se algum caso falhar.
 #>
 param(
     [string[]]$Grupos = @("modelo", "medidas"),
-    [string]$Papel,
-    [string]$Usuario
+    [string]$Papel
 )
 
 $ErrorActionPreference = "Stop"
@@ -66,7 +69,9 @@ foreach ($linha in $linhas) {
 # --- Casos ---------------------------------------------------------------------
 $todos = Get-Content (Join-Path $Pasta "casos.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 $casos = @()
-if ($Usuario) {
+if ($Papel) {
+    # Diretoria nao filtra; nos outros papeis o usuario do Windows fica de fora.
+    $Usuario = if ($Papel -eq "Diretoria") { "diretoria@exemplo.com.br" } else { "fora@exemplo.com.br" }
     foreach ($c in $todos.seguranca) {
         $casos += [pscustomobject]@{ caso = $c.caso.Replace("{usuario}", $Usuario); dax = $c.dax; erro = $false }
     }
@@ -85,8 +90,19 @@ if ($Usuario) {
 
 # --- Conexao e conferencia -------------------------------------------------------
 $conexao = "Data Source=localhost:$porta"
-if ($Papel) { $conexao += ";Roles=$Papel" }
-if ($Usuario) { $conexao += ";EffectiveUserName=$Usuario" }
+if ($Papel) {
+    # Com Roles o motor exige o catalogo explicito.
+    $conn = New-Object Microsoft.AnalysisServices.AdomdClient.AdomdConnection($conexao)
+    $conn.Open()
+    $cmd = $conn.CreateCommand()
+    $cmd.CommandText = 'SELECT [CATALOG_NAME] FROM $SYSTEM.DBSCHEMA_CATALOGS'
+    $leitor = $cmd.ExecuteReader()
+    $leitor.Read() | Out-Null
+    $catalogo = $leitor.GetValue(0)
+    $leitor.Close()
+    $conn.Close()
+    $conexao += ";Initial Catalog=$catalogo;Roles=$Papel"
+}
 $conn = New-Object Microsoft.AnalysisServices.AdomdClient.AdomdConnection($conexao)
 $conn.Open()
 
@@ -140,7 +156,7 @@ foreach ($c in $casos) {
 }
 $conn.Close()
 
-$contexto = if ($Usuario) { " (papel $Papel, usuario $Usuario)" } else { "" }
+$contexto = if ($Papel) { " (papel $Papel, esperado como $Usuario)" } else { "" }
 if ($falhas -gt 0) {
     Write-Host "$falhas caso(s) falharam$contexto."
     exit 1

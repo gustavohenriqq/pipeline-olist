@@ -1,0 +1,12 @@
+/// Ve so os clientes (e seus pedidos e itens) das regioes do usuario em seguranca_bi.
+role 'Gerente regional'
+	modelPermission: read
+
+	tablePermission seguranca_bi = [email] = USERPRINCIPALNAME ()
+
+	tablePermission dim_clientes =
+			[regiao]
+			    IN CALCULATETABLE (
+			        VALUES ( seguranca_bi[regiao] ),
+			        seguranca_bi[email] = USERPRINCIPALNAME ()
+			    )

@@ -1,0 +1,9 @@
+# Dependencias so do agente (Etapa 6). O Streamlit Cloud le este arquivo por
+# estar na mesma pasta do app, e assim nao instala dbt nem scikit-learn.
+streamlit>=1.40
+openai>=1.40
+sqlglot>=25
+pandas>=2.0,<3.1
+psycopg2-binary>=2.9
+python-dotenv>=1.0
+pyyaml>=6

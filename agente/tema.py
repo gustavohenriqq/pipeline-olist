@@ -94,7 +94,7 @@ _ESTILO = """
 .stApp button[data-testid="stBaseButton-tertiary"]:hover p { color: var(--destaque); }
 
 /* marca no topo */
-.marca { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+.marca { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; margin-bottom: 14px; }
 .marca-icone {
   width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
   background: var(--destaque); color: var(--texto_no_destaque);

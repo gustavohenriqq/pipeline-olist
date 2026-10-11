@@ -127,3 +127,10 @@ def test_cifrao_escapado_na_resposta(ambiente):
     at.chat_input[0].set_value("Receita por ano?").run()
     assert not at.exception
     assert any(r"\$ 10,00" in m.value for m in at.markdown)
+
+
+def test_botao_de_tema_fica_na_barra_lateral(ambiente):
+    at = _app()
+    chaves = [b.key for b in at.sidebar.button]
+    assert "alternar_tema" in chaves and "nova_conversa" in chaves
+    assert "alternar_tema" not in [b.key for b in at.main.button]

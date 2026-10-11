@@ -52,13 +52,17 @@ def ler_atualizacao(conexao) -> str | None:
         return None
 
 
-def executar(conexao, sql: str) -> tuple[list[str], list[tuple]]:
-    """Roda em transacao somente leitura com tempo maximo; devolve colunas e linhas."""
+def executar(conexao, sql: str, parametros: tuple | None = None) -> tuple[list[str], list[tuple]]:
+    """Roda em transacao somente leitura com tempo maximo; devolve colunas e linhas.
+
+    `parametros` vai separado do texto (psycopg2 faz o escape): o painel nunca
+    concatena filtro em SQL.
+    """
     try:
         with conexao.cursor() as cur:
             cur.execute("SET TRANSACTION READ ONLY")
             cur.execute(f"SET LOCAL statement_timeout = {int(TIMEOUT_MS)}")
-            cur.execute(sql)
+            cur.execute(sql, parametros)
             colunas = [d[0] for d in cur.description or []]
             linhas = cur.fetchall() if cur.description else []
         conexao.rollback()

@@ -45,8 +45,18 @@ def ambiente(monkeypatch):
     return chamadas
 
 
+# A conversa agora e a pagina "Pergunte aos dados" do painel.
+PERGUNTE = """
+from agente.app import barra_lateral, preparar
+from painel.paginas import pergunte
+preparar()
+pergunte.pagina()
+barra_lateral()
+"""
+
+
 def _app():
-    return AppTest.from_file(APP, default_timeout=30).run()
+    return AppTest.from_string(PERGUNTE, default_timeout=30).run()
 
 
 def test_tela_inicial(ambiente):
@@ -57,13 +67,13 @@ def test_tela_inicial(ambiente):
     assert len([b for b in at.button if b.key and b.key.startswith("exemplo_")]) == 4
 
 
-def test_tema_comeca_claro_e_alterna(ambiente):
+def test_tema_comeca_escuro_e_alterna(ambiente):
     at = _app()
-    assert at.session_state["tema"] == "claro"
-    at.button(key="alternar_tema").click().run()
     assert at.session_state["tema"] == "escuro"
     at.button(key="alternar_tema").click().run()
     assert at.session_state["tema"] == "claro"
+    at.button(key="alternar_tema").click().run()
+    assert at.session_state["tema"] == "escuro"
 
 
 def test_pergunta_aparece_na_barra_lateral(ambiente):

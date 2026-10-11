@@ -125,3 +125,28 @@ def test_taxa_fora_de_zero_a_um_fica_numero():
 def test_eixo_de_taxa_em_percentual():
     df = pd.DataFrame({"uf": ["AL", "MA"], "taxa_atraso": [0.2141, 0.1746]})
     assert _spec(df, "barras")["encoding"]["y"]["axis"]["format"] == ".0%"
+
+
+def test_variacao_em_percentual_mesmo_acima_de_um_e_negativa():
+    assert _formatado("variacao_mensal", [1.087, -0.052], 1.087) == "108,70%"
+    assert _formatado("variacao_mensal", [1.087, -0.052], -0.052) == "-5,20%"
+
+
+def test_rotulos_do_placar():
+    assert rotulo_coluna("pct_no_prazo") == "% no prazo"
+    assert rotulo_coluna("ticket_medio") == "Ticket médio"
+    assert rotulo_coluna("variacao_mensal") == "Var. mensal"
+
+
+def test_tabela_html_com_classe_por_linha():
+    from agente.apresentacao import tabela_html
+    df = preparar(pd.DataFrame({"uf": ["RJ", "SP"], "prob_atraso": [0.52, 0.31]}))
+    html = tabela_html(df, classe_linha=lambda linha: "risco-alto" if linha["prob_atraso"] >= 0.4 else "")
+    assert '<tr class="risco-alto">' in html and html.count("risco-alto") == 1
+
+
+def test_data_na_tabela_no_formato_brasileiro():
+    from datetime import date
+    from agente.apresentacao import tabela_html
+    html = tabela_html(pd.DataFrame({"compra": [date(2018, 7, 29)], "uf": ["RJ"]}))
+    assert "<td>29/07/2018</td>" in html

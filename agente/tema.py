@@ -1,4 +1,4 @@
-"""Tema do app: paleta clara (padrao) e escura, trocadas pelo botao de sol/lua.
+"""Tema do app: paleta escura (padrao) e clara, trocadas pelo botao de sol/lua.
 
 O Streamlit nao deixa cada visitante trocar o tema por codigo, entao a troca e
 feita aqui, com CSS. Os seletores usam data-testid do Streamlit (versao fixada em
@@ -21,6 +21,10 @@ PALETAS = {
         "brilho": "rgba(16, 185, 129, 0.16)",
         "sombra": "rgba(15, 23, 42, 0.06)",
         "grade": "#E8EEF0",
+        "azul": "#2563EB",
+        "violeta": "#7C3AED",
+        "ambar": "#D97706",
+        "vermelho": "#DC2626",
     },
     "escuro": {
         "fundo": "#0B1220",
@@ -35,15 +39,78 @@ PALETAS = {
         "brilho": "rgba(52, 211, 153, 0.10)",
         "sombra": "rgba(0, 0, 0, 0.35)",
         "grade": "#1C263A",
+        "azul": "#60A5FA",
+        "violeta": "#A78BFA",
+        "ambar": "#FBBF24",
+        "vermelho": "#F87171",
     },
 }
 
 
 def tema_valido(nome: str | None) -> str:
-    return nome if nome in PALETAS else "claro"
+    return nome if nome in PALETAS else "escuro"
 
 
 _ESTILO = """
+/* campos e listas (selectbox, date_input) seguem o tema, nao o base do config.toml */
+html, body { background: var(--fundo); }
+[data-testid="stDateInputField"], [data-testid="stSelectbox"] div:has(> input) {
+  background: var(--superficie) !important; border: 1px solid var(--borda) !important; border-radius: 10px;
+}
+[data-testid="stDateInputField"] *, [data-testid="stDateInput"] input, [data-testid="stSelectbox"] input {
+  color: var(--texto) !important; -webkit-text-fill-color: var(--texto);
+}
+[data-testid="stSelectbox"] svg { color: var(--texto_suave); }
+[data-testid="stSelectboxVirtualDropdown"] {
+  background: var(--superficie) !important; color: var(--texto) !important;
+  border: 1px solid var(--borda); border-radius: 10px;
+}
+[data-testid="stSelectboxVirtualDropdown"] [role="option"] { color: var(--texto); }
+[data-testid="stSelectboxVirtualDropdown"] [role="option"]:hover,
+[data-testid="stSelectboxVirtualDropdown"] [aria-selected="true"] { background: var(--destaque_suave); }
+.stApp [data-testid="stWidgetLabel"] p { color: var(--texto_suave); }
+
+/* menu de paginas */
+[data-testid="stSidebarNav"] a span, [data-testid="stSidebarNavLink"] span { color: var(--texto_suave); }
+[data-testid="stSidebarNavLink"][aria-current="page"] {
+  background: var(--destaque_suave); border-radius: 10px;
+}
+[data-testid="stSidebarNavLink"][aria-current="page"] span { color: var(--destaque); font-weight: 600; }
+
+/* cabecalho das paginas do painel */
+.cabecalho h1 { font-size: 28px; font-weight: 700; padding: 0; margin: 0; }
+.cabecalho p { color: var(--texto_suave); margin: 2px 0 0; }
+
+/* cartoes de indicador */
+.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 14px; margin: 6px 0 14px; }
+.cartao {
+  --cor: var(--destaque);
+  display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 18px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cor) 16%, var(--superficie)), var(--superficie) 70%);
+  border: 1px solid color-mix(in srgb, var(--cor) 32%, var(--borda));
+  box-shadow: 0 10px 30px var(--sombra);
+}
+.cor-menta { --cor: var(--destaque); }
+.cor-azul { --cor: var(--azul); }
+.cor-violeta { --cor: var(--violeta); }
+.cor-ambar { --cor: var(--ambar); }
+.cartao-icone {
+  flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--cor) 22%, transparent); color: var(--cor);
+}
+.cartao-icone span { font-family: "Material Symbols Rounded"; font-size: 24px; line-height: 1; }
+.cartao-rotulo { color: var(--texto_suave); font-size: 13px; }
+.cartao-valor { color: var(--texto); font-size: 22px; white-space: nowrap; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; }
+.cartao-delta { font-size: 12.5px; margin-top: 2px; color: var(--texto_suave); }
+.cartao-delta b { font-weight: 600; }
+.cartao-delta.melhora b { color: var(--destaque); }
+.cartao-delta.piora b { color: var(--vermelho); }
+
+/* blocos de grafico e tabela */
+.bloco-titulo { font-weight: 600; font-size: 16px; color: var(--texto); margin: 4px 0 0; }
+.bloco-sub { color: var(--texto_suave); font-size: 13px; margin: 0 0 6px; }
+.risco-alto { background: color-mix(in srgb, var(--vermelho) 22%, transparent); }
+.risco-medio { background: color-mix(in srgb, var(--ambar) 20%, transparent); }
 .stApp {
   background:
     radial-gradient(circle at 0% 100%, var(--brilho), transparent 32%),
@@ -163,6 +230,7 @@ _ESTILO = """
 .tabela-resultado td {
   color: var(--texto); padding: 8px 14px; border: 0; border-top: 1px solid var(--borda);
 }
+.tabela-resultado td { white-space: nowrap; }
 .tabela-resultado .num { text-align: right; font-variant-numeric: tabular-nums; }
 .tabela-resultado tr:hover td { background: var(--destaque_suave); }
 """
@@ -171,4 +239,6 @@ _ESTILO = """
 def css(tema: str | None) -> str:
     paleta = PALETAS[tema_valido(tema)]
     variaveis = "\n".join(f"  --{nome}: {valor};" for nome, valor in paleta.items())
-    return f":root {{\n{variaveis}\n}}\n{_ESTILO}"
+    # Icones dos cartoes (Material Symbols); @import precisa vir antes de qualquer regra.
+    fonte = "@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded');"
+    return f"{fonte}\n:root {{\n{variaveis}\n}}\n{_ESTILO}"

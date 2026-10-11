@@ -160,3 +160,18 @@ def test_banco_indisponivel_vira_aviso_sem_nova_tentativa():
     assert r.tipo == "banco"
     assert "acordando" in r.texto
     assert len(banco.sqls) == 1
+
+
+def test_contexto_vai_ao_modelo_mas_nao_a_resposta():
+    contexto = "Contexto do painel: página Entrega e risco; período 01/01/2018 a 31/08/2018."
+    llm = _LLM(_sql("SELECT count(*) AS pedidos FROM marts.fato_pedidos"), "Foram 10 pedidos.")
+    r = responder("Quantos pedidos?", [], llm, _Banco((["pedidos"], [(10,)])), ESQUEMA, contexto=contexto)
+    pedido_sql = llm.mensagens[0][-1]["content"]
+    assert "período 01/01/2018 a 31/08/2018" in pedido_sql and "Pergunta: Quantos pedidos?" in pedido_sql
+    assert "Contexto do painel" not in r.texto
+
+
+def test_sem_contexto_o_pedido_nao_muda():
+    llm = _LLM(_sql("SELECT 1 AS x FROM marts.fato_pedidos"), "x")
+    responder("Quantos pedidos?", [], llm, _Banco((["x"], [(1,)])), ESQUEMA)
+    assert "Contexto do painel" not in llm.mensagens[0][-1]["content"]

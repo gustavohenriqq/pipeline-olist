@@ -12,10 +12,11 @@ def test_paleta_escura_com_fundo_escuro():
     assert "--fundo: #0B1220" in css("escuro")
 
 
-def test_tema_desconhecido_cai_no_claro():
-    assert tema_valido("roxo") == "claro"
-    assert tema_valido(None) == "claro"
-    assert css("roxo") == css("claro")
+def test_tema_padrao_e_desconhecido_caem_no_escuro():
+    assert tema_valido("roxo") == "escuro"
+    assert tema_valido(None) == "escuro"
+    assert tema_valido("claro") == "claro"
+    assert css("roxo") == css("escuro")
 
 
 def test_as_duas_paletas_tem_os_mesmos_tokens():

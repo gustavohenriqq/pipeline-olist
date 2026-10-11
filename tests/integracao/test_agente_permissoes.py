@@ -114,3 +114,19 @@ def test_executar_respeita_tempo_maximo(agente):
 def test_le_atualizacao_dados_para_o_rodape(agente):
     from agente.banco import ler_atualizacao
     assert ler_atualizacao(agente) is None or isinstance(ler_atualizacao(agente), str)
+
+
+def test_conexao_derrubada_vira_banco_indisponivel(admin, concedidas):
+    """Como quando o Neon dorme: o servidor encerra a sessao no meio do caminho."""
+    from agente.banco import BancoIndisponivel, executar
+    conn = psycopg2.connect(**{**PG, "user": ROLE, "password": SENHA})
+    with conn.cursor() as cur:
+        cur.execute("select pg_backend_pid()")
+        pid = cur.fetchone()[0]
+    conn.rollback()
+    with admin.cursor() as cur:
+        cur.execute("select pg_terminate_backend(%s)", (pid,))
+    for _ in range(2):
+        with pytest.raises(BancoIndisponivel):
+            executar(conn, "select 1")
+    conn.close()

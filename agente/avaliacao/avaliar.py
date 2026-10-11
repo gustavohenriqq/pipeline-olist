@@ -23,26 +23,50 @@ from agente.config import env
 PASTA = Path(__file__).resolve().parent
 
 
-def _celula(valor) -> str:
+def _texto(valor) -> str:
     if valor is None:
         return ""
     if isinstance(valor, bool):
         return str(valor).lower()
-    if isinstance(valor, (int, float, Decimal)):
-        return f"{round(float(valor), 2):.2f}"
     if isinstance(valor, (date, datetime)):
         return valor.isoformat()[:10]
     texto = unicodedata.normalize("NFKD", str(valor))
     return "".join(c for c in texto if not unicodedata.combining(c)).strip().lower()
 
 
-def _linha(linha) -> tuple:
-    return tuple(sorted(_celula(v) for v in linha))
+def _e_numero(valor) -> bool:
+    return isinstance(valor, (int, float, Decimal)) and not isinstance(valor, bool)
+
+
+def _linha(linha) -> tuple[tuple, tuple]:
+    """(textos ordenados, numeros ordenados): ordem de coluna nao importa."""
+    textos = tuple(sorted(_texto(v) for v in linha if not _e_numero(v)))
+    numeros = tuple(sorted(float(v) for v in linha if _e_numero(v)))
+    return textos, numeros
+
+
+def _proximo(a: float, b: float) -> bool:
+    # Totais em reais: centavo. Taxas e frações (abaixo de 1): 4 casas, como o prompt pede.
+    folga = 0.005 if max(abs(a), abs(b)) >= 1 else 5e-5
+    return abs(a - b) <= folga
+
+
+def _mesma_linha(a, b) -> bool:
+    return (a[0] == b[0] and len(a[1]) == len(b[1])
+            and all(_proximo(x, y) for x, y in zip(a[1], b[1])))
 
 
 def mesmo_resultado(linhas_a, linhas_b) -> bool:
     """Mesmos valores por linha, sem olhar nome nem ordem de coluna ou de linha."""
-    return Counter(_linha(l) for l in linhas_a) == Counter(_linha(l) for l in linhas_b)
+    if len(linhas_a) != len(linhas_b):
+        return False
+    restantes = [_linha(l) for l in linhas_b]
+    for linha in (_linha(l) for l in linhas_a):
+        par = next((i for i, outra in enumerate(restantes) if _mesma_linha(linha, outra)), None)
+        if par is None:
+            return False
+        restantes.pop(par)
+    return True
 
 
 def main() -> None:

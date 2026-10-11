@@ -14,7 +14,7 @@ from typing import Callable
 
 import pandas as pd
 
-from agente.banco import ErroBanco
+from agente.banco import BancoIndisponivel, ErroBanco
 from agente.config import LINHAS_NA_RESPOSTA, TENTATIVAS_SQL, TURNOS_HISTORICO
 from agente.grafico import escolher_grafico
 from agente.guarda_sql import SQLRecusado, validar
@@ -28,6 +28,7 @@ COTA = "A cota gratuita do dia acabou. Volte amanhã."
 SOBRECARGA = "O modelo está sobrecarregado agora; tente de novo em instantes."
 FALHA_MODELO = "Não consegui falar com o modelo agora; tente de novo em instantes."
 VAZIO = "Nenhum registro encontrado para essa pergunta."
+BANCO_ACORDANDO = "O banco está acordando ou a conexão caiu; tente de novo em alguns segundos."
 PEDE_GRAFICO = re.compile(r"gr[aá]fico|evolu|tend[eê]ncia|ao longo", re.IGNORECASE)
 
 
@@ -39,7 +40,7 @@ class Turno:
 
 @dataclass
 class Resposta:
-    tipo: str  # ok, vazio, fora_do_escopo, recusado, erro, cota
+    tipo: str  # ok, vazio, fora_do_escopo, recusado, erro, cota, banco
     texto: str
     sql: str | None = None
     colunas: list[str] = field(default_factory=list)
@@ -115,6 +116,8 @@ def responder(pergunta: str, historico: list[Turno], llm, executar: Callable[[st
             return Resposta("recusado", e.motivo, sql=dados.get("sql"))
         try:
             colunas, linhas = executar(sql)
+        except BancoIndisponivel:
+            return Resposta("banco", BANCO_ACORDANDO, sql=sql)
         except ErroBanco as e:
             erro = str(e)
             continue

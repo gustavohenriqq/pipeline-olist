@@ -48,9 +48,14 @@ def _carregar_segredos() -> None:
         pass
 
 
-@st.cache_resource
-def _conexao():
-    return banco.abrir_conexao()
+@st.cache_data(ttl=600, show_spinner=False)
+def _resumo_dos_dados() -> str | None:
+    # Falha levanta e nao entra no cache: na proxima tela tenta de novo.
+    conexao = banco.abrir_conexao()
+    try:
+        return banco.ler_atualizacao(conexao)
+    finally:
+        conexao.close()
 
 
 @st.cache_resource
@@ -110,15 +115,22 @@ def _processar(pergunta: str) -> None:
         st.warning(f"Você chegou ao limite de {MAX_POR_SESSAO} perguntas desta sessão. "
                    "A cota do modelo é gratuita e compartilhada; volte mais tarde.")
         return
+    # Uma conexao por pergunta: uma conexao guardada morre quando o Neon dorme
+    # e, compartilhada entre visitantes, misturaria transacoes.
     try:
-        conexao = _conexao()
+        conexao = banco.abrir_conexao()
     except Exception:  # noqa: BLE001
         st.warning("O banco está acordando; tente de novo em alguns segundos.")
         return
     estado.perguntas_feitas += 1
-    with st.spinner("Consultando os dados..."):
-        resposta = nucleo.responder(pergunta, estado.historico, _cliente(),
-                                    lambda sql: banco.executar(conexao, sql), ESQUEMA)
+    try:
+        with st.spinner("Consultando os dados..."):
+            resposta = nucleo.responder(pergunta, estado.historico, _cliente(),
+                                        lambda sql: banco.executar(conexao, sql), ESQUEMA)
+    except Exception:  # noqa: BLE001 (ultima defesa: nada chega cru na tela)
+        resposta = nucleo.Resposta("erro", "Algo deu errado ao responder; tente de novo.")
+    finally:
+        conexao.close()
     estado.conversa.append({"pergunta": pergunta, "resposta": resposta})
     if resposta.sql and resposta.tipo in ("ok", "vazio"):
         estado.historico.append(nucleo.Turno(pergunta, resposta.sql))
@@ -162,7 +174,7 @@ def _barra_lateral() -> None:
                     f":material/code: [Código no GitHub]({REPO})")
         st.markdown('<div class="rotulo-secao">Dados</div>', unsafe_allow_html=True)
         try:
-            resumo = banco.ler_atualizacao(_conexao())
+            resumo = _resumo_dos_dados()
         except Exception:  # noqa: BLE001
             resumo = None
         partes = [resumo, "Base pública Olist, pedidos de set/2016 a out/2018",

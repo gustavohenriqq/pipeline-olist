@@ -9,15 +9,40 @@ from __future__ import annotations
 
 import sqlglot
 from sqlglot import exp
-from sqlglot.errors import ParseError
+from sqlglot.errors import SqlglotError
 
 from agente.config import LIMITE_LINHAS, SCHEMA, TABELAS_PERMITIDAS
 
 FUNCOES_NEGADAS = {
-    "pg_sleep", "pg_sleep_for", "pg_sleep_until", "set_config", "dblink",
-    "pg_read_file", "pg_read_binary_file", "pg_ls_dir", "lo_import", "lo_export",
-    "pg_terminate_backend", "pg_cancel_backend", "current_setting",
+    "set_config", "current_setting", "version", "inet_server_addr", "inet_server_port",
+    "inet_client_addr", "inet_client_port", "txid_current",
 }
+# Familias inteiras: funcoes do servidor (pg_*), objetos grandes (lo_*), conexao a
+# outros bancos (dblink*) e as que executam SQL em texto (query_to_xml, *_to_xml).
+PREFIXOS_NEGADOS = ("pg_", "lo_", "dblink", "query_to_", "cursor_to_")
+SUFIXOS_NEGADOS = ("_to_xml", "_to_xmlschema", "_to_xml_and_xmlschema")
+
+
+def _funcao_negada(nome: str) -> bool:
+    return (nome in FUNCOES_NEGADAS or nome.startswith(PREFIXOS_NEGADOS)
+            or nome.endswith(SUFIXOS_NEGADOS))
+
+
+def _ctes_visiveis(tabela: exp.Table) -> set[str]:
+    """CTEs que alcancam esta tabela: as do WITH da propria consulta e das que a envolvem.
+
+    Uma CTE definida dentro de uma subconsulta nao vale fora dela; sem isso,
+    "(WITH pg_roles AS (...) ...) CROSS JOIN pg_roles" liberaria o catalogo.
+    """
+    nomes, no = set(), tabela.parent
+    while no is not None:
+        # "with_" nas versoes novas do sqlglot, "with" nas antigas
+        com = (no.args.get("with_") or no.args.get("with")) if isinstance(no, exp.Expression) else None
+        if com is not None:
+            nomes |= {cte.alias_or_name for cte in com.expressions}
+        no = no.parent
+    return nomes
+
 
 # Nos que escrevem, mudam estado ou travam linhas, em qualquer ponto da arvore.
 NOS_NEGADOS = tuple(
@@ -47,7 +72,7 @@ def validar(sql: str) -> str:
         raise SQLRecusado("O modelo não gerou SQL.")
     try:
         comandos = [c for c in sqlglot.parse(sql, read="postgres") if c is not None]
-    except ParseError:
+    except (SqlglotError, RecursionError):
         raise SQLRecusado("Não consegui ler o SQL gerado.") from None
     if len(comandos) != 1:
         raise SQLRecusado("Só é permitido um comando por consulta.")
@@ -59,18 +84,17 @@ def validar(sql: str) -> str:
         if isinstance(no, NOS_NEGADOS):
             raise SQLRecusado("A consulta tenta escrever ou travar dados.")
 
-    ctes = {cte.alias_or_name for cte in raiz.find_all(exp.CTE)}
     for tabela in raiz.find_all(exp.Table):
         nome, schema = tabela.name, tabela.db
         if not nome:
             raise SQLRecusado("Fonte de dados não permitida.")
-        if not schema and nome in ctes:
+        if not schema and nome in _ctes_visiveis(tabela):
             continue
         if (schema and schema != SCHEMA) or nome not in TABELAS_PERMITIDAS:
             raise SQLRecusado(f"A tabela {tabela.sql(dialect='postgres')} não está liberada para o agente.")
 
     for funcao in raiz.find_all(exp.Func):
-        if _nome_funcao(funcao) in FUNCOES_NEGADAS:
+        if _funcao_negada(_nome_funcao(funcao)):
             raise SQLRecusado(f"A função {_nome_funcao(funcao)} não é permitida.")
 
     limite = raiz.args.get("limit")

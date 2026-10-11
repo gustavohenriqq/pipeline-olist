@@ -67,3 +67,38 @@ def test_recusa(sql):
 def test_comando_escondido_em_comentario_nao_passa():
     with pytest.raises(SQLRecusado):
         validar("SELECT 1 /* inocente */; DELETE FROM fato_pedidos -- fim")
+
+
+def test_literal_sem_fechar_e_recusado_sem_excecao_crua():
+    for sql in ("SELECT 'abc FROM marts.fato_pedidos",
+                "SELECT * FROM marts.dim_clientes WHERE cidade = 'santa barbara d'oeste'"):
+        with pytest.raises(SQLRecusado):
+            validar(sql)
+
+
+def test_aninhamento_profundo_e_recusado():
+    with pytest.raises(SQLRecusado):
+        validar("SELECT " + "(" * 3000 + "1" + ")" * 3000)
+
+
+def test_cte_de_subconsulta_nao_libera_nome_de_fora():
+    with pytest.raises(SQLRecusado):
+        validar("SELECT r.rolname FROM (WITH pg_roles AS (SELECT 1) SELECT 1) a CROSS JOIN pg_roles r")
+
+
+def test_tabela_do_catalogo_sem_schema_e_recusada():
+    with pytest.raises(SQLRecusado):
+        validar("SELECT rolname FROM pg_roles")
+
+
+def test_cte_continua_valendo_no_proprio_escopo_e_em_subconsulta():
+    validar("WITH t AS (SELECT 1 AS x FROM marts.fato_pedidos) SELECT x FROM t")
+    validar("WITH t AS (SELECT 1 AS x FROM marts.fato_pedidos) SELECT (SELECT max(x) FROM t)")
+
+
+def test_funcoes_que_executam_sql_ou_leem_o_servidor_sao_recusadas():
+    for chamada in ("query_to_xml('select 1', true, true, '')", "table_to_xml('marts.fato_pedidos', true, true, '')",
+                    "version()", "inet_server_addr()", "lo_get(1)", "pg_stat_file('x')",
+                    "pg_advisory_lock(1)", "dblink_exec('x')"):
+        with pytest.raises(SQLRecusado):
+            validar(f"SELECT {chamada} FROM marts.fato_pedidos")

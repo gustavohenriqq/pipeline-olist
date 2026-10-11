@@ -1,10 +1,11 @@
-# Tema escuro do app do agente; o azul de destaque e o mesmo do Looker e do Power BI.
+# Tema base do app do agente: claro, destaque verde menta. O escuro e o botao de
+# troca ficam em agente/tema.py (CSS por sessao, que o config.toml nao faz).
 [theme]
-base = "dark"
-primaryColor = "#4F8DF7"
-backgroundColor = "#0B1220"
-secondaryBackgroundColor = "#162033"
-textColor = "#E2E8F0"
+base = "light"
+primaryColor = "#10B981"
+backgroundColor = "#F7FAF9"
+secondaryBackgroundColor = "#F1F5F4"
+textColor = "#0F172A"
 
 [browser]
 gatherUsageStats = false

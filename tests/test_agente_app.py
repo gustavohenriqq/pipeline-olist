@@ -39,9 +39,39 @@ def _app():
 def test_tela_inicial(ambiente):
     at = _app()
     assert not at.exception
-    assert "Pergunte aos dados" in at.title[0].value
-    assert any("SQL" in i.value for i in at.info)
-    assert len(at.button) == 4
+    assert any("O que você quer saber" in m.value for m in at.markdown)
+    assert any("SQL" in c.value for c in at.caption)
+    assert len([b for b in at.button if b.key and b.key.startswith("exemplo_")]) == 4
+
+
+def test_tema_comeca_claro_e_alterna(ambiente):
+    at = _app()
+    assert at.session_state["tema"] == "claro"
+    at.button(key="alternar_tema").click().run()
+    assert at.session_state["tema"] == "escuro"
+    at.button(key="alternar_tema").click().run()
+    assert at.session_state["tema"] == "claro"
+
+
+def test_pergunta_aparece_na_barra_lateral(ambiente):
+    at = _app()
+    at.chat_input[0].set_value("Quantos pedidos?").run()
+    assert any("Quantos pedidos?" in c.value for c in at.sidebar.caption)
+
+
+def test_nova_conversa_limpa_tudo(ambiente):
+    at = _app()
+    at.chat_input[0].set_value("Quantos pedidos?").run()
+    at.button(key="nova_conversa").click().run()
+    assert at.session_state["conversa"] == []
+    assert at.session_state["historico"] == []
+    assert any("O que você quer saber" in m.value for m in at.markdown)
+
+
+def test_exemplo_clicado_vira_pergunta(ambiente):
+    at = _app()
+    at.button(key="exemplo_0").click().run()
+    assert ambiente.perguntas == ["Qual a receita por ano?"]
 
 
 def test_pergunta_longa_e_recusada(ambiente):

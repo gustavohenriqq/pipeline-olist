@@ -1,10 +1,10 @@
-# Tema do app do agente, nas cores do dashboard do Looker e do Power BI.
+# Tema escuro do app do agente; o azul de destaque e o mesmo do Looker e do Power BI.
 [theme]
-base = "light"
-primaryColor = "#0F52BA"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F1F5F9"
-textColor = "#0F172A"
+base = "dark"
+primaryColor = "#4F8DF7"
+backgroundColor = "#0B1220"
+secondaryBackgroundColor = "#162033"
+textColor = "#E2E8F0"
 
 [browser]
 gatherUsageStats = false

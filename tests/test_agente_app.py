@@ -96,4 +96,4 @@ def test_cifrao_escapado_na_resposta(ambiente):
     at = _app()
     at.chat_input[0].set_value("Receita por ano?").run()
     assert not at.exception
-    assert any("\$ 10,00" in m.value for m in at.markdown)
+    assert any(r"\$ 10,00" in m.value for m in at.markdown)

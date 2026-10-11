@@ -26,6 +26,19 @@ def abrir_conexao():
     return psycopg2.connect(**parametros)
 
 
+def ler_atualizacao(conexao) -> str | None:
+    """Resumo da ultima atualizacao dos dados (rodape do app); None se nao houver."""
+    try:
+        with conexao.cursor() as cur:
+            cur.execute("SELECT resumo FROM marts.atualizacao_dados LIMIT 1")
+            linha = cur.fetchone()
+        conexao.rollback()
+        return linha[0] if linha else None
+    except psycopg2.Error:
+        conexao.rollback()
+        return None
+
+
 def executar(conexao, sql: str) -> tuple[list[str], list[tuple]]:
     """Roda em transacao somente leitura com tempo maximo; devolve colunas e linhas."""
     try:

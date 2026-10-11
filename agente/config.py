@@ -29,6 +29,10 @@ TABELAS_PERMITIDAS = (
     "previsao_atraso",
 )
 
+# Lidas pelo app (rodape com a data dos dados), nunca pelo modelo: o usuario do
+# banco tem SELECT nelas, mas a guarda de SQL nao as aceita.
+TABELAS_DO_APP = ("atualizacao_dados",)
+
 LIMITE_LINHAS = 1000
 TIMEOUT_MS = 5000
 MAX_PERGUNTA = 300

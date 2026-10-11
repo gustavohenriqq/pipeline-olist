@@ -9,7 +9,7 @@ import psycopg2
 import pytest
 from psycopg2 import errors, sql
 
-from agente.config import ROLE, SCHEMA, TABELAS_PERMITIDAS
+from agente.config import ROLE, SCHEMA, TABELAS_DO_APP, TABELAS_PERMITIDAS
 from agente.permissoes import aplicar_permissoes
 from ingestion.config import PG
 
@@ -27,7 +27,7 @@ def admin():
     with conn.cursor() as cur:
         cur.execute("create schema if not exists marts")
         cur.execute("create schema if not exists raw")
-        for tabela in TABELAS_PERMITIDAS + TABELAS_PROIBIDAS:
+        for tabela in TABELAS_PERMITIDAS + TABELAS_DO_APP + TABELAS_PROIBIDAS:
             cur.execute(sql.SQL("create table if not exists {}.{} (id int)").format(
                 sql.Identifier(SCHEMA), sql.Identifier(tabela)))
         cur.execute("create table if not exists raw.orders (id int)")
@@ -87,7 +87,7 @@ def test_timeout(agente):
 def test_reaplicar_e_idempotente(admin, concedidas):
     with admin.cursor() as cur:
         assert aplicar_permissoes(cur) == concedidas
-    assert set(concedidas) == set(TABELAS_PERMITIDAS)
+    assert set(concedidas) == set(TABELAS_PERMITIDAS + TABELAS_DO_APP)
 
 
 def test_executar_devolve_colunas_e_linhas(agente):
@@ -109,3 +109,8 @@ def test_executar_respeita_tempo_maximo(agente):
     from agente.banco import ErroBanco, executar
     with pytest.raises(ErroBanco):
         executar(agente, "select pg_sleep(6)")
+
+
+def test_le_atualizacao_dados_para_o_rodape(agente):
+    from agente.banco import ler_atualizacao
+    assert ler_atualizacao(agente) is None or isinstance(ler_atualizacao(agente), str)

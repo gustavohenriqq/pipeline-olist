@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from psycopg2 import sql
 
-from agente.config import ROLE, SCHEMA, TABELAS_PERMITIDAS, TIMEOUT_MS
+from agente.config import ROLE, SCHEMA, TABELAS_DO_APP, TABELAS_PERMITIDAS, TIMEOUT_MS
 
 
 def papel_existe(cur) -> bool:
@@ -41,7 +41,7 @@ def aplicar_permissoes(cur, senha: str | None = None) -> list[str]:
         (SCHEMA,),
     )
     existentes = {r[0] for r in cur.fetchall()}
-    concedidas = [t for t in TABELAS_PERMITIDAS if t in existentes]
+    concedidas = [t for t in TABELAS_PERMITIDAS + TABELAS_DO_APP if t in existentes]
     for tabela in concedidas:
         cur.execute(sql.SQL("grant select on {}.{} to {}").format(
             schema, sql.Identifier(tabela), papel))

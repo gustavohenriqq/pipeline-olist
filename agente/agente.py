@@ -18,12 +18,15 @@ from agente.banco import ErroBanco
 from agente.config import LINHAS_NA_RESPOSTA, TENTATIVAS_SQL, TURNOS_HISTORICO
 from agente.grafico import escolher_grafico
 from agente.guarda_sql import SQLRecusado, validar
-from agente.llm import CotaEsgotada
+from agente.llm import CotaEsgotada, ModeloIndisponivel
 from agente.numeros import confere, extrair_numeros
 from agente.prompts import EXEMPLOS, SISTEMA_RESPOSTA, SISTEMA_SQL
 
 AVISO_NAO_CONFIRMADA = "Resposta automática não confirmada; confira a tabela."
-AVISO_SEM_RESPOSTA = "A cota do modelo acabou antes da resposta escrita; confira a tabela."
+AVISO_SEM_RESPOSTA = "O modelo ficou indisponível antes da resposta escrita; confira a tabela."
+COTA = "A cota gratuita do dia acabou. Volte amanhã."
+SOBRECARGA = "O modelo está sobrecarregado agora; tente de novo em instantes."
+FALHA_MODELO = "Não consegui falar com o modelo agora; tente de novo em instantes."
 VAZIO = "Nenhum registro encontrado para essa pergunta."
 PEDE_GRAFICO = re.compile(r"gr[aá]fico|evolu|tend[eê]ncia|ao longo", re.IGNORECASE)
 
@@ -93,8 +96,12 @@ def responder(pergunta: str, historico: list[Turno], llm, executar: Callable[[st
     for _ in range(TENTATIVAS_SQL):
         try:
             bruto = llm.completar(_mensagens_sql(pergunta, historico, esquema, erro, sql), json=True)
+        except ModeloIndisponivel:
+            return Resposta("cota", SOBRECARGA)
         except CotaEsgotada:
-            return Resposta("cota", "A cota gratuita do dia acabou. Volte amanhã.")
+            return Resposta("cota", COTA)
+        except Exception:  # noqa: BLE001 (erro do provedor nunca vira traceback na tela)
+            return Resposta("erro", FALHA_MODELO)
         try:
             dados = _ler_json(bruto)
         except ValueError as e:
@@ -129,7 +136,7 @@ def responder(pergunta: str, historico: list[Turno], llm, executar: Callable[[st
     ]
     try:
         texto = llm.completar(mensagens).strip()
-    except CotaEsgotada:
+    except Exception:  # noqa: BLE001 (sem frase, a tabela e o SQL continuam valendo)
         base.texto = AVISO_SEM_RESPOSTA
         return base
 

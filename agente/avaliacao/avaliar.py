@@ -46,7 +46,7 @@ def mesmo_resultado(linhas_a, linhas_b) -> bool:
 
 
 def main() -> None:
-    from agente.agente import Turno, responder
+    from agente.agente import Resposta, Turno, responder
     from agente.banco import abrir_conexao, executar
     from agente.llm import ClienteLLM, provedores_do_ambiente
 
@@ -62,7 +62,10 @@ def main() -> None:
     totais: Counter = Counter()
     for p in perguntas:
         historico = [Turno(por_id[i]["pergunta"], por_id[i]["sql_referencia"]) for i in p.get("contexto") or []]
-        r = responder(p["pergunta"], historico, llm, lambda sql: executar(conexao, sql), esquema)
+        try:
+            r = responder(p["pergunta"], historico, llm, lambda sql: executar(conexao, sql), esquema)
+        except Exception as erro:  # noqa: BLE001 (uma pergunta nao derruba a avaliacao)
+            r = Resposta("erro", str(erro))
         if p["sql_referencia"] is None:
             esperado, ok = "fora_do_escopo", r.tipo == "fora_do_escopo"
         else:

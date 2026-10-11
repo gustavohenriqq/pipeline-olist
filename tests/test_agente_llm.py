@@ -132,3 +132,17 @@ def test_gemini_erro_que_nao_e_cota_levanta():
 def test_provedores_do_gemini_usam_a_api_nativa(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "g")
     assert {p.api for p in provedores_do_ambiente() if p.nome.startswith("gemini")} == {"gemini"}
+
+
+def test_gemini_sobrecarregado_passa_para_o_proximo():
+    http = _Http((503, {"error": {"code": 503, "message": "high demand"}}), _texto_gemini("ok lite"))
+    lite = Provedor("gemini-lite", "http://g/v1beta", "gemini-lite-x", "chave-g", api="gemini")
+    assert ClienteLLM([G, lite], enviar=http).completar(MSG) == "ok lite"
+
+
+def test_todos_sobrecarregados_levanta_modelo_indisponivel():
+    from agente.llm import ModeloIndisponivel
+    http = _Http((503, {}), (500, {}))
+    lite = Provedor("gemini-lite", "http://g/v1beta", "gemini-lite-x", "chave-g", api="gemini")
+    with pytest.raises(ModeloIndisponivel):
+        ClienteLLM([G, lite], enviar=http).completar(MSG)

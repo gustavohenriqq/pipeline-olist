@@ -33,8 +33,16 @@ class CotaEsgotada(Exception):
     """Todos os provedores recusaram por cota."""
 
 
+class ModeloIndisponivel(CotaEsgotada):
+    """Todos recusaram, e ao menos um por sobrecarga (5xx), nao por cota."""
+
+
 class _Cota(Exception):
     """Um provedor recusou por cota (429)."""
+
+
+class _Sobrecarga(Exception):
+    """Um provedor esta sobrecarregado (500, 503): tenta o proximo."""
 
 
 def provedores_do_ambiente() -> list[Provedor]:
@@ -91,6 +99,8 @@ class ClienteLLM:
         status, dados = self._enviar(url, _corpo_gemini(mensagens, json), {"x-goog-api-key": p.chave})
         if status == 429:
             raise _Cota()
+        if status in (500, 502, 503, 504):
+            raise _Sobrecarga()
         if status != 200:
             erro = dados[0] if isinstance(dados, list) and dados else dados
             mensagem = (erro.get("error") or {}).get("message", "") if isinstance(erro, dict) else ""
@@ -105,15 +115,21 @@ class ClienteLLM:
                 model=p.modelo, messages=mensagens, temperature=0, **extras)
         except openai.RateLimitError:
             raise _Cota() from None
+        except openai.InternalServerError:
+            raise _Sobrecarga() from None
         return resposta.choices[0].message.content or ""
 
     def completar(self, mensagens: list[dict], json: bool = False) -> str:
+        sobrecarga = False
         for provedor in self.provedores:
             chamar = self._gemini if provedor.api == "gemini" else self._openai
             try:
                 texto = chamar(provedor, mensagens, json)
             except _Cota:
                 continue
+            except _Sobrecarga:
+                sobrecarga = True
+                continue
             self.ultimo_provedor = provedor.nome
             return texto
-        raise CotaEsgotada()
+        raise ModeloIndisponivel() if sobrecarga else CotaEsgotada()

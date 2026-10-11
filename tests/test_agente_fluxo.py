@@ -139,3 +139,15 @@ def test_decimal_none_e_data_nao_quebram():
                   _Banco((["data", "valor_total", "nota_avaliacao"], linhas)), ESQUEMA)
     assert r.tipo == "ok" and r.confirmada
     assert r.grafico == "linha"
+
+
+def test_modelo_sobrecarregado_vira_aviso():
+    from agente.llm import ModeloIndisponivel
+    r = responder("Quantos pedidos?", [], _LLM(ModeloIndisponivel()), _Banco(), ESQUEMA)
+    assert r.tipo == "cota"
+    assert "sobrecarregado" in r.texto
+
+
+def test_erro_inesperado_do_provedor_vira_resposta_de_erro():
+    r = responder("Quantos pedidos?", [], _LLM(RuntimeError("Gemini respondeu 403")), _Banco(), ESQUEMA)
+    assert r.tipo == "erro"

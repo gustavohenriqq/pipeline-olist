@@ -1,0 +1,11 @@
+# Tema base do app do agente: claro, destaque verde menta. O escuro e o botao de
+# troca ficam em agente/tema.py (CSS por sessao, que o config.toml nao faz).
+[theme]
+base = "light"
+primaryColor = "#10B981"
+backgroundColor = "#F7FAF9"
+secondaryBackgroundColor = "#F1F5F4"
+textColor = "#0F172A"
+
+[browser]
+gatherUsageStats = false

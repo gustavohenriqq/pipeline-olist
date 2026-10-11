@@ -118,7 +118,27 @@ automático que consulta o modelo por DAX.
 
 Como abrir, segurança, conferência e armadilhas: [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 
-Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn e Power BI.**
+### Agente de IA (Etapa 6)
+
+**[Pergunte aos dados](https://olist-agente.streamlit.app/)**: pergunta de negócio
+em português vira SQL sobre o star schema, e a resposta mostra o número, a tabela,
+o SQL e, quando cabe, um gráfico. Modelo gratuito, app público lendo o Neon.
+
+![Agente respondendo a receita por ano, uma continuação e o SQL gerado](docs/prints/agente.gif)
+
+- **O banco é a defesa que importa:** usuário só de leitura, com `SELECT` apenas
+  nas tabelas das marts que o agente usa, transação read-only e 5 s de limite. Mesmo um `DROP` que
+  passasse pelo resto seria recusado pelo Postgres, e o CI testa isso.
+- **Guarda de SQL** por análise sintática (`sqlglot`), não por texto: um comando
+  só, só tabelas permitidas, `LIMIT` forçado.
+- **Contra a resposta inventada:** todo número da frase precisa estar no
+  resultado da consulta; se não estiver, a frase é descartada e fica só a tabela.
+- **Avaliação com resposta conhecida:** 25 perguntas, comparando o resultado da
+  consulta do agente com o de um SQL escrito à mão. Última rodada: 25/25.
+
+Como funciona, defesas, avaliação e limites: [docs/agente.md](docs/agente.md).
+
+Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn, Power BI e Streamlit.**
 
 ---
 
@@ -169,7 +189,7 @@ flowchart TD
     P --> N["Neon<br/>Postgres serverless"]
     N --> H["Looker Studio<br/>público 24/7"]
     F --> G["Power BI<br/>DAX + RLS"]
-    F --> I["Agente IA<br/>LangChain + Streamlit"]
+    N --> I["Agente de IA<br/>Streamlit, só leitura"]
 ```
 
 O fluxo segue o padrão **Medallion** (bronze / silver / gold), que na fase cloud vira Bronze, Silver e Gold no Databricks:
@@ -213,7 +233,7 @@ erDiagram
 | Camada de serviço | Neon (Postgres serverless) | Recebe só as marts testadas, para o BI ler 24/7 sem depender da máquina local. |
 | BI principal | Power BI (DAX, RLS, OLS) | Padrão de mercado em BI corporativo no Brasil. |
 | BI público | Looker Studio | Dashboard online e gratuito, para portfólio 24/7. |
-| IA | LangChain + Streamlit | Perguntas em linguagem natural viram SQL sobre o warehouse. |
+| IA | Gemini (gratuito) + Streamlit | Perguntas em linguagem natural viram SQL sobre o warehouse. Pacote próprio no lugar de LangChain: são duas chamadas ao modelo, e o que importa (guarda de SQL, checagem dos números) é código nosso e testado. |
 | Container | Docker + Docker Compose | Sobe o ambiente inteiro com um comando, em qualquer máquina. |
 
 ---
@@ -393,7 +413,7 @@ uma, está no [ROADMAP.md](ROADMAP.md). Resumo:
 3. **Confiabilidade no dbt** (concluída): models incrementais, idempotência, reprocessamento por janela, freshness, metadados de execução e CI enxuto. Detalhes em [docs/confiabilidade.md](docs/confiabilidade.md).
 4. **Previsão de atraso** (concluída): classificador treinado só com informação disponível no ato da compra, com inferência escrita de volta nas marts. Resultados em [docs/modelo-atraso.md](docs/modelo-atraso.md).
 5. **Power BI avançado** (concluída): DAX de inteligência de tempo, RLS dinâmico por região e vendedor e OLS, conferidos contra o SQL. Detalhes em [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
-6. **Agente de IA** (opcional): LangChain sobre as marts, com usuário somente leitura.
+6. **Agente de IA** (concluída): pergunta em português vira SQL nas marts, num usuário só de leitura, com checagem dos números da resposta. App público em [olist-agente.streamlit.app](https://olist-agente.streamlit.app/); detalhes em [docs/agente.md](docs/agente.md).
 
 Três mudanças de rota, todas por evidência nos dados:
 

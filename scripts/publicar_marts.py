@@ -31,6 +31,9 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(PROJECT_ROOT / ".env")
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from agente.permissoes import aplicar_permissoes, papel_existe  # noqa: E402
 
 
 def _get(name: str, default: str = "") -> str:
@@ -136,6 +139,23 @@ def copiar(cur_origem, cur_destino, tabela: str) -> int:
     return cur_destino.fetchone()[0]
 
 
+def reaplicar_permissoes_do_agente(conn) -> None:
+    """DROP + CREATE apaga os GRANT; o usuario do agente perde o acesso ate aqui.
+
+    Falha segura: se der erro, o agente fica sem acesso (nunca com acesso a mais).
+    """
+    try:
+        with conn.cursor() as cur:
+            if not papel_existe(cur):
+                return
+            tabelas = aplicar_permissoes(cur)
+        conn.commit()
+        print(f"[ok] permissoes do agente reaplicadas: {', '.join(tabelas)}")
+    except Exception as exc:  # noqa: BLE001
+        conn.rollback()
+        print(f"[AVISO] permissoes do agente nao reaplicadas: {exc}")
+
+
 def main() -> int:
     faltando = [k for k in ("host", "dbname", "user", "password") if not NEON[k]]
     if faltando:
@@ -175,6 +195,8 @@ def main() -> int:
         conn_neon.rollback()
         print(f"[ERRO] Publicacao falhou e foi revertida: {exc}")
         return 1
+    else:
+        reaplicar_permissoes_do_agente(conn_neon)
     finally:
         conn_local.close()
         conn_neon.close()

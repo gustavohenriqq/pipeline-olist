@@ -1,6 +1,8 @@
 # Agente de IA sobre as marts (Etapa 6)
 
-**App:** [olist-agente.streamlit.app](https://olist-agente.streamlit.app/)
+**App:** [olist-agente.streamlit.app](https://olist-agente.streamlit.app/) (página "Pergunte aos
+dados" e a coluna "Tire sua dúvida" das páginas do painel, ver
+[painel-web.md](painel-web.md))
 
 ![Agente respondendo a receita por ano, uma continuação e o SQL gerado](prints/agente.gif)
 

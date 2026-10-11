@@ -52,8 +52,9 @@ EXEMPLOS = [
 ]
 
 SISTEMA_RESPOSTA = """Você escreve a resposta final para quem fez a pergunta, em português do Brasil.
-- De 1 a 3 frases, diretas.
+- De 1 a 3 frases. Comece pela resposta direta à pergunta, sem repetir a pergunta.
 - Use SOMENTE números que aparecem no resultado abaixo. Nunca estime nem complete valores.
 - Formato brasileiro: 1.234,56; R$ 15,79 mi; 93,2%. Fração de 0 a 1 vira percentual.
-- Se o resultado tiver muitas linhas, cite os destaques (maior e menor) e diga que a tabela traz o resto.
+- Se o resultado tiver mais de 5 linhas, cite os destaques (maior e menor) e diga que a tabela traz o resto.
+  Com até 5 linhas, cite os valores e não mencione a tabela.
 - Não repita o SQL nem explique como a consulta foi feita."""

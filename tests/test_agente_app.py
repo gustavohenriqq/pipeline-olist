@@ -87,3 +87,13 @@ def test_banco_acordando(ambiente, monkeypatch):
 def test_rodape_com_data_dos_dados(ambiente):
     at = _app()
     assert any("Dados processados em 09/10/2026" in c.value for c in at.caption)
+
+
+def test_cifrao_escapado_na_resposta(ambiente):
+    ambiente.resposta = Resposta("ok", "De R$ 10,00 em 2016 até R$ 20,00 em 2018.", sql="SELECT 1",
+                                 colunas=["ano", "receita"], linhas=[(2016, 10.0), (2018, 20.0)],
+                                 grafico="barras", confirmada=True)
+    at = _app()
+    at.chat_input[0].set_value("Receita por ano?").run()
+    assert not at.exception
+    assert any("\$ 10,00" in m.value for m in at.markdown)

@@ -20,6 +20,7 @@ import streamlit as st  # noqa: E402
 from agente import agente as nucleo  # noqa: E402
 from agente import banco  # noqa: E402
 from agente import llm as modelo  # noqa: E402
+from agente.apresentacao import escapar_markdown, formato_coluna, grafico, rotulo_coluna  # noqa: E402
 from agente.config import MAX_PERGUNTA, MAX_POR_SESSAO  # noqa: E402
 
 ESQUEMA = (Path(__file__).resolve().parent / "esquema_marts.md").read_text(encoding="utf-8")
@@ -61,17 +62,14 @@ def _numerico(df: pd.DataFrame) -> pd.DataFrame:
     return saida
 
 
-def _grafico(df: pd.DataFrame, tipo: str | None) -> None:
-    if tipo is None:
-        return
-    eixo = next((c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c])), df.columns[0])
-    dados = df.set_index(eixo).select_dtypes("number")
-    if dados.empty:
-        return
-    if tipo == "linha":
-        st.line_chart(dados)
-    else:
-        st.bar_chart(dados)
+def _tabela(df: pd.DataFrame) -> None:
+    config = {}
+    for coluna in df.columns:
+        formato = formato_coluna(str(coluna), df[coluna])
+        rotulo = rotulo_coluna(str(coluna))
+        config[coluna] = (st.column_config.NumberColumn(rotulo, format=formato) if formato
+                          else st.column_config.TextColumn(rotulo))
+    st.dataframe(df, hide_index=True, column_config=config, use_container_width=True)
 
 
 def _mostrar(item: dict) -> None:
@@ -79,20 +77,22 @@ def _mostrar(item: dict) -> None:
         st.markdown(item["pergunta"])
     with st.chat_message("assistant"):
         r: nucleo.Resposta = item["resposta"]
+        texto = escapar_markdown(r.texto)
         if r.tipo == "cota":
-            st.warning(r.texto)
+            st.warning(texto)
         elif r.tipo in ("erro", "recusado"):
-            st.error(r.texto)
+            st.error(texto)
         elif r.tipo == "fora_do_escopo":
-            st.info(f"Essa pergunta está fora do que a base tem: {r.texto}")
+            st.info(f"Essa pergunta está fora do que a base tem: {texto}")
         elif r.confirmada or r.tipo == "vazio":
-            st.markdown(r.texto)
+            st.markdown(texto)
         else:
-            st.warning(r.texto)
+            st.warning(texto)
         if r.linhas:
             df = _numerico(pd.DataFrame(r.linhas, columns=r.colunas))
-            _grafico(df, r.grafico)
-            st.dataframe(df, hide_index=True)
+            if r.grafico:
+                st.altair_chart(grafico(df, r.grafico), use_container_width=True)
+            _tabela(df)
         if r.sql:
             with st.expander("SQL gerado"):
                 st.code(r.sql, language="sql")

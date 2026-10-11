@@ -77,3 +77,58 @@ def test_sem_chave_nenhuma_nao_ha_provedor(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     assert provedores_do_ambiente() == []
+
+
+class _Http:
+    """Simula a API nativa do Gemini: responde (status, corpo) e guarda as chamadas."""
+
+    def __init__(self, *respostas):
+        self.respostas = list(respostas)
+        self.chamadas = []
+
+    def __call__(self, url, corpo, cabecalhos):
+        self.chamadas.append((url, corpo, cabecalhos))
+        return self.respostas.pop(0)
+
+
+def _texto_gemini(texto):
+    return 200, {"candidates": [{"content": {"parts": [{"text": texto}]}}]}
+
+
+G = Provedor("gemini", "http://g/v1beta", "gemini-x", "chave-g", api="gemini")
+MSGS = [
+    {"role": "system", "content": "regras"},
+    {"role": "user", "content": "exemplo"},
+    {"role": "assistant", "content": "{}"},
+    {"role": "user", "content": "pergunta"},
+]
+
+
+def test_gemini_nativo_monta_a_chamada():
+    http = _Http(_texto_gemini('{"sql": "SELECT 1"}'))
+    texto = ClienteLLM([G], enviar=http).completar(MSGS, json=True)
+    assert texto == '{"sql": "SELECT 1"}'
+    url, corpo, cabecalhos = http.chamadas[0]
+    assert url == "http://g/v1beta/models/gemini-x:generateContent"
+    assert cabecalhos["x-goog-api-key"] == "chave-g"
+    assert corpo["systemInstruction"] == {"parts": [{"text": "regras"}]}
+    assert [c["role"] for c in corpo["contents"]] == ["user", "model", "user"]
+    assert corpo["generationConfig"]["responseMimeType"] == "application/json"
+    assert corpo["generationConfig"]["temperature"] == 0
+
+
+def test_gemini_429_passa_para_o_proximo():
+    http = _Http((429, {"error": {"code": 429}}))
+    fabrica = _Fabrica({"http://b": "resposta b"})
+    assert ClienteLLM([G, B], fabrica=fabrica, enviar=http).completar(MSG) == "resposta b"
+
+
+def test_gemini_erro_que_nao_e_cota_levanta():
+    http = _Http((403, {"error": {"code": 403, "message": "sem permissao"}}))
+    with pytest.raises(RuntimeError, match="403"):
+        ClienteLLM([G], enviar=http).completar(MSG)
+
+
+def test_provedores_do_gemini_usam_a_api_nativa(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "g")
+    assert {p.api for p in provedores_do_ambiente() if p.nome.startswith("gemini")} == {"gemini"}

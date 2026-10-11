@@ -45,8 +45,18 @@ def ambiente(monkeypatch):
     return chamadas
 
 
+# A conversa agora e a pagina "Pergunte aos dados" do painel.
+PERGUNTE = """
+from agente.app import barra_lateral, preparar
+from painel.paginas import pergunte
+preparar()
+pergunte.pagina()
+barra_lateral()
+"""
+
+
 def _app():
-    return AppTest.from_file(APP, default_timeout=30).run()
+    return AppTest.from_string(PERGUNTE, default_timeout=30).run()
 
 
 def test_tela_inicial(ambiente):

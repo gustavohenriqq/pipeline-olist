@@ -82,7 +82,7 @@ html, body { background: var(--fundo); }
 .cabecalho p { color: var(--texto_suave); margin: 2px 0 0; }
 
 /* cartoes de indicador */
-.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin: 6px 0 14px; }
+.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 14px; margin: 6px 0 14px; }
 .cartao {
   --cor: var(--destaque);
   display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 18px;
@@ -100,7 +100,7 @@ html, body { background: var(--fundo); }
 }
 .cartao-icone span { font-family: "Material Symbols Rounded"; font-size: 24px; line-height: 1; }
 .cartao-rotulo { color: var(--texto_suave); font-size: 13px; }
-.cartao-valor { color: var(--texto); font-size: 24px; white-space: nowrap; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; }
+.cartao-valor { color: var(--texto); font-size: 22px; white-space: nowrap; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; }
 .cartao-delta { font-size: 12.5px; margin-top: 2px; color: var(--texto_suave); }
 .cartao-delta b { font-weight: 600; }
 .cartao-delta.melhora b { color: var(--destaque); }
@@ -230,6 +230,7 @@ html, body { background: var(--fundo); }
 .tabela-resultado td {
   color: var(--texto); padding: 8px 14px; border: 0; border-top: 1px solid var(--borda);
 }
+.tabela-resultado td { white-space: nowrap; }
 .tabela-resultado .num { text-align: right; font-variant-numeric: tabular-nums; }
 .tabela-resultado tr:hover td { background: var(--destaque_suave); }
 """

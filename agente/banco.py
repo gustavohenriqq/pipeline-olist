@@ -10,6 +10,19 @@ class ErroBanco(Exception):
     """Erro do banco ao executar o SQL; a mensagem volta para o modelo corrigir."""
 
 
+class BancoIndisponivel(Exception):
+    """A conexao caiu ou nao abriu (Neon dormindo, rede): nao adianta o modelo tentar de novo."""
+
+
+def _desfazer(conexao) -> None:
+    # Com a conexao derrubada, o proprio rollback levanta InterfaceError.
+    if not conexao.closed:
+        try:
+            conexao.rollback()
+        except psycopg2.Error:
+            pass
+
+
 def abrir_conexao():
     host = env("AGENTE_DB_HOST", "localhost")
     parametros = {
@@ -35,7 +48,7 @@ def ler_atualizacao(conexao) -> str | None:
         conexao.rollback()
         return linha[0] if linha else None
     except psycopg2.Error:
-        conexao.rollback()
+        _desfazer(conexao)
         return None
 
 
@@ -51,6 +64,8 @@ def executar(conexao, sql: str) -> tuple[list[str], list[tuple]]:
         conexao.rollback()
         return colunas, linhas
     except psycopg2.Error as erro:
-        conexao.rollback()
+        _desfazer(conexao)
+        if conexao.closed or isinstance(erro, psycopg2.InterfaceError):
+            raise BancoIndisponivel(str(erro).strip()) from None
         mensagem = (getattr(erro, "pgerror", None) or str(erro)).strip().splitlines()
         raise ErroBanco(mensagem[0] if mensagem else "erro no banco") from None

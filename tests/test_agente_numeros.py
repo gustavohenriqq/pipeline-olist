@@ -71,3 +71,16 @@ def test_numero_dentro_de_rotulo_do_resultado_confere():
 
 def test_numero_de_rotulo_nao_libera_outro_numero():
     assert not confere("Guariba/SP · 4869f7 vendeu 9.999 itens.", ["Guariba/SP · 4869f7", 1156])
+
+
+def test_decimal_com_ponto_e_lido():
+    assert extrair_numeros("A taxa foi 12.5%") == [12.5]
+    assert extrair_numeros("nota 4.09") == [4.09]
+    assert extrair_numeros("taxa de 0.0812") == [0.0812]
+    assert extrair_numeros("1.234 pedidos") == [1234.0]
+
+
+def test_decimal_com_ponto_inventado_nao_passa():
+    assert not confere("A taxa de atraso foi 12.5%.", [Decimal("0.0812")])
+    assert confere("A taxa de atraso foi 8.12%.", [Decimal("0.0812")])
+    assert confere("A nota média foi 4.09.", [Decimal("4.0868")])

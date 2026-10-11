@@ -20,10 +20,23 @@ class _Chamadas:
         return self.resposta
 
 
+class _Conexao:
+    abertas = []
+
+    def __init__(self):
+        self.fechada = False
+        _Conexao.abertas.append(self)
+
+    def close(self):
+        self.fechada = True
+
+
 @pytest.fixture()
 def ambiente(monkeypatch):
     st.cache_resource.clear()
-    monkeypatch.setattr("agente.banco.abrir_conexao", lambda: object())
+    st.cache_data.clear()
+    _Conexao.abertas = []
+    monkeypatch.setattr("agente.banco.abrir_conexao", _Conexao)
     monkeypatch.setattr("agente.banco.ler_atualizacao", lambda conexao: "Dados processados em 09/10/2026")
     monkeypatch.setattr("agente.llm.provedores_do_ambiente", lambda: [])
     chamadas = _Chamadas(Resposta("ok", "Foram 99.441 pedidos.", sql="SELECT 1", colunas=["pedidos"],
@@ -134,3 +147,29 @@ def test_botao_de_tema_fica_na_barra_lateral(ambiente):
     chaves = [b.key for b in at.sidebar.button]
     assert "alternar_tema" in chaves and "nova_conversa" in chaves
     assert "alternar_tema" not in [b.key for b in at.main.button]
+
+
+def test_conexao_aberta_e_fechada_a_cada_pergunta(ambiente):
+    at = _app()
+    antes = len(_Conexao.abertas)
+    at.chat_input[0].set_value("Quantos pedidos?").run()
+    at.chat_input[0].set_value("E em 2018?").run()
+    novas = _Conexao.abertas[antes:]
+    assert len(novas) == 2 and all(c.fechada for c in novas)
+
+
+def test_erro_inesperado_no_fluxo_vira_aviso(ambiente, monkeypatch):
+    def quebra(*a, **k):
+        raise RuntimeError("bug")
+    monkeypatch.setattr("agente.agente.responder", quebra)
+    at = _app()
+    at.chat_input[0].set_value("Quantos pedidos?").run()
+    assert not at.exception
+    assert any("Algo deu errado" in e.value for e in at.error)
+
+
+def test_banco_indisponivel_vira_aviso(ambiente):
+    ambiente.resposta = Resposta("banco", "O banco está acordando ou a conexão caiu; tente de novo.")
+    at = _app()
+    at.chat_input[0].set_value("Quantos pedidos?").run()
+    assert any("acordando" in w.value for w in at.warning)

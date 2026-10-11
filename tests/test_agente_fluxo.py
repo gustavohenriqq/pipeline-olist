@@ -151,3 +151,12 @@ def test_modelo_sobrecarregado_vira_aviso():
 def test_erro_inesperado_do_provedor_vira_resposta_de_erro():
     r = responder("Quantos pedidos?", [], _LLM(RuntimeError("Gemini respondeu 403")), _Banco(), ESQUEMA)
     assert r.tipo == "erro"
+
+
+def test_banco_indisponivel_vira_aviso_sem_nova_tentativa():
+    from agente.banco import BancoIndisponivel
+    banco = _Banco(BancoIndisponivel("conexão perdida"))
+    r = responder("Quantos pedidos?", [], _LLM(_sql("SELECT count(*) FROM marts.fato_pedidos")), banco, ESQUEMA)
+    assert r.tipo == "banco"
+    assert "acordando" in r.texto
+    assert len(banco.sqls) == 1

@@ -26,3 +26,11 @@ def test_quantidade_de_linhas_diferente():
 
 def test_texto_sem_acento_e_sem_caixa():
     assert mesmo_resultado([("São Paulo", 1)], [("sao paulo", 1)])
+
+
+def test_taxas_diferentes_na_terceira_casa_nao_sao_iguais():
+    assert not mesmo_resultado([("Sul", Decimal("0.0812"))], [("Sul", Decimal("0.0789"))])
+
+
+def test_taxa_arredondada_a_quatro_casas_e_igual():
+    assert mesmo_resultado([("Sul", Decimal("0.0812"))], [("Sul", 0.081234)])

@@ -22,8 +22,8 @@ _ESCALAS = (
 _NUMERO = re.compile(
     r"(?<![\w/.,])(?<!\d-)"              # nao continua palavra, data ou outro numero
     r"-?"                                 # sinal (o "-" de 2018-03 e barrado acima)
-    r"(\d{1,3}(?:\.\d{3})+|\d+)"          # inteiro, com ou sem ponto de milhar
-    r"(?:,(\d+))?"                        # decimais com virgula
+    r"(\d{1,3}(?:\.\d{3})+(?!\d)|\d+)"   # inteiro, com ou sem ponto de milhar
+    r"(?:,(\d+)|\.(\d{1,2}(?!\d)|\d{4,}))?"  # decimais com virgula, ou com ponto (12.5, 0.0812)
     r"(?![\d/\-]|,\d|\.\d)"               # nao e parte de data (2018-03, 01/08)
     r"(\s*%)?"
     r"(?:\s*(" + "|".join(p for p, _ in _ESCALAS) + r"))?",
@@ -41,8 +41,10 @@ class _Escrito:
 
 def _ler(texto: str) -> list[_Escrito]:
     achados = []
-    for inteiro, decimais, pct, escala_txt in _NUMERO.findall(texto):
-        decimais = decimais or ""
+    # O modelo le o resultado com ponto decimal e as vezes copia assim ("12.5%").
+    # Ponto seguido de 3 digitos segue sendo milhar ("1.234").
+    for inteiro, virgula, ponto, pct, escala_txt in _NUMERO.findall(texto):
+        decimais = virgula or ponto or ""
         valor = float(inteiro.replace(".", "") + ("." + decimais if decimais else ""))
         escala = 1.0
         if escala_txt:

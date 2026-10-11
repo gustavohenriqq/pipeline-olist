@@ -1,6 +1,6 @@
 # Dependencias so do agente (Etapa 6). O Streamlit Cloud le este arquivo por
 # estar na mesma pasta do app, e assim nao instala dbt nem scikit-learn.
-streamlit>=1.40
+streamlit==1.65.0  # fixa: o tema (agente/tema.py) usa nomes internos do Streamlit
 openai>=1.40
 sqlglot>=25
 pandas>=2.0,<3.1

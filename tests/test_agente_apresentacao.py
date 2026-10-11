@@ -46,7 +46,7 @@ def test_contagem_com_milhar_e_sem_casas():
 
 
 def test_taxa_com_quatro_casas():
-    assert _formatado("taxa_atraso", [0.0812, 0.1203], 0.0812) == "0,0812"
+    assert _formatado("ticket_medio_variacao", [0.0812, 0.1203], 0.0812) == "0,0812"
 
 
 def test_texto_sem_formatador():
@@ -85,3 +85,43 @@ def test_grafico_de_linha_com_mes():
     spec = _spec(df, "linha")
     assert spec["mark"]["type"] == "line"
     assert spec["encoding"]["x"]["title"] == "Mês"
+
+
+def test_tabela_html_formata_e_escapa():
+    from agente.apresentacao import tabela_html
+    df = preparar(pd.DataFrame({"uf": ["<b>SP</b>", "RJ"], "pedidos": [99441, 7269]}))
+    html = tabela_html(df)
+    assert "&lt;b&gt;SP&lt;/b&gt;" in html and "<b>SP</b>" not in html
+    assert "99.441" in html
+    assert '<td class="num">' in html
+    assert "<th>UF</th>" in html and '<th class="num">Pedidos</th>' in html
+
+
+def test_grafico_usa_cores_da_paleta():
+    from agente.tema import PALETAS
+    escuro = PALETAS["escuro"]
+    df = pd.DataFrame({"ano": [2017, 2018], "receita_total": [1.0, 2.0]})
+    spec = grafico(df, "barras", escuro).to_dict()
+    assert spec["mark"]["color"] == escuro["destaque"]
+    assert spec["config"]["axis"]["labelColor"] == escuro["texto_suave"]
+
+
+def test_coluna_de_tempo_alinhada_como_rotulo():
+    from agente.apresentacao import tabela_html
+    html = tabela_html(preparar(pd.DataFrame({"ano": [2017, 2018], "pedidos": [45101, 54011]})))
+    assert "<th>Ano</th>" in html and "<td>2017</td>" in html
+    assert '<td class="num">45.101</td>' in html
+
+
+def test_taxa_entre_zero_e_um_vira_percentual():
+    assert _formatado("taxa_atraso", [0.2141, 0.1374], 0.2141) == "21,41%"
+    assert _formatado("percentual_no_prazo", [0.9188], 0.9188) == "91,88%"
+
+
+def test_taxa_fora_de_zero_a_um_fica_numero():
+    assert _formatado("taxa_atraso", [12.5, 8.1], 12.5) == "12,50"
+
+
+def test_eixo_de_taxa_em_percentual():
+    df = pd.DataFrame({"uf": ["AL", "MA"], "taxa_atraso": [0.2141, 0.1746]})
+    assert _spec(df, "barras")["encoding"]["y"]["axis"]["format"] == ".0%"

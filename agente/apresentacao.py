@@ -4,6 +4,7 @@ Separado do app para ser testado sem rodar o Streamlit.
 """
 from __future__ import annotations
 
+from html import escape
 from numbers import Number
 from typing import Callable
 
@@ -11,8 +12,8 @@ import altair as alt
 import pandas as pd
 
 from agente.grafico import COLUNAS_DE_TEMPO
+from agente.tema import PALETAS
 
-AZUL = "#4F8DF7"  # mesmo azul do tema escuro (.streamlit/config.toml)
 # Eixo do valor como no texto da resposta: 8 mi, 500 mil, 0,08.
 ROTULO_COMPACTO = (
     "replace(abs(datum.value) >= 1e9 ? format(datum.value / 1e9, '~g') + ' bi'"
@@ -66,15 +67,26 @@ def numero_br(valor: float, casas: int, milhar: bool = True) -> str:
     return texto.replace(",", "_").replace(".", ",").replace("_", ".")
 
 
+def _e_taxa(nome: str) -> bool:
+    """O prompt pede taxas como fracao de 0 a 1; na tabela elas viram percentual."""
+    nome = nome.lower()
+    return nome.startswith(("taxa", "percentual", "pct")) or "percentual" in nome
+
+
 def formatadores(df: pd.DataFrame) -> dict[str, Callable[[float], str]]:
     """Formato brasileiro fixo por coluna, sem depender do idioma do navegador.
 
-    Ano e mes sem milhar; contagem com milhar; valor com 2 casas; taxa (tudo abaixo de 1) com 4.
+    Taxa (nome taxa_/percentual, de 0 a 1) em %; ano e mes sem milhar; contagem com milhar;
+    valor com 2 casas; outra fracao (tudo abaixo de 1) com 4.
     """
     saida = {}
     for coluna in df.columns:
         serie = df[coluna]
         if pd.api.types.is_bool_dtype(serie) or not pd.api.types.is_numeric_dtype(serie):
+            continue
+        valores = serie.dropna()
+        if _e_taxa(str(coluna)) and len(valores) and valores.between(0, 1).all():
+            saida[coluna] = lambda v: "" if pd.isna(v) else numero_br(v * 100, 2) + "%"
             continue
         if str(coluna).lower() in COLUNAS_DE_TEMPO or str(coluna).lower() == "dia":
             casas, milhar = 0, False
@@ -87,6 +99,34 @@ def formatadores(df: pd.DataFrame) -> dict[str, Callable[[float], str]]:
     return saida
 
 
+def _celula(valor) -> str:
+    texto = "" if valor is None or (not isinstance(valor, str) and pd.isna(valor)) else str(valor)
+    return escape(texto).replace("$", "&#36;")
+
+
+def tabela_html(df: pd.DataFrame) -> str:
+    """Tabela do resultado em HTML, para acompanhar o tema (a do Streamlit e um canvas).
+
+    Tudo que vem do banco passa por escape: um rotulo com "<" nao vira HTML.
+    """
+    formatos = formatadores(df)
+    # numero alinhado a direita; ano e mes ficam como rotulo, a esquerda
+    numericas = {c for c in formatos if str(c).lower() not in COLUNAS_DE_TEMPO | {"dia"}}
+    cabecalho = "".join(
+        f'<th class="num">{escape(rotulo_coluna(str(c)))}</th>' if c in numericas
+        else f"<th>{escape(rotulo_coluna(str(c)))}</th>"
+        for c in df.columns)
+    linhas = []
+    for registro in df.itertuples(index=False):
+        celulas = "".join(
+            f'<td class="num">{_celula(formatos[c](v))}</td>' if c in numericas
+            else f"<td>{_celula(formatos[c](v) if c in formatos else v)}</td>"
+            for c, v in zip(df.columns, registro))
+        linhas.append(f"<tr>{celulas}</tr>")
+    return (f'<div class="tabela-resultado"><table><thead><tr>{cabecalho}</tr></thead>'
+            f'<tbody>{"".join(linhas)}</tbody></table></div>')
+
+
 def _eixo_e_medidas(df: pd.DataFrame) -> tuple[str, list[str]]:
     eixo = next((c for c in df.columns
                  if str(c).lower() in COLUNAS_DE_TEMPO or not pd.api.types.is_numeric_dtype(df[c])),
@@ -95,8 +135,9 @@ def _eixo_e_medidas(df: pd.DataFrame) -> tuple[str, list[str]]:
     return eixo, medidas
 
 
-def grafico(df: pd.DataFrame, tipo: str) -> alt.Chart:
+def grafico(df: pd.DataFrame, tipo: str, paleta: dict | None = None) -> alt.Chart:
     """Barras ou linha, eixo do valor compacto (2 mi, 4 mi) e sempre a partir do zero."""
+    cores = paleta or PALETAS["claro"]
     eixo, medidas = _eixo_e_medidas(df)
     dados = df[[eixo, *medidas]].copy()
     dados[eixo] = dados[eixo].astype(str)
@@ -104,14 +145,30 @@ def grafico(df: pd.DataFrame, tipo: str) -> alt.Chart:
     eixo_y = alt.Axis(labelExpr=ROTULO_COMPACTO)
     escala = alt.Scale(zero=True)
     if len(medidas) == 1:
+        if _e_taxa(str(medidas[0])) and dados[medidas[0]].dropna().between(0, 1).all():
+            eixo_y = alt.Axis(format=".0%")
         y = alt.Y(f"{medidas[0]}:Q", title=rotulo_coluna(medidas[0]), axis=eixo_y, scale=escala)
         base = alt.Chart(dados).encode(x=x, y=y, tooltip=[eixo, medidas[0]])
-        marca = base.mark_bar(color=AZUL) if tipo == "barras" else base.mark_line(color=AZUL, point=True)
-        return marca.properties(height=320)
+        marca = (base.mark_bar(color=cores["destaque"], cornerRadiusTopLeft=6, cornerRadiusTopRight=6)
+                 if tipo == "barras" else base.mark_line(color=cores["destaque"], point=True))
+        return _com_cores(marca, cores)
     longo = dados.melt(id_vars=[eixo], value_vars=medidas, var_name="serie", value_name="valor")
     longo["serie"] = longo["serie"].map(rotulo_coluna)
     y = alt.Y("valor:Q", title=None, axis=eixo_y, scale=escala)
-    base = alt.Chart(longo).encode(x=x, y=y, color=alt.Color("serie:N", title=None),
+    cor = alt.Color("serie:N", title=None, scale=alt.Scale(range=_series(cores)))
+    base = alt.Chart(longo).encode(x=x, y=y, color=cor,
                                    tooltip=[eixo, "serie", "valor"])
     marca = base.mark_bar() if tipo == "barras" else base.mark_line(point=True)
-    return marca.properties(height=320)
+    return _com_cores(marca, cores)
+
+
+def _series(cores: dict) -> list[str]:
+    return [cores["destaque"], "#60A5FA", "#F59E0B", "#F472B6"]
+
+
+def _com_cores(grafico_: alt.Chart, cores: dict) -> alt.Chart:
+    return (grafico_.properties(height=320, background="transparent")
+            .configure_axis(labelColor=cores["texto_suave"], titleColor=cores["texto_suave"],
+                            gridColor=cores["grade"], domainColor=cores["borda"], tickColor=cores["borda"])
+            .configure_legend(labelColor=cores["texto"])
+            .configure_view(strokeWidth=0))

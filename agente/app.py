@@ -124,16 +124,6 @@ def _processar(pergunta: str) -> None:
         estado.historico.append(nucleo.Turno(pergunta, resposta.sql))
 
 
-def _topo() -> None:
-    marca, botao = st.columns([1, 0.06], vertical_alignment="center")
-    marca.markdown(f'<div class="marca"><span class="marca-icone">{ICONE.format(t=18)}</span>'
-                   "Pergunte aos dados</div>", unsafe_allow_html=True)
-    escuro = st.session_state.tema == "escuro"
-    botao.button("", key="alternar_tema", on_click=_alternar_tema, type="tertiary",
-                 icon=":material/light_mode:" if escuro else ":material/dark_mode:",
-                 help="Tema claro" if escuro else "Tema escuro")
-
-
 def _tela_vazia() -> None:
     with st.container(key="vazio"):
         st.markdown(f'<div class="hero"><div class="hero-icone">{ICONE.format(t=32)}</div>'
@@ -151,8 +141,16 @@ def _tela_vazia() -> None:
 
 def _barra_lateral() -> None:
     with st.sidebar:
-        st.button("Nova conversa", key="nova_conversa", icon=":material/edit_square:",
-                  on_click=_nova_conversa, use_container_width=True)
+        st.markdown(f'<div class="marca"><span class="marca-icone">{ICONE.format(t=18)}</span>'
+                    "Pergunte aos dados</div>", unsafe_allow_html=True)
+        # tema ao lado de "Nova conversa": a barra lateral nao rola com a conversa
+        nova, tema = st.columns([1, 0.28], vertical_alignment="center")
+        nova.button("Nova conversa", key="nova_conversa", icon=":material/edit_square:",
+                    on_click=_nova_conversa, use_container_width=True)
+        escuro = st.session_state.tema == "escuro"
+        tema.button("", key="alternar_tema", on_click=_alternar_tema, use_container_width=True,
+                    icon=":material/light_mode:" if escuro else ":material/dark_mode:",
+                    help="Tema claro" if escuro else "Tema escuro")
         st.markdown('<div class="rotulo-secao">Nesta conversa</div>', unsafe_allow_html=True)
         perguntas = [item["pergunta"] for item in st.session_state.conversa]
         if not perguntas:
@@ -180,7 +178,6 @@ for chave, inicial in (("historico", []), ("conversa", []), ("perguntas_feitas",
 st.session_state.setdefault("tema", tema_valido(st.query_params.get("tema")))
 st.html(f"<style>{css(st.session_state.tema)}</style>")
 
-_topo()
 pergunta = st.chat_input("Pergunte sobre receita, pedidos, atrasos, avaliações...") \
     or st.session_state.pop("pendente", None)
 if pergunta:

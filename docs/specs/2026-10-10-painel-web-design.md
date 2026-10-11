@@ -28,7 +28,7 @@ Decisões do dono nesta conversa:
    referência, com o verde menta do agente como cor principal e azul, violeta e
    âmbar de apoio nos cartões; tema claro no botão de sol/lua.
 
-**Critério de sucesso:** um visitante abre https://olist-agente.streamlit.app/,
+**Critério de sucesso:** um visitante abre https://painel-olist.streamlit.app/,
 vê as 3 páginas do painel com os mesmos números do Power BI (conferidos por
 teste), troca período e região, e pergunta ao agente sem sair da página.
 

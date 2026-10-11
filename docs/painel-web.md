@@ -1,6 +1,6 @@
 # Painel web com o agente (Etapa 7)
 
-**App:** [olist-agente.streamlit.app](https://olist-agente.streamlit.app/)
+**App:** [painel-olist.streamlit.app](https://painel-olist.streamlit.app/)
 
 ![Painel: visão executiva, troca de filtro, entrega e risco, pergunta ao agente e tema claro](prints/painel.gif)
 

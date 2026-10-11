@@ -261,7 +261,8 @@ o teste por usuário pode ser automatizado.
   pode citar números que estão no resultado, e uma frase que não bate é
   descartada.
 - **Avaliação:** 25 perguntas com resposta conhecida em SQL, comparando o
-  resultado, não o texto do SQL. Última rodada: 25/25 e 22/22 frases conferidas.
+  resultado, não o texto do SQL. Última rodada: 25/25, com taxas comparadas em 4
+  casas.
 
 **Decisão: sem LangChain.** O plano original usava LangChain. São duas chamadas
 ao modelo por pergunta, e as partes que importam (guarda, checagem, avaliação)

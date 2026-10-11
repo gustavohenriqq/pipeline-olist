@@ -62,9 +62,17 @@ agente fica sem acesso, nunca com acesso a mais.
 
 **Na guarda.** Recusa dois comandos com `;`, escrita (inclusive escondida numa CTE
 como `WITH x AS (DELETE ...)`), `SELECT ... INTO`, `FOR UPDATE`, tabela fora da
-lista com ou sem schema (`raw.`, `meta.`, `pg_catalog.`, `information_schema.`) e
-funções como `pg_sleep`, `set_config`, `dblink`, `pg_read_file`. A análise é pela
+lista com ou sem schema (`raw.`, `meta.`, `pg_catalog.`, `information_schema.`),
+CTE usada fora do próprio escopo (uma CTE criada numa subconsulta não "libera" o
+nome `pg_roles` lá fora) e famílias de funções que leem o servidor ou executam SQL
+em texto (`pg_*`, `lo_*`, `dblink*`, `query_to_xml` e `*_to_xml`, `version()`,
+`set_config`). SQL que nem dá para ler vira recusa, não erro. A análise é pela
 árvore do SQL, não por texto: comentário e caixa não enganam.
+
+A revisão final do PR achou esses dois furos (a CTE fora do escopo e as funções
+`*_to_xml`), que liam metadados do catálogo como o usuário do agente. Dado nenhum
+vazava, porque o banco só concede as tabelas da lista, mas era uma defesa
+documentada que não se sustentava; os dois casos viraram teste.
 
 **Na resposta.** A frase do modelo só aparece se cada número dela estiver no
 resultado: "R$ 15,79 mi" casa com 15.786.203,57 e "659" com 658,65, mas "8.468"
@@ -73,7 +81,9 @@ a tabela com o aviso "Resposta automática não confirmada".
 
 **No app.** Pergunta com até 300 caracteres, 20 perguntas por sessão, nenhuma
 pergunta gravada. Cota esgotada, modelo sobrecarregado e banco acordando viram
-aviso, nunca erro na tela.
+aviso, nunca erro na tela. Cada pergunta abre e fecha a própria conexão: uma
+conexão guardada morre quando o Neon dorme e, compartilhada entre visitantes,
+misturaria transações.
 
 Tudo isso tem teste: 126 testes automáticos (guarda com casos de ataque, checagem
 de números, gráfico, fluxo com modelo falso, tela com `AppTest`) e testes de
@@ -94,7 +104,8 @@ Também conta as frases que passaram pela conferência de números.
 | 1 | interrompida | - | erro 503 do modelo derrubava a avaliação; 5xx passou a cair para o modelo reserva |
 | 2 | 25/25 | não medido | coluna de frase conferida adicionada ao relatório |
 | 3 | 24/25 | 21/22 | ver abaixo |
-| 4 | 25/25 | 22/22 | versão final |
+| 4 | 25/25 | 22/22 | a revisão final mostrou que a comparação em 2 casas empatava taxas como 0,0812 e 0,0789 |
+| 5 | 25/25 | 21/22 | versão final, com taxas comparadas em 4 casas e totais no centavo |
 
 Na rodada 3, a d07 ("quantos pedidos foram entregues com atraso?") veio com um
 filtro a mais, `foi_entregue`, que muda a contagem. É uma leitura defensável da
@@ -103,7 +114,12 @@ não conferida da mesma rodada era alarme falso: o rótulo do vendedor tem dígi
 (cidade/UF e o início do código, ex.: "Ibitinga/SP · 4a3ca9") e a conferência os lia como números inventados. Dígitos
 dentro de células de texto do resultado passaram a contar como conferidos.
 
-Nas rodadas 3 e 4, todas as respostas vieram do Gemini Flash-Lite: a cota diária do
+Na rodada 5, a frase não conferida (j06) estava certa: "o RJ lidera com 226
+pedidos ... o restante das 23 UFs". O 23 é a quantidade de linhas, que não é um
+valor do resultado, e a checagem descartou a frase. É alarme falso para o lado
+seguro: quem pergunta vê a tabela com o aviso, não um número errado.
+
+Nas rodadas 3 a 5, todas as respostas vieram do Gemini Flash-Lite: a cota diária do
 Flash já tinha acabado nas rodadas anteriores, e a troca para a reserva foi
 automática. Ou seja, o resultado vale para o modelo menor, que é o que atende
 quando o dia está movimentado.

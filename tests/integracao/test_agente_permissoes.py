@@ -88,3 +88,24 @@ def test_reaplicar_e_idempotente(admin, concedidas):
     with admin.cursor() as cur:
         assert aplicar_permissoes(cur) == concedidas
     assert set(concedidas) == set(TABELAS_PERMITIDAS)
+
+
+def test_executar_devolve_colunas_e_linhas(agente):
+    from agente.banco import executar
+    colunas, linhas = executar(agente, "select count(*) as n, 1.5::numeric as v from marts.dim_tempo")
+    assert colunas == ["n", "v"]
+    assert len(linhas) == 1
+
+
+def test_executar_converte_erro_e_segue_usavel(agente):
+    from agente.banco import ErroBanco, executar
+    with pytest.raises(ErroBanco) as erro:
+        executar(agente, "select coluna_que_nao_existe from marts.dim_tempo")
+    assert "coluna_que_nao_existe" in str(erro.value)
+    assert executar(agente, "select 1 as um") == (["um"], [(1,)])
+
+
+def test_executar_respeita_tempo_maximo(agente):
+    from agente.banco import ErroBanco, executar
+    with pytest.raises(ErroBanco):
+        executar(agente, "select pg_sleep(6)")

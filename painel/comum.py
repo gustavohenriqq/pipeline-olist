@@ -22,6 +22,7 @@ MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "
 
 _aviso = None  # espaco do aviso de banco dormindo, criado pelo cabecalho a cada execucao
 _acordando_mostrado = False
+_lateral = None  # coluna do agente, quando aberta (criada por corpo())
 
 
 def mes_extenso(ano_mes: str) -> str:
@@ -44,6 +45,20 @@ def cabecalho(titulo: str, subtitulo: str, pagina: str) -> None:
                    icon=":material/close:" if aberto else ":material/forum:", type="primary",
                    on_click=_alternar_agente, width="stretch")
     _aviso, _acordando_mostrado = st.empty(), False
+
+
+def corpo():
+    """Area do painel: a pagina inteira, ou a coluna da esquerda quando o agente esta aberto."""
+    global _lateral
+    if st.session_state.get("agente_aberto"):
+        esquerda, _lateral = st.columns([3, 1.35], gap="large")
+        return esquerda
+    _lateral = None
+    return st.container()
+
+
+def coluna_lateral():
+    return _lateral
 
 
 def filtros_da_pagina(regiao: bool) -> Filtros:

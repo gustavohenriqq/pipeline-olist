@@ -131,3 +131,60 @@ def test_periodo_sem_dados(ambiente):
     html = _html(at)
     assert not at.exception
     assert "sem dados" in html and "Sem pedidos neste período" in html
+
+
+class _Respostas:
+    def __init__(self):
+        self.chamadas = []
+
+    def __call__(self, pergunta, historico, llm, executar, esquema, contexto=None):
+        from agente.agente import Resposta
+        self.chamadas.append({"pergunta": pergunta, "contexto": contexto})
+        return Resposta("ok", "Foram 10 pedidos.", sql="SELECT 1", colunas=["pedidos"], linhas=[(10,)],
+                        confirmada=True)
+
+
+@pytest.fixture()
+def respostas(ambiente):
+    r = _Respostas()
+    ambiente.setattr("agente.agente.responder", r)
+    return r
+
+
+def _abrir_agente(at):
+    at.button(key="abrir_agente").click().run()
+    return at
+
+
+def test_tire_sua_duvida_abre_e_fecha(respostas):
+    at = _abrir_agente(_pagina("entrega"))
+    assert at.session_state["agente_aberto"] is True
+    assert any(c.key == "pergunta_lateral" for c in at.chat_input)
+    at.button(key="abrir_agente").click().run()
+    assert at.session_state["agente_aberto"] is False
+    assert not any(c.key == "pergunta_lateral" for c in at.chat_input)
+
+
+def test_pergunta_da_lateral_entra_na_conversa_compartilhada(respostas):
+    at = _abrir_agente(_pagina("executivo"))
+    at.chat_input(key="pergunta_lateral").set_value("E por UF?").run()
+    assert not at.exception
+    assert [i["pergunta"] for i in at.session_state["conversa"]] == ["E por UF?"]
+    assert any("Foram 10 pedidos" in m.value for m in at.markdown)
+
+
+def test_responder_recebe_o_contexto_da_pagina_e_dos_filtros(respostas):
+    at = _abrir_agente(_pagina("entrega"))
+    at.chat_input(key="pergunta_lateral").set_value("Qual UF atrasa mais?").run()
+    contexto = respostas.chamadas[-1]["contexto"]
+    assert "página Entrega e risco" in contexto and "período 01/01/2017 a 31/08/2018" in contexto
+    assert "região" not in contexto
+    assert all("Contexto do painel" not in m.value for m in at.markdown)
+
+
+def test_limite_de_20_soma_lateral_e_pagina(respostas):
+    at = _abrir_agente(_pagina("executivo"))
+    at.session_state["perguntas_feitas"] = 20
+    at.chat_input(key="pergunta_lateral").set_value("Mais uma?").run()
+    assert respostas.chamadas == []
+    assert any("limite de 20 perguntas" in w.value for w in at.warning)

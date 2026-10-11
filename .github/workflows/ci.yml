@@ -51,13 +51,13 @@ jobs:
           python-version: "3.11"
 
       - name: Instalar dependencias
-        run: pip install -r requirements.txt -r requirements-ml.txt
+        run: pip install -r requirements.txt -r requirements-ml.txt -r agente/requirements.txt
 
       # Testes do modelo de atraso: lista permitida, cortes temporais, custo,
       # limiar e PSI. O treino real nao roda aqui: 800 pedidos nao dao
       # metrica que signifique algo.
-      - name: Testes Python (ML)
-        run: python -m pytest tests -q
+      - name: Testes Python (ML e agente)
+        run: python -m pytest tests -q --ignore=tests/integracao
 
       - name: Ingestao da amostra
         run: python ingestion/ingest.py
@@ -112,6 +112,11 @@ jobs:
         if: github.event_name == 'push'
         working-directory: dbt
         run: dbt build --profiles-dir .
+
+      # Permissoes reais do usuario do agente: le so as marts permitidas, nao
+      # escreve, nao passa do tempo. Cria tabelas minimas se o PR nao construiu.
+      - name: Testes de integracao do agente (permissoes no banco)
+        run: python -m pytest tests/integracao -q
 
       # Na main sempre; no PR, so quando os fatos incrementais estao na selecao.
       - name: Validar incrementalidade, janela e metadados (banco descartavel)

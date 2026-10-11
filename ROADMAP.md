@@ -243,36 +243,36 @@ o teste por usuário pode ser automatizado.
 
 ---
 
-## Etapa 6: Agente de IA (opcional)
+## Etapa 6: Agente de IA (concluída)
 
 **Objetivo:** responder perguntas de negócio em linguagem natural sobre as marts.
 
-Fica por último e é explicitamente opcional. Só faz sentido depois que as três
-frentes principais estiverem profundas. Um agente sobre um pipeline raso
-impressiona menos que um pipeline sólido sem agente.
+**Entregue** (detalhes em [docs/agente.md](docs/agente.md)), app público em
+[olist-agente.streamlit.app](https://olist-agente.streamlit.app/):
+- **Pergunta vira SQL** sobre o star schema, com contexto das 3 últimas perguntas
+  ("e no Nordeste?"). Modelo gratuito com reserva automática quando a cota acaba
+  ou o serviço está sobrecarregado.
+- **Segurança do banco, em camadas:** usuário só de leitura com `SELECT` apenas
+  nas tabelas das marts que o agente usa (sem `raw`, `staging` nem OBTs),
+  transação read-only, 5 s de limite e guarda de SQL por análise sintática. O CI
+  cria o usuário com o mesmo código do Neon e confirma que `DROP`, `INSERT` e
+  leitura fora da lista falham.
+- **Contra resposta errada com cara de certa:** SQL sempre visível; a frase só
+  pode citar números que estão no resultado, e uma frase que não bate é
+  descartada.
+- **Avaliação:** 25 perguntas com resposta conhecida em SQL, comparando o
+  resultado, não o texto do SQL. Última rodada: 25/25, com taxas comparadas em 4
+  casas.
 
-**Entregas planejadas:** agente LangChain traduzindo pergunta em SQL, interface
-Streamlit, conectado só às marts.
+**Decisão: sem LangChain.** O plano original usava LangChain. São duas chamadas
+ao modelo por pergunta, e as partes que importam (guarda, checagem, avaliação)
+seriam código nosso de qualquer jeito; a biblioteca acrescentaria dependência sem
+acrescentar defesa.
 
-**Dois cuidados obrigatórios:**
-
-**1. Segurança do banco.** Um agente que gera e executa SQL a partir de texto
-livre é risco real. Defesas, em ordem de importância:
-- **Usuário de banco somente leitura**, com `SELECT` apenas nos schemas `marts`. Mesmo que o modelo gere `DROP`, o banco recusa. Esta é a defesa que importa.
-- O agente não enxerga `raw` nem `staging`.
-- Bloquear tudo que não começa com `SELECT` antes de executar.
-- Forçar `LIMIT` e `statement_timeout` curto.
-- Nunca concatenar texto do usuário em SQL na mão.
-
-**2. Custo de token.** Modelo barato por padrão, enviar só o schema das marts,
-cache de perguntas frequentes e limite de tentativas.
-
-**Risco principal:** resposta errada com cara de certa. Mitigar mostrando o SQL
-gerado junto da resposta. Este projeto já tem evidência do problema: ao gerar o
-mockup do dashboard, um modelo inventou os valores de 6 das 9 UFs do mapa e citou
-dois estados que nem estão no top 9, acertando apenas os três que receberam
-explicitamente no prompt. Modelo de linguagem preenche lacuna com o que parece
-razoável. O agente precisa de guarda contra exatamente isso.
+**Achado do caminho.** A checagem de números deu um alarme falso numa rodada: o
+rótulo do vendedor tem dígitos ("Ibitinga/SP · 4a3ca9"), lidos como número
+inventado. Dígitos dentro de células de texto do resultado passaram a contar
+como conferidos.
 
 ---
 

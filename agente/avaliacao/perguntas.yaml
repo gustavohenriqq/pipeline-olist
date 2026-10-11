@@ -1,0 +1,171 @@
+# Perguntas de avaliacao do agente, com SQL de referencia (resposta conhecida).
+# Diferentes dos exemplos do prompt (agente/prompts.py), para nao "colar".
+# tipo: direta, juncao, tempo, continuacao, fora. contexto: ids anteriores que
+# viram historico (com o SQL de referencia). sql_referencia null = fora do escopo.
+
+- id: d01
+  tipo: direta
+  pergunta: Quantos pedidos existem na base?
+  sql_referencia: SELECT count(*) FROM marts.fato_pedidos
+
+- id: d02
+  tipo: direta
+  pergunta: Qual a receita total?
+  sql_referencia: SELECT sum(valor_total) FROM marts.fato_pedidos
+
+- id: d03
+  tipo: direta
+  pergunta: Qual o ticket médio dos pedidos?
+  sql_referencia: SELECT round(sum(valor_total) / count(*), 2) FROM marts.fato_pedidos
+
+- id: d04
+  tipo: direta
+  pergunta: Qual a nota média das avaliações?
+  sql_referencia: SELECT round(avg(nota_avaliacao), 2) FROM marts.fato_pedidos
+
+- id: d05
+  tipo: direta
+  pergunta: Qual o percentual de pedidos entregues no prazo?
+  sql_referencia: >-
+    SELECT round(avg(CASE WHEN entregue_no_prazo THEN 1.0 ELSE 0 END), 4)
+    FROM marts.fato_pedidos WHERE entregue_no_prazo IS NOT NULL
+
+- id: d06
+  tipo: direta
+  pergunta: Quantos vendedores existem na base?
+  sql_referencia: SELECT count(*) FROM marts.dim_vendedores
+
+- id: d07
+  tipo: direta
+  pergunta: Quantos pedidos foram entregues com atraso?
+  sql_referencia: SELECT count(*) FROM marts.fato_pedidos WHERE entregue_no_prazo = false
+
+- id: d08
+  tipo: direta
+  pergunta: Quantos produtos estão sem categoria?
+  sql_referencia: SELECT count(*) FROM marts.dim_produtos WHERE categoria_grupo = 'Sem categoria'
+
+- id: j01
+  tipo: juncao
+  pergunta: Qual a taxa de atraso por região do cliente?
+  sql_referencia: >-
+    SELECT c.regiao, round(avg(CASE WHEN NOT f.entregue_no_prazo THEN 1.0 ELSE 0 END), 4)
+    FROM marts.fato_pedidos f JOIN marts.dim_clientes c ON c.cliente_sk = f.cliente_sk
+    WHERE f.entregue_no_prazo IS NOT NULL GROUP BY c.regiao
+
+- id: j02
+  tipo: juncao
+  pergunta: Quais as 5 UFs com mais pedidos?
+  sql_referencia: >-
+    SELECT c.uf, count(*) AS pedidos FROM marts.fato_pedidos f
+    JOIN marts.dim_clientes c ON c.cliente_sk = f.cliente_sk
+    GROUP BY c.uf ORDER BY pedidos DESC LIMIT 5
+
+- id: j03
+  tipo: juncao
+  pergunta: Qual a receita de itens por grupo de categoria?
+  sql_referencia: >-
+    SELECT p.categoria_grupo, sum(i.valor_item) FROM marts.fato_itens_pedido i
+    JOIN marts.dim_produtos p ON p.produto_sk = i.produto_sk GROUP BY p.categoria_grupo
+
+- id: j04
+  tipo: juncao
+  pergunta: Quais os 3 vendedores com maior receita de itens?
+  sql_referencia: >-
+    SELECT v.vendedor_rotulo, sum(i.valor_item) AS receita FROM marts.fato_itens_pedido i
+    JOIN marts.dim_vendedores v ON v.vendedor_sk = i.vendedor_sk
+    GROUP BY v.vendedor_rotulo ORDER BY receita DESC LIMIT 3
+
+- id: j05
+  tipo: juncao
+  pergunta: Qual a nota média por região do cliente?
+  sql_referencia: >-
+    SELECT c.regiao, round(avg(f.nota_avaliacao), 2) FROM marts.fato_pedidos f
+    JOIN marts.dim_clientes c ON c.cliente_sk = f.cliente_sk GROUP BY c.regiao
+
+- id: j06
+  tipo: juncao
+  pergunta: Quantos pedidos em andamento estão em alerta de atraso em cada UF do cliente?
+  sql_referencia: >-
+    SELECT c.uf, count(*) FROM marts.previsao_atraso p
+    JOIN marts.fato_pedidos f ON f.pedido_sk = p.pedido_sk
+    JOIN marts.dim_clientes c ON c.cliente_sk = f.cliente_sk
+    WHERE p.conjunto = 'em_andamento' AND p.alerta GROUP BY c.uf
+
+- id: t01
+  tipo: tempo
+  pergunta: Qual a receita de 2018?
+  sql_referencia: >-
+    SELECT sum(f.valor_total) FROM marts.fato_pedidos f
+    JOIN marts.dim_tempo t ON t.tempo_sk = f.tempo_sk_compra WHERE t.ano = 2018
+
+- id: t02
+  tipo: tempo
+  pergunta: Quantos pedidos foram feitos em cada ano?
+  sql_referencia: >-
+    SELECT t.ano, count(*) FROM marts.fato_pedidos f
+    JOIN marts.dim_tempo t ON t.tempo_sk = f.tempo_sk_compra GROUP BY t.ano
+
+- id: t03
+  tipo: tempo
+  pergunta: Qual foi a receita de março de 2018?
+  sql_referencia: >-
+    SELECT sum(f.valor_total) FROM marts.fato_pedidos f
+    JOIN marts.dim_tempo t ON t.tempo_sk = f.tempo_sk_compra WHERE t.ano_mes = '2018-03'
+
+- id: t04
+  tipo: tempo
+  pergunta: Qual a receita de cada mês de 2017?
+  sql_referencia: >-
+    SELECT t.ano_mes, sum(f.valor_total) FROM marts.fato_pedidos f
+    JOIN marts.dim_tempo t ON t.tempo_sk = f.tempo_sk_compra WHERE t.ano = 2017 GROUP BY t.ano_mes
+
+- id: t05
+  tipo: tempo
+  pergunta: Em que mês de 2018 a taxa de atraso foi maior?
+  sql_referencia: >-
+    SELECT t.ano_mes, round(avg(CASE WHEN NOT f.entregue_no_prazo THEN 1.0 ELSE 0 END), 4) AS taxa
+    FROM marts.fato_pedidos f JOIN marts.dim_tempo t ON t.tempo_sk = f.tempo_sk_compra
+    WHERE t.ano = 2018 AND f.entregue_no_prazo IS NOT NULL GROUP BY t.ano_mes ORDER BY taxa DESC LIMIT 1
+
+- id: c01
+  tipo: continuacao
+  contexto: [t02]
+  pergunta: e só no Nordeste?
+  sql_referencia: >-
+    SELECT t.ano, count(*) FROM marts.fato_pedidos f
+    JOIN marts.dim_tempo t ON t.tempo_sk = f.tempo_sk_compra
+    JOIN marts.dim_clientes c ON c.cliente_sk = f.cliente_sk
+    WHERE c.regiao = 'Nordeste' GROUP BY t.ano
+
+- id: c02
+  tipo: continuacao
+  contexto: [j01]
+  pergunta: e por UF, só dentro do Sudeste?
+  sql_referencia: >-
+    SELECT c.uf, round(avg(CASE WHEN NOT f.entregue_no_prazo THEN 1.0 ELSE 0 END), 4)
+    FROM marts.fato_pedidos f JOIN marts.dim_clientes c ON c.cliente_sk = f.cliente_sk
+    WHERE f.entregue_no_prazo IS NOT NULL AND c.regiao = 'Sudeste' GROUP BY c.uf
+
+- id: c03
+  tipo: continuacao
+  contexto: [t01]
+  pergunta: e a de 2017?
+  sql_referencia: >-
+    SELECT sum(f.valor_total) FROM marts.fato_pedidos f
+    JOIN marts.dim_tempo t ON t.tempo_sk = f.tempo_sk_compra WHERE t.ano = 2017
+
+- id: f01
+  tipo: fora
+  pergunta: Qual a margem de lucro média por categoria?
+  sql_referencia: null
+
+- id: f02
+  tipo: fora
+  pergunta: Qual o nome do cliente que mais comprou?
+  sql_referencia: null
+
+- id: f03
+  tipo: fora
+  pergunta: Quanto tem em estoque de cada produto hoje?
+  sql_referencia: null

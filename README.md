@@ -120,7 +120,7 @@ Como abrir, segurança, conferência e armadilhas: [dashboards/powerbi/README.md
 
 ### Agente de IA (Etapa 6)
 
-**[Pergunte aos dados](https://olist-agente.streamlit.app/)**: pergunta de negócio
+**[Pergunte aos dados](https://painel-olist.streamlit.app/)**: pergunta de negócio
 em português vira SQL sobre o star schema, e a resposta mostra o número, a tabela,
 o SQL e, quando cabe, um gráfico. Modelo gratuito, app público lendo o Neon.
 
@@ -137,6 +137,24 @@ o SQL e, quando cabe, um gráfico. Modelo gratuito, app público lendo o Neon.
   consulta do agente com o de um SQL escrito à mão. Última rodada: 25/25.
 
 Como funciona, defesas, avaliação e limites: [docs/agente.md](docs/agente.md).
+
+### Painel web com o agente (Etapa 7)
+
+O Power BI não é publicado (publicar exige conta corporativa), então as três
+páginas dele foram para o mesmo app público do agente:
+**[Painel Olist](https://painel-olist.streamlit.app/)**, em HTML e CSS, tema escuro
+ou claro, com o agente abrindo ao lado do painel ("Tire sua dúvida") e já sabendo
+a página e os filtros da tela.
+
+![Painel: visão executiva, filtro, entrega e risco, pergunta ao agente e tema claro](docs/prints/painel.gif)
+
+- **Mesmos números do Power BI, por teste:** cada consulta do painel é comparada
+  no CI com o `esperado.sql` que confere o modelo do Power BI. Se divergirem, o
+  CI acusa.
+- **Filtro nunca vira texto de SQL:** período e região vão como parâmetro.
+- **Um link reproduz a visão:** filtros e tema ficam no endereço.
+
+Páginas, garantias e limites: [docs/painel-web.md](docs/painel-web.md).
 
 Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn, Power BI e Streamlit.**
 
@@ -413,7 +431,9 @@ uma, está no [ROADMAP.md](ROADMAP.md). Resumo:
 3. **Confiabilidade no dbt** (concluída): models incrementais, idempotência, reprocessamento por janela, freshness, metadados de execução e CI enxuto. Detalhes em [docs/confiabilidade.md](docs/confiabilidade.md).
 4. **Previsão de atraso** (concluída): classificador treinado só com informação disponível no ato da compra, com inferência escrita de volta nas marts. Resultados em [docs/modelo-atraso.md](docs/modelo-atraso.md).
 5. **Power BI avançado** (concluída): DAX de inteligência de tempo, RLS dinâmico por região e vendedor e OLS, conferidos contra o SQL. Detalhes em [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
-6. **Agente de IA** (concluída): pergunta em português vira SQL nas marts, num usuário só de leitura, com checagem dos números da resposta. App público em [olist-agente.streamlit.app](https://olist-agente.streamlit.app/); detalhes em [docs/agente.md](docs/agente.md).
+6. **Agente de IA** (concluída): pergunta em português vira SQL nas marts, num usuário só de leitura, com checagem dos números da resposta. App público em [painel-olist.streamlit.app](https://painel-olist.streamlit.app/); detalhes em [docs/agente.md](docs/agente.md).
+7. **Painel web com o agente** (concluída): as três páginas do Power BI no app público, com os números conferidos contra o mesmo SQL do Power BI e o agente ao lado. Detalhes em [docs/painel-web.md](docs/painel-web.md).
+8. **HTML e CSS dentro do Power BI** (planejada): o relatório desenhado em HTML por medida DAX, com desenho próprio.
 
 Três mudanças de rota, todas por evidência nos dados:
 

@@ -1,4 +1,4 @@
-"""Interface do agente (Streamlit). Desenha o que agente.responder devolve.
+"""App publico: painel (3 paginas do Power BI) e o agente, num link so.
 
 Rodar local:  streamlit run agente/app.py
 No Streamlit Community Cloud, as chaves e a conexao vem de st.secrets.
@@ -15,28 +15,15 @@ if str(RAIZ) in sys.path:
     sys.path.remove(str(RAIZ))
 sys.path.insert(0, str(RAIZ))
 
-import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 
-from agente import agente as nucleo  # noqa: E402
 from agente import banco  # noqa: E402
-from agente import llm as modelo  # noqa: E402
-from agente.apresentacao import escapar_markdown, grafico, preparar, tabela_html  # noqa: E402
-from agente.config import MAX_PERGUNTA, MAX_POR_SESSAO  # noqa: E402
-from agente.tema import PALETAS, css, tema_valido  # noqa: E402
+from agente.apresentacao import escapar_markdown  # noqa: E402
+from agente.tema import css, tema_valido  # noqa: E402
+from painel.comum import REPO  # noqa: E402
+from painel.filtros import da_url  # noqa: E402
 
-ESQUEMA = (Path(__file__).resolve().parent / "esquema_marts.md").read_text(encoding="utf-8")
-REPO = "https://github.com/gustavohenriqq/pipeline-olist"
-# (rotulo do chip, pergunta enviada, icone)
-EXEMPLOS = [
-    ("Receita por ano", "Qual a receita por ano?", ":material/payments:"),
-    ("Atraso por UF", "Quais as 5 UFs com maior taxa de atraso?", ":material/local_shipping:"),
-    ("Pedidos em 2018", "Mostre a evolução mensal de pedidos em 2018", ":material/show_chart:"),
-    ("Alertas de atraso", "Quantos pedidos em andamento estão em alerta de atraso?",
-     ":material/notifications_active:"),
-]
-ICONE = ('<svg width="{t}" height="{t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-         'stroke-width="2.2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>')
+MARCA = str(Path(__file__).resolve().parent / "marca.svg")
 
 
 def _carregar_segredos() -> None:
@@ -58,11 +45,6 @@ def _resumo_dos_dados() -> str | None:
         conexao.close()
 
 
-@st.cache_resource
-def _cliente():
-    return modelo.ClienteLLM(modelo.provedores_do_ambiente())
-
-
 def _alternar_tema() -> None:
     estado = st.session_state
     estado.tema = "escuro" if estado.tema == "claro" else "claro"
@@ -75,92 +57,28 @@ def _nova_conversa() -> None:
     st.session_state.historico = []
 
 
-def _usar_exemplo(pergunta: str) -> None:
-    st.session_state.pendente = pergunta
-
-
-def _mostrar(item: dict) -> None:
-    with st.chat_message("user", avatar=":material/person:"):
-        st.markdown(escapar_markdown(item["pergunta"]))
-    with st.chat_message("assistant", avatar=":material/insights:"):
-        r: nucleo.Resposta = item["resposta"]
-        texto = escapar_markdown(r.texto)
-        if r.tipo == "cota":
-            st.warning(texto)
-        elif r.tipo in ("erro", "recusado"):
-            st.error(texto)
-        elif r.tipo == "fora_do_escopo":
-            st.info(f"Essa pergunta está fora do que a base tem: {texto}")
-        elif r.confirmada or r.tipo == "vazio":
-            st.markdown(texto)
-        else:
-            st.warning(texto)
-        if r.linhas:
-            df = preparar(pd.DataFrame(r.linhas, columns=r.colunas))
-            if r.grafico:
-                st.altair_chart(grafico(df, r.grafico, PALETAS[st.session_state.tema]),
-                                use_container_width=True, theme=None)
-            st.markdown(tabela_html(df), unsafe_allow_html=True)
-        if r.sql:
-            with st.expander("SQL gerado", icon=":material/code:"):
-                st.code(r.sql, language="sql")
-
-
-def _processar(pergunta: str) -> None:
+def preparar() -> None:
+    """Configuracao, segredos, estado da sessao e tema; roda antes de qualquer pagina."""
+    st.set_page_config(page_title="Painel Olist", page_icon="📊", layout="wide",
+                       initial_sidebar_state="auto")
+    _carregar_segredos()
     estado = st.session_state
-    if len(pergunta) > MAX_PERGUNTA:
-        st.warning(f"A pergunta passa de {MAX_PERGUNTA} caracteres; resuma um pouco.")
-        return
-    if estado.perguntas_feitas >= MAX_POR_SESSAO:
-        st.warning(f"Você chegou ao limite de {MAX_POR_SESSAO} perguntas desta sessão. "
-                   "A cota do modelo é gratuita e compartilhada; volte mais tarde.")
-        return
-    # Uma conexao por pergunta: uma conexao guardada morre quando o Neon dorme
-    # e, compartilhada entre visitantes, misturaria transacoes.
-    try:
-        conexao = banco.abrir_conexao()
-    except Exception:  # noqa: BLE001
-        st.warning("O banco está acordando; tente de novo em alguns segundos.")
-        return
-    estado.perguntas_feitas += 1
-    try:
-        with st.spinner("Consultando os dados..."):
-            resposta = nucleo.responder(pergunta, estado.historico, _cliente(),
-                                        lambda sql: banco.executar(conexao, sql), ESQUEMA)
-    except Exception:  # noqa: BLE001 (ultima defesa: nada chega cru na tela)
-        resposta = nucleo.Resposta("erro", "Algo deu errado ao responder; tente de novo.")
-    finally:
-        conexao.close()
-    estado.conversa.append({"pergunta": pergunta, "resposta": resposta})
-    if resposta.sql and resposta.tipo in ("ok", "vazio"):
-        estado.historico.append(nucleo.Turno(pergunta, resposta.sql))
+    for chave, inicial in (("historico", []), ("conversa", []), ("perguntas_feitas", 0),
+                           ("agente_aberto", False)):
+        estado.setdefault(chave, inicial)
+    estado.setdefault("tema", tema_valido(st.query_params.get("tema")))
+    estado.setdefault("filtros", da_url(st.query_params))
+    st.html(f"<style>{css(estado.tema)}</style>")
 
 
-def _tela_vazia() -> None:
-    with st.container(key="vazio"):
-        st.markdown(f'<div class="hero"><div class="hero-icone">{ICONE.format(t=32)}</div>'
-                    '<h1>Olá! O que você quer saber sobre as <span class="destaque">vendas</span>?</h1>'
-                    "</div>", unsafe_allow_html=True)
-        with st.container(key="chips", horizontal=True, horizontal_alignment="center"):
-            for i, (rotulo, pergunta, icone) in enumerate(EXEMPLOS):
-                st.button(rotulo, key=f"exemplo_{i}", icon=icone, on_click=_usar_exemplo, args=(pergunta,))
-        st.caption("Escreva uma pergunta de negócio em português. Ela vira uma consulta SQL nas tabelas "
-                   "do projeto; cada resposta mostra a tabela e o SQL gerado. Se um número da frase não "
-                   "bater com o resultado, a frase é descartada.")
-        st.markdown('<div class="pilha"><span>dbt</span><span>PostgreSQL</span><span>Python</span>'
-                    "<span>Streamlit</span></div>", unsafe_allow_html=True)
-
-
-def _barra_lateral() -> None:
+def barra_lateral() -> None:
     with st.sidebar:
-        st.markdown(f'<div class="marca"><span class="marca-icone">{ICONE.format(t=18)}</span>'
-                    "Pergunte aos dados</div>", unsafe_allow_html=True)
-        # tema ao lado de "Nova conversa": a barra lateral nao rola com a conversa
+        # tema ao lado de "Nova conversa": a barra lateral nao rola com a pagina
         nova, tema = st.columns([1, 0.28], vertical_alignment="center")
         nova.button("Nova conversa", key="nova_conversa", icon=":material/edit_square:",
-                    on_click=_nova_conversa, use_container_width=True)
+                    on_click=_nova_conversa, width="stretch")
         escuro = st.session_state.tema == "escuro"
-        tema.button("", key="alternar_tema", on_click=_alternar_tema, use_container_width=True,
+        tema.button("", key="alternar_tema", on_click=_alternar_tema, width="stretch",
                     icon=":material/light_mode:" if escuro else ":material/dark_mode:",
                     help="Tema claro" if escuro else "Tema escuro")
         st.markdown('<div class="rotulo-secao">Nesta conversa</div>', unsafe_allow_html=True)
@@ -182,23 +100,21 @@ def _barra_lateral() -> None:
         st.caption(" · ".join(p for p in partes if p))
 
 
-st.set_page_config(page_title="Pergunte aos dados | Olist", page_icon="🔎", layout="wide",
-                   initial_sidebar_state="expanded")
-_carregar_segredos()
-for chave, inicial in (("historico", []), ("conversa", []), ("perguntas_feitas", 0)):
-    st.session_state.setdefault(chave, inicial)
-st.session_state.setdefault("tema", tema_valido(st.query_params.get("tema")))
-st.html(f"<style>{css(st.session_state.tema)}</style>")
+def main() -> None:
+    from painel.paginas import entrega, executivo, pergunte, vendedores
 
-pergunta = st.chat_input("Pergunte sobre receita, pedidos, atrasos, avaliações...") \
-    or st.session_state.pop("pendente", None)
-if pergunta:
-    _processar(pergunta.strip())
+    preparar()
+    st.logo(MARCA, size="large")
+    menu = st.navigation([
+        st.Page(executivo.pagina, title="Visão executiva", icon=":material/insights:",
+                default=True),
+        st.Page(entrega.pagina, title="Entrega e risco", icon=":material/local_shipping:", url_path="entrega"),
+        st.Page(vendedores.pagina, title="Vendedores", icon=":material/storefront:", url_path="vendedores"),
+        st.Page(pergunte.pagina, title="Pergunte aos dados", icon=":material/forum:", url_path="pergunte"),
+    ])
+    menu.run()
+    barra_lateral()
 
-if st.session_state.conversa:
-    for item in st.session_state.conversa:
-        _mostrar(item)
-else:
-    _tela_vazia()
 
-_barra_lateral()
+if __name__ == "__main__":
+    main()

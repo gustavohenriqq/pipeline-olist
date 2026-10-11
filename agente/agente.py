@@ -50,7 +50,7 @@ class Resposta:
 
 
 def _mensagens_sql(pergunta: str, historico: list[Turno], esquema: str, erro: str | None,
-                   sql_anterior: str | None) -> list[dict]:
+                   sql_anterior: str | None, contexto: str | None = None) -> list[dict]:
     mensagens = [{"role": "system", "content": SISTEMA_SQL.replace("{esquema}", esquema)}]
     for exemplo, sql in EXEMPLOS:
         mensagens.append({"role": "user", "content": exemplo})
@@ -60,6 +60,10 @@ def _mensagens_sql(pergunta: str, historico: list[Turno], esquema: str, erro: st
     if recentes:
         pedido += "Conversa até aqui:\n" + "\n".join(
             f'- Pergunta: "{t.pergunta}" (SQL: {t.sql})' for t in recentes) + "\n\n"
+    if contexto:
+        # Vem do painel (pagina e filtros da tela); so orienta o SQL, nao aparece para quem pergunta.
+        pedido += (f"{contexto} Use esse período (e a região, se houver) quando a pergunta "
+                   "não disser outro.\n\n")
     pedido += f"Pergunta: {pergunta}"
     if erro:
         pedido += f"\n\nO SQL anterior falhou.\nSQL: {sql_anterior}\nErro do banco: {erro}\nCorrija."
@@ -92,11 +96,11 @@ def _numeros_do_sql(sql: str) -> list[float]:
 
 
 def responder(pergunta: str, historico: list[Turno], llm, executar: Callable[[str], tuple],
-              esquema: str) -> Resposta:
+              esquema: str, contexto: str | None = None) -> Resposta:
     erro = sql = None
     for _ in range(TENTATIVAS_SQL):
         try:
-            bruto = llm.completar(_mensagens_sql(pergunta, historico, esquema, erro, sql), json=True)
+            bruto = llm.completar(_mensagens_sql(pergunta, historico, esquema, erro, sql, contexto), json=True)
         except ModeloIndisponivel:
             return Resposta("cota", SOBRECARGA)
         except CotaEsgotada:

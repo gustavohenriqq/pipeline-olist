@@ -248,7 +248,7 @@ o teste por usuário pode ser automatizado.
 **Objetivo:** responder perguntas de negócio em linguagem natural sobre as marts.
 
 **Entregue** (detalhes em [docs/agente.md](docs/agente.md)), app público em
-[olist-agente.streamlit.app](https://olist-agente.streamlit.app/):
+[painel-olist.streamlit.app](https://painel-olist.streamlit.app/):
 - **Pergunta vira SQL** sobre o star schema, com contexto das 3 últimas perguntas
   ("e no Nordeste?"). Modelo gratuito com reserva automática quando a cota acaba
   ou o serviço está sobrecarregado.
@@ -273,6 +273,39 @@ acrescentar defesa.
 rótulo do vendedor tem dígitos ("Ibitinga/SP · 4a3ca9"), lidos como número
 inventado. Dígitos dentro de células de texto do resultado passaram a contar
 como conferidos.
+
+---
+
+## Etapa 7: Painel web com o agente (concluída)
+
+**Objetivo:** quem visita o portfólio abrir um link só e ver o BI e o agente.
+
+**Por quê.** O Power BI não é publicado (publicar exige conta de trabalho ou de
+escola, e a conta de trabalho do dono não entra neste projeto). O agente estava
+em outro link.
+
+**Entregue** (detalhes em [docs/painel-web.md](docs/painel-web.md)):
+- **As três páginas do Power BI** (visão executiva, entrega e risco, vendedores)
+  no app público, em HTML e CSS, com tema escuro e claro e filtros de período e
+  região guardados no endereço.
+- **O agente ao lado do painel:** "Tire sua dúvida" abre uma coluna com a mesma
+  conversa da página do agente, e cada pergunta leva a página e os filtros como
+  contexto.
+- **Mesmos números, por teste:** as consultas do painel são comparadas no CI com o
+  `esperado.sql` que confere o modelo do Power BI, mais casos novos para os
+  visuais que ele não cobria.
+
+**Decisão: o mesmo app, não um site estático.** Um site em HTML puro daria mais
+liberdade de layout, mas exigiria dados pré-calculados para cada filtro, dois
+deploys e um agente que não enxerga a tela.
+
+---
+
+## Etapa 8: HTML e CSS dentro do Power BI (planejada)
+
+Técnica de relatório inteiro desenhado em HTML por medida DAX, renderizado por um
+visual de HTML no Power BI. Mostra domínio de Power BI que o painel web não mostra.
+Terá desenho próprio.
 
 ---
 

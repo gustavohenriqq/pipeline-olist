@@ -35,7 +35,7 @@ select 'taxa_nacional', (select taxa from nacional)::text
 union all select 'taxa_regiao_nordeste',
     (sum(case when not entregue_no_prazo then 1 else 0 end)::numeric / count(*))::text
     from entregues where regiao = 'Nordeste'
-union all select 'primeira_uf_excesso', (select uf from excesso order by valor desc limit 1)
+union all select 'primeira_uf_excesso', (select uf from excesso order by valor desc, uf limit 1)
 union all select 'itens', count(*)::text from marts.fato_itens_pedido
 union all select 'receita_itens', sum(valor_item)::text from marts.fato_itens_pedido
 union all select 'taxa_atraso_itens',
@@ -43,8 +43,8 @@ union all select 'taxa_atraso_itens',
     from marts.fato_pedidos f
     where f.entregue_no_prazo is not null
       and f.order_id in (select order_id from pedidos_dos_itens)
-union all select 'primeiro_grupo', (select categoria_grupo from grupos order by receita desc limit 1)
+union all select 'primeiro_grupo', (select categoria_grupo from grupos order by receita desc, categoria_grupo limit 1)
 union all select 'receita_primeiro_grupo', (select max(receita) from grupos)::text
-union all select 'primeiro_vendedor', (select vendedor_rotulo from vendedores order by receita desc limit 1)
+union all select 'primeiro_vendedor', (select vendedor_rotulo from vendedores order by receita desc, vendedor_rotulo limit 1)
 union all select 'pedidos_em_risco_linhas',
     least(50, count(*))::text from marts.previsao_atraso where conjunto = 'em_andamento';

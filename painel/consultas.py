@@ -191,7 +191,7 @@ def excesso_por_uf(conexao, f: Filtros) -> pd.DataFrame:
                as atraso_em_excesso
     from base b cross join nacional n
     group by b.uf
-    order by atraso_em_excesso desc
+    order by atraso_em_excesso desc, b.uf
     """
     return _consulta(conexao, sql, _sem_regiao(f))
 
@@ -238,7 +238,7 @@ def receita_por_grupo(conexao, f: Filtros) -> pd.DataFrame:
     from ({_ITENS}) i
     join marts.dim_produtos d on d.produto_sk = i.produto_sk
     group by d.categoria_grupo
-    order by receita_itens desc
+    order by receita_itens desc, d.categoria_grupo
     """
     return _consulta(conexao, sql, _sem_regiao(f))
 
@@ -250,7 +250,7 @@ def vendedores(conexao, f: Filtros) -> pd.DataFrame:
     por_vendedor as (
         select vendedor_sk, sum(valor_item) as receita_itens, count(*) as itens
         from itens group by vendedor_sk
-        order by receita_itens desc
+        order by receita_itens desc, vendedor_sk
         limit 50
     ),
     atraso as (
@@ -265,6 +265,6 @@ def vendedores(conexao, f: Filtros) -> pd.DataFrame:
     from por_vendedor pv
     join marts.dim_vendedores v on v.vendedor_sk = pv.vendedor_sk
     left join atraso a on a.vendedor_sk = pv.vendedor_sk
-    order by pv.receita_itens desc
+    order by pv.receita_itens desc, v.vendedor_rotulo
     """
     return _consulta(conexao, sql, _sem_regiao(f))

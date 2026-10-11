@@ -151,7 +151,7 @@ def grafico(df: pd.DataFrame, tipo: str, paleta: dict | None = None) -> alt.Char
         base = alt.Chart(dados).encode(x=x, y=y, tooltip=[eixo, medidas[0]])
         marca = (base.mark_bar(color=cores["destaque"], cornerRadiusTopLeft=6, cornerRadiusTopRight=6)
                  if tipo == "barras" else base.mark_line(color=cores["destaque"], point=True))
-        return _com_cores(marca, cores)
+        return com_cores(marca, cores)
     longo = dados.melt(id_vars=[eixo], value_vars=medidas, var_name="serie", value_name="valor")
     longo["serie"] = longo["serie"].map(rotulo_coluna)
     y = alt.Y("valor:Q", title=None, axis=eixo_y, scale=escala)
@@ -159,14 +159,14 @@ def grafico(df: pd.DataFrame, tipo: str, paleta: dict | None = None) -> alt.Char
     base = alt.Chart(longo).encode(x=x, y=y, color=cor,
                                    tooltip=[eixo, "serie", "valor"])
     marca = base.mark_bar() if tipo == "barras" else base.mark_line(point=True)
-    return _com_cores(marca, cores)
+    return com_cores(marca, cores)
 
 
 def _series(cores: dict) -> list[str]:
     return [cores["destaque"], "#60A5FA", "#F59E0B", "#F472B6"]
 
 
-def _com_cores(grafico_: alt.Chart, cores: dict) -> alt.Chart:
+def com_cores(grafico_: alt.Chart, cores: dict) -> alt.Chart:
     return (grafico_.properties(height=320, background="transparent")
             .configure_axis(labelColor=cores["texto_suave"], titleColor=cores["texto_suave"],
                             gridColor=cores["grade"], domainColor=cores["borda"], tickColor=cores["borda"])

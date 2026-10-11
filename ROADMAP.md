@@ -248,7 +248,7 @@ o teste por usuário pode ser automatizado.
 **Objetivo:** responder perguntas de negócio em linguagem natural sobre as marts.
 
 **Entregue** (detalhes em [docs/agente.md](docs/agente.md)), app público em
-[olist-agente.streamlit.app](https://olist-agente.streamlit.app/):
+[painel-olist.streamlit.app](https://painel-olist.streamlit.app/):
 - **Pergunta vira SQL** sobre o star schema, com contexto das 3 últimas perguntas
   ("e no Nordeste?"). Modelo gratuito com reserva automática quando a cota acaba
   ou o serviço está sobrecarregado.

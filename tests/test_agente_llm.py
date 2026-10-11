@@ -58,8 +58,22 @@ def test_json_pede_formato_json():
     assert kwargs["model"] == "modelo-a"
 
 
-def test_provedores_do_ambiente_pula_quem_nao_tem_chave(monkeypatch):
+def test_so_com_chave_do_gemini_a_reserva_e_o_flash_lite(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "g")
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     provedores = provedores_do_ambiente()
-    assert [p.nome for p in provedores] == ["gemini"]
+    assert [p.nome for p in provedores] == ["gemini", "gemini-lite"]
+    assert provedores[0].modelo != provedores[1].modelo
+    assert provedores[0].chave == provedores[1].chave == "g"
+
+
+def test_com_as_duas_chaves_o_groq_fica_por_ultimo(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "g")
+    monkeypatch.setenv("GROQ_API_KEY", "q")
+    assert [p.nome for p in provedores_do_ambiente()] == ["gemini", "gemini-lite", "groq"]
+
+
+def test_sem_chave_nenhuma_nao_ha_provedor(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    assert provedores_do_ambiente() == []

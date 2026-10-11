@@ -85,8 +85,9 @@ def processar(pergunta: str, contexto: str | None = None) -> None:
     estado.perguntas_feitas += 1
     try:
         with st.spinner("Consultando os dados..."):
+            extra = {"contexto": contexto} if contexto else {}
             resposta = nucleo.responder(pergunta, estado.historico, _cliente(),
-                                        lambda sql: banco.executar(conexao, sql), ESQUEMA)
+                                        lambda sql: banco.executar(conexao, sql), ESQUEMA, **extra)
     except Exception:  # noqa: BLE001 (ultima defesa: nada chega cru na tela)
         resposta = nucleo.Resposta("erro", "Algo deu errado ao responder; tente de novo.")
     finally:

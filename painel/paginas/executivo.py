@@ -7,9 +7,11 @@ from agente.apresentacao import tabela_html
 from agente.tema import PALETAS
 from painel import consultas
 from painel.cartoes import cartao, linha_de_cartoes, valor_br
-from painel.comum import bloco, cabecalho, carregar, filtros_da_pagina, linha_unica, sem_anterior, sem_dados
+from painel.comum import (bloco, cabecalho, carregar, corpo, filtros_da_pagina, linha_unica, sem_anterior,
+                          sem_dados)
 from painel.consultas import delta
 from painel.graficos import receita_com_ano_anterior
+from painel.lateral import coluna_do_agente
 
 TITULO = "Visão executiva"
 
@@ -30,27 +32,29 @@ def _cartoes(c: dict) -> str:
 
 def pagina() -> None:
     cabecalho(TITULO, "Receita, volume, prazo e satisfação. Período padrão jan/2017 a ago/2018.", TITULO)
-    f = filtros_da_pagina(regiao=True)
-    paleta = PALETAS[st.session_state.tema]
+    with corpo():
+        f = filtros_da_pagina(regiao=True)
+        paleta = PALETAS[st.session_state.tema]
 
-    cartoes = carregar(consultas.cartoes_executivo, f)
-    if cartoes is not None:
-        st.markdown(_cartoes(linha_unica(cartoes)), unsafe_allow_html=True)
+        cartoes = carregar(consultas.cartoes_executivo, f)
+        if cartoes is not None:
+            st.markdown(_cartoes(linha_unica(cartoes)), unsafe_allow_html=True)
 
-    esquerda, direita = st.columns([1.5, 1], gap="large")
-    with esquerda:
-        bloco("Receita por mês e no mesmo mês do ano anterior", "Área: receita do mês. Tracejado: ano anterior.")
-        receita = carregar(consultas.receita_mensal, f)
-        if receita is not None:
-            if receita.empty:
-                sem_dados()
-            else:
-                st.altair_chart(receita_com_ano_anterior(receita, paleta), width="stretch", theme=None)
-    with direita:
-        bloco("Placar mensal", "Variação contra o mês anterior.")
-        placar = carregar(consultas.placar_mensal, f)
-        if placar is not None:
-            if placar.empty:
-                sem_dados()
-            else:
-                st.markdown(tabela_html(placar), unsafe_allow_html=True)
+        esquerda, direita = st.columns([1.5, 1], gap="large")
+        with esquerda:
+            bloco("Receita por mês e no mesmo mês do ano anterior", "Área: receita do mês. Tracejado: ano anterior.")
+            receita = carregar(consultas.receita_mensal, f)
+            if receita is not None:
+                if receita.empty:
+                    sem_dados()
+                else:
+                    st.altair_chart(receita_com_ano_anterior(receita, paleta), width="stretch", theme=None)
+        with direita:
+            bloco("Placar mensal", "Variação contra o mês anterior.")
+            placar = carregar(consultas.placar_mensal, f)
+            if placar is not None:
+                if placar.empty:
+                    sem_dados()
+                else:
+                    st.markdown(tabela_html(placar), unsafe_allow_html=True)
+    coluna_do_agente(TITULO, f)

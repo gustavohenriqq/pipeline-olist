@@ -1,8 +1,9 @@
 """Cliente de modelo gratuito, com provedor de reserva quando a cota estoura.
 
 Gemini e Groq aceitam o formato da API da OpenAI, entao um cliente so serve para
-os dois: muda a URL, o modelo e a chave. Ordem: Gemini Flash (camada gratuita)
-e, se ele responder 429 (cota), Groq (camada gratuita).
+os dois: muda a URL, o modelo e a chave. Ordem: Gemini Flash, Gemini Flash-Lite
+(mesma chave; a cota gratuita do Gemini e contada por modelo) e Groq, se houver
+chave. Cada um so e tentado quando o anterior responde 429 (cota).
 """
 from __future__ import annotations
 
@@ -26,10 +27,12 @@ class CotaEsgotada(Exception):
 
 
 def provedores_do_ambiente() -> list[Provedor]:
+    url_gemini = env("AGENTE_URL_GEMINI", "https://generativelanguage.googleapis.com/v1beta/openai/")
     candidatos = [
-        Provedor("gemini",
-                 env("AGENTE_URL_GEMINI", "https://generativelanguage.googleapis.com/v1beta/openai/"),
-                 env("AGENTE_MODELO_GEMINI", "gemini-flash-latest"),
+        Provedor("gemini", url_gemini, env("AGENTE_MODELO_GEMINI", "gemini-flash-latest"),
+                 env("GEMINI_API_KEY")),
+        Provedor("gemini-lite", url_gemini,
+                 env("AGENTE_MODELO_GEMINI_LITE", "gemini-flash-lite-latest"),
                  env("GEMINI_API_KEY")),
         Provedor("groq",
                  env("AGENTE_URL_GROQ", "https://api.groq.com/openai/v1"),

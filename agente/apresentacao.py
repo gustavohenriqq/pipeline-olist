@@ -4,6 +4,8 @@ Separado do app para ser testado sem rodar o Streamlit.
 """
 from __future__ import annotations
 
+import re
+from datetime import date, datetime
 from html import escape
 from numbers import Number
 from typing import Callable
@@ -22,7 +24,10 @@ ROTULO_COMPACTO = (
     " : format(datum.value, '~g'), '.', ',')"
 )
 ROTULOS = {"ano_mes": "Mês", "mes": "Mês", "ano": "Ano", "uf": "UF", "trimestre": "Trimestre",
-           "data": "Data"}
+           "data": "Data", "pct_no_prazo": "% no prazo", "ticket_medio": "Ticket médio",
+           "variacao_mensal": "Var. mensal", "prob_atraso": "Prob. de atraso",
+           "entrega_prevista": "Entrega prevista", "taxa_atraso_itens": "Taxa de atraso dos itens",
+           "receita_itens": "Receita de itens"}
 
 
 def escapar_markdown(texto: str) -> str:
@@ -85,6 +90,10 @@ def formatadores(df: pd.DataFrame) -> dict[str, Callable[[float], str]]:
         if pd.api.types.is_bool_dtype(serie) or not pd.api.types.is_numeric_dtype(serie):
             continue
         valores = serie.dropna()
+        if str(coluna).lower().startswith("variacao"):
+            # variacao e fracao que pode passar de 1 ou ser negativa (108,70%, -5,20%)
+            saida[coluna] = lambda v: "" if pd.isna(v) else numero_br(v * 100, 2) + "%"
+            continue
         if _e_taxa(str(coluna)) and len(valores) and valores.between(0, 1).all():
             saida[coluna] = lambda v: "" if pd.isna(v) else numero_br(v * 100, 2) + "%"
             continue
@@ -100,14 +109,17 @@ def formatadores(df: pd.DataFrame) -> dict[str, Callable[[float], str]]:
 
 
 def _celula(valor) -> str:
+    if isinstance(valor, (date, datetime)):
+        return valor.strftime("%d/%m/%Y")
     texto = "" if valor is None or (not isinstance(valor, str) and pd.isna(valor)) else str(valor)
     return escape(texto).replace("$", "&#36;")
 
 
-def tabela_html(df: pd.DataFrame) -> str:
+def tabela_html(df: pd.DataFrame, classe_linha=None) -> str:
     """Tabela do resultado em HTML, para acompanhar o tema (a do Streamlit e um canvas).
 
     Tudo que vem do banco passa por escape: um rotulo com "<" nao vira HTML.
+    `classe_linha(linha) -> str` pinta a linha (ex.: risco alto); so aceita nome de classe simples.
     """
     formatos = formatadores(df)
     # numero alinhado a direita; ano e mes ficam como rotulo, a esquerda
@@ -117,12 +129,14 @@ def tabela_html(df: pd.DataFrame) -> str:
         else f"<th>{escape(rotulo_coluna(str(c)))}</th>"
         for c in df.columns)
     linhas = []
-    for registro in df.itertuples(index=False):
+    for (_, linha), registro in zip(df.iterrows(), df.itertuples(index=False)):
+        classe = classe_linha(linha) if classe_linha else ""
+        abre = f'<tr class="{classe}">' if re.fullmatch(r"[a-z-]+", classe or "") else "<tr>"
         celulas = "".join(
             f'<td class="num">{_celula(formatos[c](v))}</td>' if c in numericas
             else f"<td>{_celula(formatos[c](v) if c in formatos else v)}</td>"
             for c, v in zip(df.columns, registro))
-        linhas.append(f"<tr>{celulas}</tr>")
+        linhas.append(f"{abre}{celulas}</tr>")
     return (f'<div class="tabela-resultado"><table><thead><tr>{cabecalho}</tr></thead>'
             f'<tbody>{"".join(linhas)}</tbody></table></div>')
 

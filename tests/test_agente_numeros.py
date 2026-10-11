@@ -62,3 +62,12 @@ def test_negativo_confere():
 
 def test_negativo_inventado_reprova():
     assert not confere("A receita caiu -9,9% em agosto", [Decimal("-0.0523")])
+
+
+def test_numero_dentro_de_rotulo_do_resultado_confere():
+    assert confere("O maior vendedor é Guariba/SP · 4869f7, com R$ 249.640,70.",
+                   ["Guariba/SP · 4869f7", Decimal("249640.70")])
+
+
+def test_numero_de_rotulo_nao_libera_outro_numero():
+    assert not confere("Guariba/SP · 4869f7 vendeu 9.999 itens.", ["Guariba/SP · 4869f7", 1156])

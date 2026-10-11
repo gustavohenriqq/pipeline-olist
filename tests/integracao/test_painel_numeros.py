@@ -145,3 +145,43 @@ def test_receita_por_grupo_e_vendedores(conexao, painel_esperado, tudo):
     v = vendedores(conexao, tudo)
     assert v.iloc[0].vendedor == painel_esperado["primeiro_vendedor"]
     assert len(v) <= 50
+
+
+def _receita(conexao, inicio, fim):
+    with conexao.cursor() as cur:
+        cur.execute("select sum(valor_total) from marts.fato_pedidos where purchased_at::date between %s and %s",
+                    (inicio, fim))
+        valor = cur.fetchone()[0]
+    conexao.rollback()
+    return float(valor) if valor is not None else None
+
+
+def test_periodo_no_meio_do_mes_compara_os_mesmos_dias(conexao):
+    """1 a 15 de agosto contra 1 a 15 de julho, como o DATEADD do Power BI."""
+    from datetime import date
+    from painel.consultas import cartoes_executivo, delta, placar_mensal, receita_mensal
+    from painel.filtros import Filtros
+    f = Filtros(date(2018, 1, 1), date(2018, 8, 15))
+    agosto, julho = _receita(conexao, date(2018, 8, 1), date(2018, 8, 15)), _receita(conexao, date(2018, 7, 1),
+                                                                                     date(2018, 7, 15))
+    if agosto is None or julho is None:
+        pytest.skip("sem pedidos nessas quinzenas nesta base")
+    c = cartoes_executivo(conexao, f).iloc[0]
+    assert delta(c.receita_ref, c.receita_ant, taxa=False) == pytest.approx(agosto / julho - 1, abs=1e-9)
+    placar = placar_mensal(conexao, f).set_index("ano_mes")
+    assert placar.loc["2018-08", "variacao_mensal"] == pytest.approx(agosto / julho - 1, abs=1e-9)
+    ano_anterior = _receita(conexao, date(2017, 8, 1), date(2017, 8, 15))
+    r = receita_mensal(conexao, f).set_index("ano_mes")
+    assert r.loc["2018-08", "receita_ano_anterior"] == pytest.approx(ano_anterior, abs=0.01)
+
+
+def test_inicio_no_meio_do_mes_anterior_compara_o_mes_inteiro(conexao):
+    from datetime import date
+    from painel.consultas import cartoes_executivo, delta
+    from painel.filtros import Filtros
+    c = cartoes_executivo(conexao, Filtros(date(2018, 7, 20), date(2018, 8, 31))).iloc[0]
+    agosto, julho = _receita(conexao, date(2018, 8, 1), date(2018, 8, 31)), _receita(conexao, date(2018, 7, 1),
+                                                                                     date(2018, 7, 31))
+    if agosto is None or julho is None:
+        pytest.skip("sem pedidos nesses meses nesta base")
+    assert delta(c.receita_ref, c.receita_ant, taxa=False) == pytest.approx(agosto / julho - 1, abs=1e-9)

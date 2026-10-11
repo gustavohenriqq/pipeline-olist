@@ -47,3 +47,22 @@ def test_contexto_para_o_agente():
     texto = contexto("Entrega e risco", Filtros(date(2018, 1, 1), date(2018, 8, 31), "Nordeste"))
     assert texto == "Contexto do painel: página Entrega e risco; período 01/01/2018 a 31/08/2018; região Nordeste."
     assert "região" not in contexto("Vendedores", PADRAO)
+
+
+def test_janela_de_comparacao_como_o_power_bi():
+    from painel.filtros import janela_comparacao
+    d = date
+    # mes inteiro contra o mes anterior inteiro
+    assert janela_comparacao(PADRAO) == (d(2018, 8, 1), d(2018, 8, 31), d(2018, 7, 1), d(2018, 7, 31))
+    # fim no meio do mes: 1 a 15 de agosto contra 1 a 15 de julho (nao julho inteiro)
+    assert janela_comparacao(Filtros(d(2018, 1, 1), d(2018, 8, 15))) == (
+        d(2018, 8, 1), d(2018, 8, 15), d(2018, 7, 1), d(2018, 7, 15))
+    # inicio no meio do mes anterior: agosto inteiro contra julho inteiro
+    assert janela_comparacao(Filtros(d(2018, 7, 20), d(2018, 8, 31))) == (
+        d(2018, 8, 1), d(2018, 8, 31), d(2018, 7, 1), d(2018, 7, 31))
+    # periodo dentro de um mes so
+    assert janela_comparacao(Filtros(d(2018, 8, 10), d(2018, 8, 20))) == (
+        d(2018, 8, 10), d(2018, 8, 20), d(2018, 7, 10), d(2018, 7, 20))
+    # fim de mes curto vira fim do mes anterior
+    assert janela_comparacao(Filtros(d(2018, 1, 1), d(2018, 3, 31)))[2:] == (d(2018, 2, 1), d(2018, 2, 28))
+    assert janela_comparacao(Filtros(d(2018, 1, 1), d(2018, 2, 28)))[2:] == (d(2018, 1, 1), d(2018, 1, 31))

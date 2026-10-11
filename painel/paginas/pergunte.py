@@ -113,7 +113,6 @@ def _tela_vazia() -> None:
 
 
 def pagina() -> None:
-    st.session_state.pagina_atual = "Pergunte aos dados"
     pergunta = st.chat_input("Pergunte sobre receita, pedidos, atrasos, avaliações...") \
         or st.session_state.pop("pendente", None)
     if pergunta:

@@ -11,7 +11,7 @@ from dataclasses import replace
 import pandas as pd
 
 from agente.banco import executar
-from painel.filtros import Filtros, mes_anterior, mes_referencia
+from painel.filtros import Filtros, janela_comparacao
 
 # Pedidos do periodo, com a regiao do cliente opcional. Base de quase tudo no painel.
 _PEDIDOS = """
@@ -22,20 +22,62 @@ _PEDIDOS = """
     where f.purchased_at::date between %(inicio)s and %(fim)s
       and (%(regiao)s::text is null or c.regiao = %(regiao)s)
 """
-# Receita por mes sem o corte de datas (para mes anterior e ano anterior).
-_RECEITA_POR_MES = """
-    select to_char(f.purchased_at, 'YYYY-MM') as mes, sum(f.valor_total) as receita
+# Pedidos da janela de comparacao (mes de referencia e os mesmos dias um mes antes),
+# sem o corte do periodo: o mes anterior pode estar fora dele.
+_COMPARACAO = """
+    select f.order_id, f.valor_total, f.entregue_no_prazo, f.nota_avaliacao,
+           f.purchased_at::date as dia
+    from marts.fato_pedidos f
+    left join marts.dim_clientes c on c.cliente_sk = f.cliente_sk
+    where f.purchased_at::date between %(ant_ini)s and %(ref_fim)s
+      and (%(regiao)s::text is null or c.regiao = %(regiao)s)
+"""
+_REF = "dia between %(ref_ini)s and %(ref_fim)s"
+_ANT = "dia between %(ant_ini)s and %(ant_fim)s"
+
+
+# Receita por dia, sem o corte do periodo e com a regiao (uns 700 dias): as janelas
+# deslocadas (mes e ano anteriores) somam em cima dela, sem varrer o fato por mes.
+_DIARIO = """
+    select f.purchased_at::date as dia, sum(f.valor_total) as receita
     from marts.fato_pedidos f
     left join marts.dim_clientes c on c.cliente_sk = f.cliente_sk
     where (%(regiao)s::text is null or c.regiao = %(regiao)s)
     group by 1
 """
+
+
+def _receita_entre(ini: str, fim: str) -> str:
+    """Receita entre duas datas (expressoes SQL), lida do CTE diario."""
+    return f"(select sum(d.receita) from diario d where d.dia between {ini} and {fim})"
+
+
+# Dias de cada mes que estao no periodo, e esses dias um mes e um ano antes.
+# Como o DATEADD do Power BI: fim de mes vira fim de mes (31/03 -> 28/02).
+_JANELAS_POR_MES = """
+    select ano_mes, ini, fim,
+           (ini - interval '1 month')::date as mes_ant_ini,
+           case when fim = (date_trunc('month', fim) + interval '1 month - 1 day')::date
+                then (date_trunc('month', fim) - interval '1 day')::date
+                else (fim - interval '1 month')::date end as mes_ant_fim,
+           (ini - interval '1 year')::date as ano_ant_ini,
+           case when fim = (date_trunc('month', fim) + interval '1 month - 1 day')::date
+                then (date_trunc('month', fim - interval '1 year') + interval '1 month - 1 day')::date
+                else (fim - interval '1 year')::date end as ano_ant_fim
+    from (
+        select ano_mes,
+               greatest(%(inicio)s::date, to_date(ano_mes, 'YYYY-MM')) as ini,
+               least(%(fim)s::date, (to_date(ano_mes, 'YYYY-MM') + interval '1 month - 1 day')::date) as fim
+        from periodo
+    ) j
+"""
 _PCT_NO_PRAZO = "avg(case when entregue_no_prazo then 1.0 else 0.0 end) filter (where entregue_no_prazo is not null)"
 
 
 def _parametros(f: Filtros) -> dict:
-    ref = mes_referencia(f)
-    return {"inicio": f.inicio, "fim": f.fim, "regiao": f.regiao, "ref": ref, "ant": mes_anterior(ref)}
+    ref_ini, ref_fim, ant_ini, ant_fim = janela_comparacao(f)
+    return {"inicio": f.inicio, "fim": f.fim, "regiao": f.regiao,
+            "ref_ini": ref_ini, "ref_fim": ref_fim, "ant_ini": ant_ini, "ant_fim": ant_fim}
 
 
 def _consulta(conexao, sql: str, f: Filtros) -> pd.DataFrame:
@@ -61,49 +103,57 @@ def delta(ref, ant, *, taxa: bool) -> float | None:
 
 def cartoes_executivo(conexao, f: Filtros) -> pd.DataFrame:
     sql = f"""
-    with base as ({_PEDIDOS})
-    select
-        sum(valor_total) as receita,
-        count(distinct order_id) as pedidos,
-        sum(valor_total) / nullif(count(distinct order_id), 0) as ticket_medio,
-        {_PCT_NO_PRAZO} as pct_no_prazo,
-        avg(nota_avaliacao) as nota_media,
-        sum(valor_total) filter (where mes = %(ref)s) as receita_ref,
-        sum(valor_total) filter (where mes = %(ant)s) as receita_ant,
-        count(distinct order_id) filter (where mes = %(ref)s) as pedidos_ref,
-        count(distinct order_id) filter (where mes = %(ant)s) as pedidos_ant,
-        sum(valor_total) filter (where mes = %(ref)s)
-            / nullif(count(distinct order_id) filter (where mes = %(ref)s), 0) as ticket_ref,
-        sum(valor_total) filter (where mes = %(ant)s)
-            / nullif(count(distinct order_id) filter (where mes = %(ant)s), 0) as ticket_ant,
-        avg(case when entregue_no_prazo then 1.0 else 0.0 end)
-            filter (where entregue_no_prazo is not null and mes = %(ref)s) as pct_ref,
-        avg(case when entregue_no_prazo then 1.0 else 0.0 end)
-            filter (where entregue_no_prazo is not null and mes = %(ant)s) as pct_ant,
-        avg(nota_avaliacao) filter (where mes = %(ref)s) as nota_ref,
-        avg(nota_avaliacao) filter (where mes = %(ant)s) as nota_ant
-    from base
-    having count(*) > 0
+    with base as ({_PEDIDOS}),
+    comp as ({_COMPARACAO}),
+    total as (
+        select sum(valor_total) as receita,
+               count(distinct order_id) as pedidos,
+               sum(valor_total) / nullif(count(distinct order_id), 0) as ticket_medio,
+               {_PCT_NO_PRAZO} as pct_no_prazo,
+               avg(nota_avaliacao) as nota_media
+        from base
+        having count(*) > 0
+    ),
+    destaque as (
+        select sum(valor_total) filter (where {_REF}) as receita_ref,
+               sum(valor_total) filter (where {_ANT}) as receita_ant,
+               count(distinct order_id) filter (where {_REF}) as pedidos_ref,
+               count(distinct order_id) filter (where {_ANT}) as pedidos_ant,
+               sum(valor_total) filter (where {_REF})
+                   / nullif(count(distinct order_id) filter (where {_REF}), 0) as ticket_ref,
+               sum(valor_total) filter (where {_ANT})
+                   / nullif(count(distinct order_id) filter (where {_ANT}), 0) as ticket_ant,
+               avg(case when entregue_no_prazo then 1.0 else 0.0 end)
+                   filter (where entregue_no_prazo is not null and {_REF}) as pct_ref,
+               avg(case when entregue_no_prazo then 1.0 else 0.0 end)
+                   filter (where entregue_no_prazo is not null and {_ANT}) as pct_ant,
+               avg(nota_avaliacao) filter (where {_REF}) as nota_ref,
+               avg(nota_avaliacao) filter (where {_ANT}) as nota_ant
+        from comp
+    )
+    select * from total cross join destaque
     """
     return _consulta(conexao, sql, f)
 
 
 def receita_mensal(conexao, f: Filtros) -> pd.DataFrame:
+    """Receita do mes no periodo e dos mesmos dias um ano antes."""
     sql = f"""
     with periodo as (
         select mes as ano_mes, sum(valor_total) as receita from ({_PEDIDOS}) p group by 1
     ),
-    todos as ({_RECEITA_POR_MES})
-    select p.ano_mes, p.receita, a.receita as receita_ano_anterior
+    janelas as ({_JANELAS_POR_MES}),
+    diario as materialized ({_DIARIO})
+    select p.ano_mes, p.receita, {_receita_entre("j.ano_ant_ini", "j.ano_ant_fim")} as receita_ano_anterior
     from periodo p
-    left join todos a
-      on a.mes = to_char(to_date(p.ano_mes, 'YYYY-MM') - interval '1 year', 'YYYY-MM')
+    join janelas j on j.ano_mes = p.ano_mes
     order by p.ano_mes
     """
     return _consulta(conexao, sql, f)
 
 
 def placar_mensal(conexao, f: Filtros) -> pd.DataFrame:
+    """Placar por mes; a variacao compara os mesmos dias um mes antes (mes parcial com parcial)."""
     sql = f"""
     with periodo as (
         select mes as ano_mes, sum(valor_total) as receita, count(distinct order_id) as pedidos,
@@ -112,13 +162,13 @@ def placar_mensal(conexao, f: Filtros) -> pd.DataFrame:
         from ({_PEDIDOS}) p
         group by 1
     ),
-    todos as ({_RECEITA_POR_MES})
+    janelas as ({_JANELAS_POR_MES}),
+    diario as materialized ({_DIARIO})
     select p.ano_mes, p.receita,
-           p.receita / nullif(a.receita, 0) - 1 as variacao_mensal,
+           p.receita / nullif({_receita_entre("j.mes_ant_ini", "j.mes_ant_fim")}, 0) - 1 as variacao_mensal,
            p.pedidos, p.ticket_medio, p.pct_no_prazo
     from periodo p
-    left join todos a
-      on a.mes = to_char(to_date(p.ano_mes, 'YYYY-MM') - interval '1 month', 'YYYY-MM')
+    join janelas j on j.ano_mes = p.ano_mes
     order by p.ano_mes desc
     """
     return _consulta(conexao, sql, f)
@@ -150,6 +200,12 @@ _ITENS = """
 def cartoes_entrega(conexao, f: Filtros) -> pd.DataFrame:
     sql = f"""
     with base as ({_ENTREGUES}),
+    comp as (
+        select f.entregue_no_prazo, f.purchased_at::date as dia
+        from marts.fato_pedidos f
+        where f.purchased_at::date between %(ant_ini)s and %(ref_fim)s
+          and f.entregue_no_prazo is not null
+    ),
     risco as (
         select count(*) as pedidos_alerta, sum(p2.valor_total) as receita_risco
         from marts.previsao_atraso r
@@ -158,8 +214,8 @@ def cartoes_entrega(conexao, f: Filtros) -> pd.DataFrame:
           and p2.purchased_at::date between %(inicio)s and %(fim)s
     )
     select {_TAXA_ATRASO} as taxa_atraso,
-           {_TAXA_ATRASO} filter (where mes = %(ref)s) as taxa_ref,
-           {_TAXA_ATRASO} filter (where mes = %(ant)s) as taxa_ant,
+           (select {_TAXA_ATRASO} filter (where {_REF}) from comp) as taxa_ref,
+           (select {_TAXA_ATRASO} filter (where {_ANT}) from comp) as taxa_ant,
            (select pedidos_alerta from risco) as pedidos_alerta,
            (select receita_risco from risco) as receita_risco
     from base
@@ -216,6 +272,12 @@ def pedidos_em_risco(conexao, f: Filtros) -> pd.DataFrame:
 def cartoes_vendedores(conexao, f: Filtros) -> pd.DataFrame:
     sql = f"""
     with itens as ({_ITENS}),
+    comp as (
+        select i.valor_item, t.data as dia
+        from marts.fato_itens_pedido i
+        join marts.dim_tempo t on t.tempo_sk = i.tempo_sk_compra
+        where t.data between %(ant_ini)s and %(ref_fim)s
+    ),
     pedidos as (
         select p.entregue_no_prazo from marts.fato_pedidos p
         where p.entregue_no_prazo is not null
@@ -224,8 +286,8 @@ def cartoes_vendedores(conexao, f: Filtros) -> pd.DataFrame:
     select sum(valor_item) as receita_itens,
            count(*) as itens,
            (select {_TAXA_ATRASO} from pedidos) as taxa_atraso_itens,
-           sum(valor_item) filter (where mes = %(ref)s) as receita_ref,
-           sum(valor_item) filter (where mes = %(ant)s) as receita_ant
+           (select sum(valor_item) filter (where {_REF}) from comp) as receita_ref,
+           (select sum(valor_item) filter (where {_ANT}) from comp) as receita_ant
     from itens
     having count(*) > 0
     """

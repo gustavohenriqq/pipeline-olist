@@ -5,8 +5,9 @@ iguais precisam dar o mesmo hash.
 """
 from __future__ import annotations
 
+import calendar
 from dataclasses import dataclass, replace
-from datetime import date
+from datetime import date, timedelta
 
 MINIMO = date(2016, 9, 1)
 MAXIMO = date(2018, 10, 31)
@@ -31,6 +32,29 @@ def mes_referencia(f: Filtros) -> str:
 def mes_anterior(ano_mes: str) -> str:
     ano, mes = (int(p) for p in ano_mes.split("-"))
     return f"{ano - 1}-12" if mes == 1 else f"{ano}-{mes - 1:02d}"
+
+
+def _fim_do_mes(d: date) -> date:
+    return d.replace(day=calendar.monthrange(d.year, d.month)[1])
+
+
+def _um_mes_antes(d: date, fim: bool) -> date:
+    """Mesmo dia no mes anterior (cortado no fim do mes); fim de mes vira fim de mes."""
+    anterior = d.replace(day=1) - timedelta(days=1)  # ultimo dia do mes anterior
+    if fim and d == _fim_do_mes(d):
+        return anterior
+    return anterior.replace(day=min(d.day, anterior.day))
+
+
+def janela_comparacao(f: Filtros) -> tuple[date, date, date, date]:
+    """(ref_ini, ref_fim, ant_ini, ant_fim) do destaque "contra o mes anterior".
+
+    Como o DATEADD do Power BI: o mes de referencia usa os dias selecionados dele, e o
+    anterior sao esses mesmos dias um mes antes. Fim em 15/08 compara 1 a 15 de
+    agosto com 1 a 15 de julho; inicio em 20/07 nao corta o julho da comparacao.
+    """
+    ref_ini = max(f.inicio, f.fim.replace(day=1))
+    return ref_ini, f.fim, _um_mes_antes(ref_ini, fim=False), _um_mes_antes(f.fim, fim=True)
 
 
 def _no_intervalo(d: date) -> date:

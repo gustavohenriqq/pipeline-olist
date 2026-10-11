@@ -20,9 +20,10 @@ ICONE = ('<svg width="{t}" height="{t}" viewBox="0 0 24 24" fill="none" stroke="
          'stroke-width="2.2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>')
 MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 
-_aviso = None  # espaco do aviso de banco dormindo, criado pelo cabecalho a cada execucao
-_acordando_mostrado = False
-_lateral = None  # coluna do agente, quando aberta (criada por corpo())
+# O que pertence a tela (espaco do aviso, coluna do agente) fica no estado da
+# sessao, nunca em variavel de modulo: o Streamlit roda cada visitante numa thread
+# do mesmo processo, e uma variavel de modulo seria compartilhada entre eles.
+_AVISO, _ACORDANDO, _LATERAL = "_painel_aviso", "_painel_acordando", "_painel_lateral"
 
 
 def mes_extenso(ano_mes: str) -> str:
@@ -35,8 +36,7 @@ def _alternar_agente() -> None:
 
 
 def cabecalho(titulo: str, subtitulo: str, pagina: str) -> None:
-    global _aviso, _acordando_mostrado
-    st.session_state.pagina_atual = pagina
+    estado = st.session_state
     esquerda, direita = st.columns([5, 1.4], vertical_alignment="center")
     esquerda.markdown(f'<div class="cabecalho"><h1>{escape(titulo)}</h1><p>{escape(subtitulo)}</p></div>',
                       unsafe_allow_html=True)
@@ -44,21 +44,21 @@ def cabecalho(titulo: str, subtitulo: str, pagina: str) -> None:
     direita.button("Fechar o agente" if aberto else "Tire sua dúvida", key="abrir_agente",
                    icon=":material/close:" if aberto else ":material/forum:", type="primary",
                    on_click=_alternar_agente, width="stretch")
-    _aviso, _acordando_mostrado = st.empty(), False
+    estado[_AVISO], estado[_ACORDANDO] = st.empty(), False
 
 
 def corpo():
     """Area do painel: a pagina inteira, ou a coluna da esquerda quando o agente esta aberto."""
-    global _lateral
-    if st.session_state.get("agente_aberto"):
-        esquerda, _lateral = st.columns([3, 1.35], gap="large")
+    estado = st.session_state
+    if estado.get("agente_aberto"):
+        esquerda, estado[_LATERAL] = st.columns([3, 1.35], gap="large")
         return esquerda
-    _lateral = None
+    estado[_LATERAL] = None
     return st.container()
 
 
 def coluna_lateral():
-    return _lateral
+    return st.session_state.get(_LATERAL)
 
 
 def filtros_da_pagina(regiao: bool) -> Filtros:
@@ -100,11 +100,11 @@ def _rodar(nome: str, f: Filtros) -> pd.DataFrame:
 
 
 def _avisar_acordando() -> None:
-    global _acordando_mostrado
-    if _acordando_mostrado or _aviso is None:
+    estado = st.session_state
+    if estado.get(_ACORDANDO) or estado.get(_AVISO) is None:
         return
-    _acordando_mostrado = True
-    with _aviso.container():
+    estado[_ACORDANDO] = True
+    with estado[_AVISO].container():
         st.warning("O banco está acordando (ele dorme quando ninguém usa). Leva alguns segundos.")
         st.button("Tentar de novo", key="tentar_de_novo", icon=":material/refresh:")
 

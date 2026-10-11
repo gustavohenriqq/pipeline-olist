@@ -101,10 +101,28 @@ jobs:
             echo "fatos=sim" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: dbt build so do que mudou (PR)
+      # O painel (Etapa 7) le as marts de verdade e confere os numeros contra o
+      # esperado do Power BI: PR que mexe nele precisa das marts inteiras. Na
+      # amostra, o build completo leva menos de um minuto.
+      - name: Arquivos alterados fora do dbt (PR)
         if: github.event_name == 'pull_request'
+        id: arquivos
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if git diff --name-only "origin/$BASE_REF"...HEAD               | grep -qE '^(painel/|agente/|tests/integracao/test_painel|dashboards/powerbi/conferencia/)'; then
+            echo "painel=sim" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: dbt build so do que mudou (PR)
+        if: github.event_name == 'pull_request' && steps.arquivos.outputs.painel != 'sim'
         working-directory: dbt
         run: dbt build --profiles-dir . --select @state:modified --state "$RUNNER_TEMP/estado_base"
+
+      - name: dbt build completo (PR que mexe no painel)
+        if: github.event_name == 'pull_request' && steps.arquivos.outputs.painel == 'sim'
+        working-directory: dbt
+        run: dbt build --profiles-dir .
 
       # ---- Push na main: tudo ----
 
@@ -116,7 +134,13 @@ jobs:
       # Permissoes reais do usuario do agente: le so as marts permitidas, nao
       # escreve, nao passa do tempo. Cria tabelas minimas se o PR nao construiu.
       - name: Testes de integracao do agente (permissoes no banco)
-        run: python -m pytest tests/integracao -q
+        run: python -m pytest tests/integracao/test_agente_permissoes.py -q
+
+      # Numeros do painel contra o esperado.sql do Power BI: so com as marts
+      # inteiras (main, ou PR que mexe no painel). Nunca contra tabela minima.
+      - name: Numeros do painel contra o Power BI
+        if: github.event_name == 'push' || steps.arquivos.outputs.painel == 'sim'
+        run: python -m pytest tests/integracao/test_painel_numeros.py -q
 
       # Na main sempre; no PR, so quando os fatos incrementais estao na selecao.
       - name: Validar incrementalidade, janela e metadados (banco descartavel)

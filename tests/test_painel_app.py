@@ -188,3 +188,37 @@ def test_limite_de_20_soma_lateral_e_pagina(respostas):
     at.chat_input(key="pergunta_lateral").set_value("Mais uma?").run()
     assert respostas.chamadas == []
     assert any("limite de 20 perguntas" in w.value for w in at.warning)
+
+
+def test_duas_sessoes_ao_mesmo_tempo_nao_trocam_a_coluna_do_agente(ambiente):
+    """Streamlit roda cada visitante numa thread do mesmo processo: nada da tela
+    pode ficar em variavel de modulo. A abre o agente; B, ao mesmo tempo, nao."""
+    import threading
+    import time
+
+    for nome, df in FIXOS.items():
+        def lenta(conexao, f, df=df):
+            time.sleep(0.8)
+            return df.copy()
+        lenta.__name__ = nome
+        ambiente.setattr(f"painel.consultas.{nome}", lenta)
+    st.cache_data.clear()
+    resultados = {}
+
+    def visitante(nome, aberto, atraso):
+        time.sleep(atraso)
+        at = AppTest.from_string(PAGINA.format(modulo="executivo"), default_timeout=60)
+        at.session_state["agente_aberto"] = aberto
+        resultados[nome] = at.run()
+
+    for ordem in ((("A", True, 0), ("B", False, 0.3)), (("B", False, 0), ("A", True, 0.3))):
+        threads = [threading.Thread(target=visitante, args=args) for args in ordem]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        a, b = resultados["A"], resultados["B"]
+        assert not a.exception and not b.exception
+        assert sum(c.key == "pergunta_lateral" for c in a.chat_input) == 1
+        assert sum(c.key == "pergunta_lateral" for c in b.chat_input) == 0
+        st.cache_data.clear()

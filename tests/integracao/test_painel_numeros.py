@@ -83,3 +83,65 @@ def test_receita_mensal_tem_o_ano_anterior(conexao):
     from painel.filtros import PADRAO
     r = receita_mensal(conexao, PADRAO).set_index("ano_mes")
     assert r.loc["2018-03", "receita_ano_anterior"] == pytest.approx(r.loc["2017-03", "receita"], abs=0.01)
+
+
+TUDO_INICIO, TUDO_FIM = "2016-09-01", "2018-10-31"
+
+
+@pytest.fixture(scope="module")
+def painel_esperado(conexao):
+    return _casos(conexao, "painel/conferencia/esperado.sql")
+
+
+@pytest.fixture(scope="module")
+def tudo():
+    from datetime import date
+    from painel.filtros import Filtros
+    return Filtros(date(2016, 9, 1), date(2018, 10, 31), None)
+
+
+def test_cartoes_de_entrega_batem_com_o_power_bi(conexao, esperado, tudo):
+    from painel.consultas import cartoes_entrega
+    c = cartoes_entrega(conexao, tudo).iloc[0]
+    assert c.pedidos_alerta == int(_valor(esperado, "pedidos_alerta"))
+    assert c.receita_risco == pytest.approx(_valor(esperado, "receita_risco"), abs=0.01)
+
+
+def test_excesso_do_rj_bate_com_o_power_bi(conexao, esperado, painel_esperado, tudo):
+    from painel.consultas import excesso_por_uf
+    e = excesso_por_uf(conexao, tudo)
+    assert e.iloc[0].uf == painel_esperado["primeira_uf_excesso"]
+    assert e.set_index("uf").loc["RJ", "atraso_em_excesso"] == pytest.approx(_valor(esperado, "excesso_rj"), abs=1e-6)
+
+
+def test_taxa_por_regiao_e_nacional(conexao, painel_esperado, tudo):
+    from painel.consultas import taxa_por_regiao
+    t = taxa_por_regiao(conexao, tudo).set_index("regiao")
+    assert t.loc["Nordeste", "taxa_atraso"] == pytest.approx(_valor(painel_esperado, "taxa_regiao_nordeste"), abs=1e-9)
+    assert (t["taxa_nacional"] - _valor(painel_esperado, "taxa_nacional")).abs().max() < 1e-9
+
+
+def test_pedidos_em_risco(conexao, painel_esperado, tudo):
+    from painel.consultas import pedidos_em_risco
+    r = pedidos_em_risco(conexao, tudo)
+    assert len(r) == int(_valor(painel_esperado, "pedidos_em_risco_linhas"))
+    assert list(r.prob_atraso) == sorted(r.prob_atraso, reverse=True)
+    assert r.pedido.str.match(r"^#[0-9a-f]{10}$").all()
+
+
+def test_cartoes_de_vendedores(conexao, painel_esperado, tudo):
+    from painel.consultas import cartoes_vendedores
+    c = cartoes_vendedores(conexao, tudo).iloc[0]
+    assert c.itens == int(_valor(painel_esperado, "itens"))
+    assert c.receita_itens == pytest.approx(_valor(painel_esperado, "receita_itens"), abs=0.01)
+    assert c.taxa_atraso_itens == pytest.approx(_valor(painel_esperado, "taxa_atraso_itens"), abs=1e-9)
+
+
+def test_receita_por_grupo_e_vendedores(conexao, painel_esperado, tudo):
+    from painel.consultas import receita_por_grupo, vendedores
+    g = receita_por_grupo(conexao, tudo)
+    assert g.iloc[0].categoria_grupo == painel_esperado["primeiro_grupo"]
+    assert g.iloc[0].receita_itens == pytest.approx(_valor(painel_esperado, "receita_primeiro_grupo"), abs=0.01)
+    v = vendedores(conexao, tudo)
+    assert v.iloc[0].vendedor == painel_esperado["primeiro_vendedor"]
+    assert len(v) <= 50

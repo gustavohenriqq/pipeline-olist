@@ -64,3 +64,15 @@ def test_delta_de_valor_e_de_taxa():
     assert delta(10.0, None, taxa=False) is None
     assert delta(None, 10.0, taxa=True) is None
     assert delta(10.0, 0.0, taxa=False) is None
+
+
+TODAS = EXECUTIVO + [consultas.cartoes_entrega, consultas.taxa_por_regiao, consultas.excesso_por_uf,
+                     consultas.pedidos_em_risco, consultas.cartoes_vendedores, consultas.receita_por_grupo,
+                     consultas.vendedores]
+
+
+@pytest.mark.parametrize("funcao", TODAS)
+def test_todas_usam_parametro_e_nao_quebram_sem_linhas(funcao):
+    sql, params = _executa(funcao, FILTRO)
+    assert "2018-01-01" not in sql and date(2018, 1, 1) in params.values()
+    assert funcao(_Conexao(), FILTRO).empty

@@ -6,6 +6,8 @@ sempre como parametro nomeado, nunca no texto do SQL.
 """
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pandas as pd
 
 from agente.banco import executar
@@ -120,3 +122,149 @@ def placar_mensal(conexao, f: Filtros) -> pd.DataFrame:
     order by p.ano_mes desc
     """
     return _consulta(conexao, sql, f)
+
+
+# ---- Entrega e risco e Vendedores: sem filtro de regiao, como no Power BI ----
+
+def _sem_regiao(f: Filtros) -> Filtros:
+    return replace(f, regiao=None)
+
+
+_ENTREGUES = """
+    select c.uf, c.regiao, f.entregue_no_prazo, to_char(f.purchased_at, 'YYYY-MM') as mes
+    from marts.fato_pedidos f
+    join marts.dim_clientes c on c.cliente_sk = f.cliente_sk
+    where f.purchased_at::date between %(inicio)s and %(fim)s
+      and f.entregue_no_prazo is not null
+"""
+_TAXA_ATRASO = "avg(case when not entregue_no_prazo then 1.0 else 0.0 end)"
+# Itens do periodo pela data de compra do pedido (dim_tempo, como o Power BI).
+_ITENS = """
+    select i.order_id, i.valor_item, i.produto_sk, i.vendedor_sk, t.ano_mes as mes
+    from marts.fato_itens_pedido i
+    join marts.dim_tempo t on t.tempo_sk = i.tempo_sk_compra
+    where t.data between %(inicio)s and %(fim)s
+"""
+
+
+def cartoes_entrega(conexao, f: Filtros) -> pd.DataFrame:
+    sql = f"""
+    with base as ({_ENTREGUES}),
+    risco as (
+        select count(*) as pedidos_alerta, sum(p2.valor_total) as receita_risco
+        from marts.previsao_atraso r
+        join marts.fato_pedidos p2 on p2.pedido_sk = r.pedido_sk
+        where r.alerta and r.conjunto in ('teste', 'em_andamento')
+          and p2.purchased_at::date between %(inicio)s and %(fim)s
+    )
+    select {_TAXA_ATRASO} as taxa_atraso,
+           {_TAXA_ATRASO} filter (where mes = %(ref)s) as taxa_ref,
+           {_TAXA_ATRASO} filter (where mes = %(ant)s) as taxa_ant,
+           (select pedidos_alerta from risco) as pedidos_alerta,
+           (select receita_risco from risco) as receita_risco
+    from base
+    having count(*) > 0
+    """
+    return _consulta(conexao, sql, _sem_regiao(f))
+
+
+def taxa_por_regiao(conexao, f: Filtros) -> pd.DataFrame:
+    sql = f"""
+    with base as ({_ENTREGUES})
+    select regiao, {_TAXA_ATRASO} as taxa_atraso,
+           (select {_TAXA_ATRASO} from base) as taxa_nacional
+    from base
+    where regiao is not null
+    group by regiao
+    order by taxa_atraso desc
+    """
+    return _consulta(conexao, sql, _sem_regiao(f))
+
+
+def excesso_por_uf(conexao, f: Filtros) -> pd.DataFrame:
+    """Atrasos da UF menos o que a taxa nacional preveria para os entregues dela."""
+    sql = f"""
+    with base as ({_ENTREGUES}),
+    nacional as (select {_TAXA_ATRASO} as taxa from base)
+    select b.uf,
+           sum(case when not b.entregue_no_prazo then 1 else 0 end) - count(*) * max(n.taxa)
+               as atraso_em_excesso
+    from base b cross join nacional n
+    group by b.uf
+    order by atraso_em_excesso desc
+    """
+    return _consulta(conexao, sql, _sem_regiao(f))
+
+
+def pedidos_em_risco(conexao, f: Filtros) -> pd.DataFrame:
+    sql = """
+    select '#' || left(p.order_id, 10) as pedido,
+           p.purchased_at::date as compra,
+           p.estimated_delivery_at::date as entrega_prevista,
+           c.uf, p.valor_total as valor, r.prob_atraso
+    from marts.previsao_atraso r
+    join marts.fato_pedidos p on p.pedido_sk = r.pedido_sk
+    join marts.dim_clientes c on c.cliente_sk = p.cliente_sk
+    where r.conjunto = 'em_andamento'
+      and p.purchased_at::date between %(inicio)s and %(fim)s
+    order by r.prob_atraso desc
+    limit 50
+    """
+    return _consulta(conexao, sql, _sem_regiao(f))
+
+
+def cartoes_vendedores(conexao, f: Filtros) -> pd.DataFrame:
+    sql = f"""
+    with itens as ({_ITENS}),
+    pedidos as (
+        select p.entregue_no_prazo from marts.fato_pedidos p
+        where p.entregue_no_prazo is not null
+          and p.order_id in (select order_id from itens)
+    )
+    select sum(valor_item) as receita_itens,
+           count(*) as itens,
+           (select {_TAXA_ATRASO} from pedidos) as taxa_atraso_itens,
+           sum(valor_item) filter (where mes = %(ref)s) as receita_ref,
+           sum(valor_item) filter (where mes = %(ant)s) as receita_ant
+    from itens
+    having count(*) > 0
+    """
+    return _consulta(conexao, sql, _sem_regiao(f))
+
+
+def receita_por_grupo(conexao, f: Filtros) -> pd.DataFrame:
+    sql = f"""
+    select d.categoria_grupo, sum(i.valor_item) as receita_itens
+    from ({_ITENS}) i
+    join marts.dim_produtos d on d.produto_sk = i.produto_sk
+    group by d.categoria_grupo
+    order by receita_itens desc
+    """
+    return _consulta(conexao, sql, _sem_regiao(f))
+
+
+def vendedores(conexao, f: Filtros) -> pd.DataFrame:
+    """Os 50 vendedores de maior receita de itens; a taxa e dos pedidos que tem itens dele."""
+    sql = f"""
+    with itens as ({_ITENS}),
+    por_vendedor as (
+        select vendedor_sk, sum(valor_item) as receita_itens, count(*) as itens
+        from itens group by vendedor_sk
+        order by receita_itens desc
+        limit 50
+    ),
+    atraso as (
+        select i.vendedor_sk, {_TAXA_ATRASO} as taxa_atraso_itens
+        from (select distinct vendedor_sk, order_id from itens) i
+        join marts.fato_pedidos p on p.order_id = i.order_id
+        where p.entregue_no_prazo is not null
+          and i.vendedor_sk in (select vendedor_sk from por_vendedor)
+        group by i.vendedor_sk
+    )
+    select v.vendedor_rotulo as vendedor, pv.receita_itens, pv.itens, a.taxa_atraso_itens
+    from por_vendedor pv
+    join marts.dim_vendedores v on v.vendedor_sk = pv.vendedor_sk
+    left join atraso a on a.vendedor_sk = pv.vendedor_sk
+    order by pv.receita_itens desc
+    """
+    return _consulta(conexao, sql, _sem_regiao(f))

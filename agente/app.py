@@ -7,12 +7,13 @@ from __future__ import annotations
 
 import os
 import sys
-from decimal import Decimal
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
-if str(RAIZ) not in sys.path:
-    sys.path.insert(0, str(RAIZ))
+# A raiz vai na frente da pasta do script; senao "agente" resolve para agente/agente.py.
+if str(RAIZ) in sys.path:
+    sys.path.remove(str(RAIZ))
+sys.path.insert(0, str(RAIZ))
 
 import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
@@ -20,7 +21,7 @@ import streamlit as st  # noqa: E402
 from agente import agente as nucleo  # noqa: E402
 from agente import banco  # noqa: E402
 from agente import llm as modelo  # noqa: E402
-from agente.apresentacao import escapar_markdown, formato_coluna, grafico, rotulo_coluna  # noqa: E402
+from agente.apresentacao import escapar_markdown, formatadores, grafico, preparar, rotulo_coluna  # noqa: E402
 from agente.config import MAX_PERGUNTA, MAX_POR_SESSAO  # noqa: E402
 
 ESQUEMA = (Path(__file__).resolve().parent / "esquema_marts.md").read_text(encoding="utf-8")
@@ -51,25 +52,10 @@ def _cliente():
     return modelo.ClienteLLM(modelo.provedores_do_ambiente())
 
 
-def _numerico(df: pd.DataFrame) -> pd.DataFrame:
-    """Decimal do psycopg2 vira float para tabela e grafico."""
-    saida = df.copy()
-    for coluna in saida.columns:
-        valores = saida[coluna].dropna()
-        if len(valores) and all(isinstance(v, (int, float, Decimal)) and not isinstance(v, bool)
-                                for v in valores):
-            saida[coluna] = saida[coluna].astype(float)
-    return saida
-
-
 def _tabela(df: pd.DataFrame) -> None:
-    config = {}
-    for coluna in df.columns:
-        formato = formato_coluna(str(coluna), df[coluna])
-        rotulo = rotulo_coluna(str(coluna))
-        config[coluna] = (st.column_config.NumberColumn(rotulo, format=formato) if formato
-                          else st.column_config.TextColumn(rotulo))
-    st.dataframe(df, hide_index=True, column_config=config, use_container_width=True)
+    config = {coluna: st.column_config.Column(rotulo_coluna(str(coluna))) for coluna in df.columns}
+    st.dataframe(df.style.format(formatadores(df)), hide_index=True, column_config=config,
+                 use_container_width=True)
 
 
 def _mostrar(item: dict) -> None:
@@ -89,7 +75,7 @@ def _mostrar(item: dict) -> None:
         else:
             st.warning(texto)
         if r.linhas:
-            df = _numerico(pd.DataFrame(r.linhas, columns=r.colunas))
+            df = preparar(pd.DataFrame(r.linhas, columns=r.colunas))
             if r.grafico:
                 st.altair_chart(grafico(df, r.grafico), use_container_width=True)
             _tabela(df)

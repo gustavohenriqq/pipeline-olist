@@ -1,7 +1,9 @@
 """Apresentacao das respostas: texto, nomes de coluna, formatos e grafico."""
+from decimal import Decimal
+
 import pandas as pd
 
-from agente.apresentacao import escapar_markdown, formato_coluna, grafico, rotulo_coluna
+from agente.apresentacao import escapar_markdown, formatadores, grafico, preparar, rotulo_coluna
 
 
 def test_cifrao_nao_vira_formula():
@@ -17,33 +19,65 @@ def test_rotulo_de_coluna_legivel():
     assert rotulo_coluna("taxa_atraso") == "Taxa atraso"
 
 
-def test_ano_e_mes_sem_separador_de_milhar():
-    assert formato_coluna("ano", pd.Series([2016, 2017])) == "plain"
-    assert formato_coluna("trimestre", pd.Series([1, 2])) == "plain"
+def test_ano_que_vem_como_decimal_vira_inteiro():
+    df = preparar(pd.DataFrame({"ano": [Decimal("2016"), 2017.0000000000002, Decimal("2018")],
+                                "receita_total": [Decimal("57183.21"), Decimal("7142672.43"),
+                                                  Decimal("8643697.60")]}))
+    assert list(df["ano"]) == [2016, 2017, 2018]
+    assert pd.api.types.is_integer_dtype(df["ano"])
+    assert pd.api.types.is_float_dtype(df["receita_total"])
 
 
-def test_valores_com_formato_local():
-    assert formato_coluna("receita_total", pd.Series([57183.21, 7142672.43])) == "localized"
+def _formatado(nome, valores, valor):
+    df = preparar(pd.DataFrame({nome: valores}))
+    return formatadores(df)[nome](valor)
 
 
-def test_texto_sem_formato_numerico():
-    assert formato_coluna("uf", pd.Series(["SP", "RJ"])) is None
+def test_ano_sem_separador_de_milhar():
+    assert _formatado("ano", [2016, 2017], 2017) == "2017"
+
+
+def test_valor_com_duas_casas_no_formato_brasileiro():
+    assert _formatado("receita_total", [57183.21, 8643697.6], 8643697.6) == "8.643.697,60"
+
+
+def test_contagem_com_milhar_e_sem_casas():
+    assert _formatado("pedidos", [99441, 7269], 99441) == "99.441"
+
+
+def test_taxa_com_quatro_casas():
+    assert _formatado("taxa_atraso", [0.0812, 0.1203], 0.0812) == "0,0812"
+
+
+def test_texto_sem_formatador():
+    assert "uf" not in formatadores(pd.DataFrame({"uf": ["SP", "RJ"], "pedidos": [1, 2]}))
 
 
 def _spec(df, tipo):
     return grafico(df, tipo).to_dict()
 
 
-def test_grafico_de_barras_com_eixo_compacto_e_comecando_no_zero():
+def test_grafico_de_barras_comecando_no_zero():
     df = pd.DataFrame({"ano": [2016, 2017, 2018], "receita_total": [57183.21, 7142672.43, 8643697.60]})
     spec = _spec(df, "barras")
     assert spec["mark"]["type"] == "bar"
     assert spec["encoding"]["x"]["field"] == "ano"
     assert spec["encoding"]["x"]["type"] == "nominal"
     assert spec["encoding"]["x"]["axis"]["labelAngle"] == 0
-    assert spec["encoding"]["y"]["axis"]["format"] == "~s"
     assert spec["encoding"]["y"]["scale"]["zero"] is True
     assert spec["encoding"]["y"]["title"] == "Receita total"
+
+
+def test_eixo_do_valor_em_mil_e_mi():
+    df = pd.DataFrame({"ano": [2017, 2018], "receita_total": [7142672.43, 8643697.60]})
+    expressao = _spec(df, "barras")["encoding"]["y"]["axis"]["labelExpr"]
+    assert "' mi'" in expressao and "' mil'" in expressao
+
+
+def test_ano_inteiro_no_eixo_sem_ponto_zero():
+    df = preparar(pd.DataFrame({"ano": [Decimal("2016"), Decimal("2017")], "receita": [1.0, 2.0]}))
+    linhas = next(iter(_spec(df, "barras")["datasets"].values()))
+    assert [linha["ano"] for linha in linhas] == ["2016", "2017"]
 
 
 def test_grafico_de_linha_com_mes():

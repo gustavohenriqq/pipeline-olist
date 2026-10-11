@@ -63,3 +63,6 @@ ml/artefatos/*.joblib
 # Power BI (PBIP): cache de dados importados e preferencias locais do Desktop
 **/.pbi/localSettings.json
 **/.pbi/cache.abf
+
+# Segredos do app do agente (Streamlit). Nunca no Git.
+.streamlit/secrets.toml

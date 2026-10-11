@@ -1,5 +1,9 @@
 # Agente de IA sobre as marts (Etapa 6)
 
+**App:** [olist-agente.streamlit.app](https://olist-agente.streamlit.app/)
+
+![Agente respondendo a receita por ano, uma continuação e o SQL gerado](prints/agente.gif)
+
 Pergunta de negócio em português vira SQL sobre o star schema, o SQL roda num
 usuário de banco somente leitura, e a resposta mostra o número, a tabela, o SQL e,
 quando cabe, um gráfico. Modelo gratuito (Gemini), app público no Streamlit
@@ -37,6 +41,8 @@ flowchart LR
 | Gráfico | `agente/grafico.py` | Regra pela forma do resultado: série no tempo vira linha, ranking curto vira barras |
 | Fluxo | `agente/agente.py` | Junta tudo, com uma segunda tentativa quando o banco devolve erro |
 | App | `agente/app.py` | Chat em Streamlit, 20 perguntas por sessão, avisos de cota e de banco acordando |
+| Apresentação | `agente/apresentacao.py` | Números no formato brasileiro fixo (8.643.697,60; 21,41%), ano sem casa decimal, tabela em HTML com escape, eixo em mil/mi |
+| Tema | `agente/tema.py` | Claro (padrão) e escuro, trocados por um botão na barra lateral; CSS por sessão, versão do Streamlit fixada |
 
 O modelo recebe as 3 últimas perguntas e SQLs da sessão, então entende
 continuação ("e no Nordeste?"). Os resultados não vão para o histórico, para

@@ -57,13 +57,13 @@ def test_tela_inicial(ambiente):
     assert len([b for b in at.button if b.key and b.key.startswith("exemplo_")]) == 4
 
 
-def test_tema_comeca_claro_e_alterna(ambiente):
+def test_tema_comeca_escuro_e_alterna(ambiente):
     at = _app()
-    assert at.session_state["tema"] == "claro"
-    at.button(key="alternar_tema").click().run()
     assert at.session_state["tema"] == "escuro"
     at.button(key="alternar_tema").click().run()
     assert at.session_state["tema"] == "claro"
+    at.button(key="alternar_tema").click().run()
+    assert at.session_state["tema"] == "escuro"
 
 
 def test_pergunta_aparece_na_barra_lateral(ambiente):

@@ -57,7 +57,9 @@ def main() -> None:
     conexao = abrir_conexao()
     pausa = float(env("AGENTE_AVALIACAO_PAUSA", "12"))
 
-    linhas_md = ["| id | tipo | pergunta | esperado | obtido | ok | provedor |", "|---|---|---|---|---|---|---|"]
+    linhas_md = ["| id | tipo | pergunta | esperado | obtido | ok | frase confirmada | provedor |",
+                 "|---|---|---|---|---|---|---|---|"]
+    confirmadas = 0
     acertos: Counter = Counter()
     totais: Counter = Counter()
     for p in perguntas:
@@ -75,12 +77,15 @@ def main() -> None:
         totais[p["tipo"]] += 1
         acertos[p["tipo"]] += ok
         obtido = r.tipo if r.tipo not in ("ok", "vazio") else f"{len(r.linhas)} linha(s)"
+        frase = "-" if r.tipo != "ok" else ("sim" if r.confirmada else "não")
+        confirmadas += r.tipo == "ok" and r.confirmada
         linhas_md.append(f"| {p['id']} | {p['tipo']} | {p['pergunta']} | {esperado} | {obtido} | "
-                         f"{'sim' if ok else 'não'} | {llm.ultimo_provedor or '-'} |")
+                         f"{'sim' if ok else 'não'} | {frase} | {llm.ultimo_provedor or '-'} |")
         print(f"[{'ok' if ok else '--'}] {p['id']}: {p['pergunta']}\n      SQL: {r.sql}")
         time.sleep(pausa)
 
     resumo = [f"- {t}: {acertos[t]}/{totais[t]}" for t in totais]
+    resumo.append(f"- frases conferidas contra o resultado: {confirmadas}")
     texto = "\n".join(["## Resultado", "", *resumo, "", *linhas_md, ""])
     (PASTA / "ultimo_resultado.md").write_text(texto, encoding="utf-8")
     print("\n".join(resumo))

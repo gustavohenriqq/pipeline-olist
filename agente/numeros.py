@@ -77,7 +77,12 @@ def _casa(escrito: _Escrito, candidato: float) -> bool:
     return any(abs(abs(o) - escrito.valor) <= folga for o in opcoes)
 
 
+def _digitos_de_textos(valores) -> list[float]:
+    """Sequencias de digitos dentro de textos do resultado (rotulo "Guariba/SP · 4869f7")."""
+    return [float(d) for v in valores if isinstance(v, str) for d in re.findall(r"\d+", v)]
+
+
 def confere(texto: str, valores, extras=()) -> bool:
     """True se todo numero do texto aparece em `valores` (resultado) ou em `extras`."""
-    candidatos = _numericos(valores) + _numericos(extras)
+    candidatos = _numericos(valores) + _numericos(extras) + _digitos_de_textos(valores)
     return all(any(_casa(e, c) for c in candidatos) for e in _ler(texto))

@@ -25,6 +25,10 @@
     {"caso": "receita_risco", "dax": "EVALUATE ROW(\"v\", [Receita em Risco])"}
   ],
   "html": [
+    {"caso": "html_dicionario_sem_selecao", "dax": "EVALUATE ROW(\"v\", [HTML Dicionário])", "contem": ["Escolha uma métrica"], "nao_contem": ["Cálculo"]},
+    {"caso": "html_dicionario_uma", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Dicionário], dicionario_metricas[Métrica] = \"Taxa de atraso\"))", "contem": ["Taxa de atraso", "Cálculo", "Exemplo"], "contagem": {"data-metrica": 1}},
+    {"caso": "html_dicionario_muitas", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Dicionário], dicionario_metricas[Métrica] IN {\"Receita\", \"Pedidos\", \"Ticket médio\", \"% no prazo\"}))", "contem": ["e mais 1"], "contagem": {"data-metrica": 3}},
+    {"caso": "dicionario_cobre_os_cartoes", "dax": "EVALUATE ROW(\"v\", CONCATENATEX(dicionario_metricas, dicionario_metricas[Métrica], \"|\"))", "contem": ["Receita", "Pedidos", "Ticket médio", "% no prazo", "Nota média", "Taxa de atraso", "Pedidos em alerta", "Receita em risco", "Atraso em excesso", "Probabilidade de atraso", "Receita de itens", "Itens", "Taxa de atraso dos itens", "Variação contra o mês anterior"]},
     {"caso": "html_cartoes_executivo", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Executivo], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["R$ 15,79 Mi", "99.092", "R$ 159,31", "93,2%", "4,09", "5,2%", "2,8 pp"]},
     {"caso": "html_cartoes_sem_dados", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Executivo], dim_tempo[ano] = 2015))", "contem": ["sem dados"], "nao_contem": ["R$ 0"]},
     {"caso": "html_cabecalho_executivo", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cabeçalho Executivo], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["Visão", "ago/2018 contra o mês anterior"]},

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/2.1.0/schema.json",
+  "displayName": "Dicionário fechado Entrega",
+  "name": "dicFechadoEntrega",
+  "options": {
+    "applyOnlyToTargetVisuals": true,
+    "targetVisualNames": [
+      "0262f97cb4888d2656bb",
+      "2f0c34b13c418f9a9dbe",
+      "85f60291d1e61b0d57bf"
+    ],
+    "suppressActiveSection": true,
+    "suppressData": true
+  },
+  "explorationState": {
+    "version": "1.0",
+    "activeSection": "c60b58f61611c036d7ce",
+    "sections": {
+      "c60b58f61611c036d7ce": {
+        "visualContainers": {
+          "0262f97cb4888d2656bb": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "2f0c34b13c418f9a9dbe": {
+            "singleVisual": {
+              "visualType": "slicer",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "85f60291d1e61b0d57bf": {
+            "singleVisual": {
+              "visualType": "actionButton",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

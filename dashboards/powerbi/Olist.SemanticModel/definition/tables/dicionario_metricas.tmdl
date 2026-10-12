@@ -1,0 +1,70 @@
+/// Dicionario de metricas do relatorio (Etapa 8). Texto versionado, sem relacao
+/// com o resto do modelo e fora do RLS.
+table dicionario_metricas
+	lineageTag: 4490c7df-082a-48c7-bc97-3d9de8b61ca0
+
+	column Ordem
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b4c4fe6f-5e8c-4494-9944-c4049830f9b2
+		summarizeBy: none
+		sourceColumn: [Ordem]
+
+	column Métrica
+		dataType: string
+		lineageTag: feb5af23-2b10-4ca2-804a-5284df3d118d
+		summarizeBy: none
+		sourceColumn: [Métrica]
+		sortByColumn: Ordem
+
+	column 'O que é'
+		dataType: string
+		lineageTag: 947d6d98-5b2e-4f1a-9c93-7a686c408912
+		summarizeBy: none
+		sourceColumn: [O que é]
+
+	column Cálculo
+		dataType: string
+		lineageTag: 58aeacad-e1d6-4c3a-8cf0-b2cdf5de966f
+		summarizeBy: none
+		sourceColumn: [Cálculo]
+
+	column Exemplo
+		dataType: string
+		lineageTag: 90bbdce3-94e7-4194-886a-03db34a25617
+		summarizeBy: none
+		sourceColumn: [Exemplo]
+
+	column Página
+		dataType: string
+		lineageTag: 3f99d082-f9fc-46f3-9f9f-b98e19b36e93
+		summarizeBy: none
+		sourceColumn: [Página]
+
+	partition dicionario_metricas = calculated
+		mode: import
+		source =
+				DATATABLE (
+					"Ordem", INTEGER, "Métrica", STRING, "O que é", STRING, "Cálculo", STRING, "Exemplo", STRING, "Página", STRING,
+					{
+					{ 1, "Receita", "Valor pago pelos clientes nos pedidos do período: produtos mais frete.", "Soma do valor total de cada pedido (itens + frete), pela data da compra.", "R$ 15,79 Mi de jan/2017 a ago/2018.", "Executivo" },
+					{ 2, "Pedidos", "Quantidade de pedidos feitos no período.", "Contagem de pedidos distintos.", "99.092 pedidos de jan/2017 a ago/2018.", "Executivo" },
+					{ 3, "Ticket médio", "Valor médio de um pedido.", "Receita dividida por Pedidos.", "R$ 159,31 por pedido de jan/2017 a ago/2018.", "Executivo" },
+					{ 4, "% no prazo", "Parte dos pedidos entregues que chegou até a data prevista.", "Pedidos entregues no prazo divididos pelos entregues. Pedidos ainda sem entrega ficam fora da conta.", "93,2% de jan/2017 a ago/2018.", "Executivo" },
+					{ 5, "Nota média", "Média da avaliação que o cliente deu ao pedido, de 1 a 5.", "Média da nota dos pedidos avaliados.", "4,09 de jan/2017 a ago/2018.", "Executivo" },
+					{ 6, "Variação contra o mês anterior", "Quanto a métrica do mês de referência mudou em relação ao mês anterior.", "O mês de referência é o último mês com venda no período. Valores e contagens mostram a variação em %; taxas, a diferença em pontos percentuais (pp); a nota, a diferença absoluta.", "Receita de ago/2018 5,2% abaixo de jul/2018; taxa de atraso 2,8 pp acima.", "Todas" },
+					{ 7, "Taxa de atraso", "Parte dos pedidos entregues que chegou depois da data prevista.", "Pedidos atrasados divididos pelos entregues. Pedidos ainda sem entrega ficam fora da conta.", "6,8% de jan/2017 a ago/2018.", "Entrega e risco" },
+					{ 8, "Taxa nacional de atraso", "A taxa de atraso do país inteiro, usada como régua nas barras por região.", "Taxa de atraso sem o recorte de região e UF do cliente. Aparece como a linha âmbar.", "6,8% de jan/2017 a ago/2018.", "Executivo e Entrega e risco" },
+					{ 9, "Atraso em excesso", "Quantos atrasos uma UF teve a mais (ou a menos) do que teria na taxa nacional.", "Atrasos da UF menos os entregues da UF vezes a taxa nacional.", "RJ: +660 atrasos acima do esperado de jan/2017 a ago/2018, com taxa de 12,2%.", "Entrega e risco" },
+					{ 10, "Pedidos em alerta", "Pedidos que o modelo de previsão marcou como prováveis atrasos.", "Pedidos com probabilidade de atraso a partir do limiar do modelo (0,11), só nos conjuntos de teste e em andamento.", "8.468 pedidos de jan/2017 a ago/2018.", "Entrega e risco" },
+					{ 11, "Receita em risco", "Quanto dinheiro está nos pedidos em alerta.", "Soma da receita (itens + frete) dos pedidos em alerta.", "R$ 1,57 Mi de jan/2017 a ago/2018.", "Entrega e risco" },
+					{ 12, "Probabilidade de atraso", "Chance, estimada pelo modelo, de um pedido em andamento chegar depois do prazo.", "Saída do modelo de previsão para cada pedido; a tabela mostra os 50 maiores. Vermelho a partir de 40%, âmbar a partir de 30%.", "52,5% no pedido de maior risco de jan/2017 a ago/2018.", "Entrega e risco" },
+					{ 13, "Receita de itens", "Receita no grão de item, que permite separar por vendedor e por categoria.", "Soma de preço mais frete de cada item vendido.", "R$ 15,79 Mi de jan/2017 a ago/2018.", "Vendedores e Executivo" },
+					{ 14, "Itens", "Quantidade de itens vendidos (um pedido pode ter vários).", "Contagem das linhas de itens de pedido.", "112.279 itens de jan/2017 a ago/2018.", "Vendedores" },
+					{ 15, "Taxa de atraso dos itens", "Taxa de atraso dos pedidos que têm itens no recorte, por exemplo de um vendedor.", "Taxa de atraso calculada só sobre os pedidos que contêm os itens filtrados.", "6,8% de jan/2017 a ago/2018; 10,5% em Guariba/SP, o vendedor de maior receita.", "Vendedores" }
+					}
+				)
+
+	annotation PBI_Id = 334323f4dffd41fca316684c700797dd
+

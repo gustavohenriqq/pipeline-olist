@@ -17,21 +17,24 @@ Decisões do dono nesta conversa:
 2. **Escopo:** redesenhar as 3 páginas existentes (Visão executiva, Entrega e
    risco, Vendedores) e incluir um dicionário de métricas, como o painel "Tire sua
    dúvida" de outro vídeo de referência.
-3. **Publicação:** nada vai para o Service. O workspace disponível é da empresa
-   do dono; publicar um projeto pessoal ali foi desaconselhado (o projeto ficaria
-   no ambiente da empresa, e "Publicar na Web" exporia um link em nome dela). Se
-   o dono tiver uma conta própria (estudante), a publicação vira tarefa separada.
+3. **Publicação:** pela **conta de estudante** do dono, não pela de trabalho (o
+   workspace da empresa foi desaconselhado: o projeto ficaria no ambiente dela e o
+   link público sairia em nome da organização). Com "Publicar na Web", qualquer
+   pessoa abre o relatório sem login.
 
 **Critério de sucesso:** o relatório abre no Power BI Desktop com faixa, cartões e
 tabelas em HTML no visual do painel web, os gráficos e filtros nativos continuam
 funcionando, os números são os mesmos de antes (conferência automática verde) e
-os prints novos saem pela exportação para PDF.
+os prints novos saem pela exportação para PDF. O relatório tem um link público
+("Publicar na Web") aberto sem login, citado no README e no painel web.
 
 ## Fora do escopo
 
 - JavaScript dentro do HTML: o visual remove scripts. Abas e filtros continuam
   nativos (botões de navegação e segmentações).
-- Publicação no Service e "Publicar na Web".
+- Publicação pela conta de trabalho.
+- Atualização agendada no Service: a base é estática, o relatório publicado guarda
+  o retrato dos dados do momento da publicação.
 - Tema claro: o Power BI não tem botão de tema; fica o escuro do painel web.
 - Agente de IA dentro do Power BI: o dicionário é texto versionado, não modelo de
   linguagem.
@@ -128,6 +131,25 @@ HTML.
   desenho usa (div, span, table, svg com path, estilos inline).
 - **DAX de texto difícil de manter.** Mitigação: uma medida por bloco, comentário
   `///` em cada uma e as medidas de número reaproveitadas, nunca recalculadas.
+
+## Publicação
+
+- **"Publicar na Web" não aceita modelo com RLS.** O relatório versionado mantém
+  os papéis (Diretoria, Gerente regional, Vendedor) e o OLS; a versão pública é
+  uma **cópia sem a pasta `roles`**, gerada por um script versionado
+  (`dashboards/powerbi/gerar_versao_publica.ps1`) numa pasta fora do Git
+  (`dashboards/powerbi/publico/`, no `.gitignore`), copiando também o cache de
+  dados (`.pbi/cache.abf`) para não precisar atualizar. A tabela `seguranca_bi`
+  só tem e-mails fictícios (`@exemplo.com.br`) e pode ir junto.
+- **Passos do dono, com roteiro escrito:** entrar no Power BI Desktop com a conta
+  de estudante, abrir a cópia pública, publicar no workspace pessoal ("Meu
+  workspace") e, no Service, Arquivo > Inserir relatório > Publicar na Web. O
+  Claude não interage com telas de login da Microsoft; confere o link depois.
+- **Dependências da instituição:** o administrador do ambiente de estudante precisa
+  permitir "Publicar na Web", e a licença precisa incluir o recurso. Se estiver
+  bloqueado, a Etapa 8 fecha sem link público e isso fica registrado no README.
+- **Depois do link:** README, `dashboards/powerbi/README.md` e a barra lateral do
+  painel web ("Ver no Power BI") passam a apontar para ele.
 
 ## Entrega
 

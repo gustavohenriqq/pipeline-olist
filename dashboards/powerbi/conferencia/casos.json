@@ -24,6 +24,23 @@
     {"caso": "pedidos_alerta", "dax": "EVALUATE ROW(\"v\", [Pedidos em Alerta])"},
     {"caso": "receita_risco", "dax": "EVALUATE ROW(\"v\", [Receita em Risco])"}
   ],
+  "html": [
+    {"caso": "html_cartoes_executivo", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Executivo], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["R$ 15,79 Mi", "99.092", "R$ 159,31", "93,2%", "4,09", "5,2%", "2,8 pp"]},
+    {"caso": "html_cartoes_sem_dados", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Executivo], dim_tempo[ano] = 2015))", "contem": ["sem dados"], "nao_contem": ["R$ 0"]},
+    {"caso": "html_cabecalho_executivo", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cabeçalho Executivo], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["Visão", "ago/2018 contra o mês anterior"]},
+    {"caso": "html_cabecalho_outra_janela", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cabeçalho Executivo], DATESBETWEEN(dim_tempo[data], DATE(2018,1,1), DATE(2018,3,31))))", "contem": ["mar/2018"]},
+    {"caso": "html_menu_executivo", "dax": "EVALUATE ROW(\"v\", [HTML Menu Executivo])", "contem": ["<svg"], "contagem": {"data-ativo": 1}},
+    {"caso": "html_receita_mensal", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Receita Mensal], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["<svg", "R$ 1,18 Mi"], "contagem": {"<circle": 20}},
+    {"caso": "html_receita_sem_dados", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Receita Mensal], dim_tempo[ano] = 2015))", "contem": ["sem dados"], "nao_contem": ["<svg"]},
+    {"caso": "html_atraso_regiao", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Atraso por Região], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["Nordeste", "Sul", "12,7%", "6,8%"]},
+    {"caso": "html_excesso_uf", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Excesso por UF], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["RJ", "SP", "+660", "-926"]},
+    {"caso": "html_grupos_top5", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Grupos Top 5], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["Casa e Decoração"], "contagem": {"data-grupo": 5}},
+    {"caso": "html_cartoes_entrega", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Entrega], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["6,8%", "8.468", "R$ 1,57 Mi", "2,8 pp"]},
+    {"caso": "html_cartoes_vendedores", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Vendedores], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["R$ 15,79 Mi", "112.279", "6,8%"]},
+    {"caso": "html_risco_linhas", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Pedidos em Risco], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["#b6906ad8ff", "52,5%"], "nao_contem": ["<script"], "contagem": {"<tr": 51}},
+    {"caso": "html_vendedores", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Vendedores], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["Guariba/SP", "249.640,70"], "contagem": {"<tr": 51}},
+    {"caso": "html_escape_padrao", "dax": "EVALUATE ROW(\"v\", SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(\"A & <b>\", \"&\", \"&amp;\"), \"<\", \"&lt;\"), \">\", \"&gt;\"))", "contem": ["A &amp; &lt;b&gt;"]}
+  ],
   "seguranca": [
     {"caso": "pedidos@{usuario}", "dax": "EVALUATE ROW(\"v\", [Pedidos])"},
     {"caso": "itens@{usuario}", "dax": "EVALUATE ROW(\"v\", COUNTROWS(fato_itens_pedido))"}

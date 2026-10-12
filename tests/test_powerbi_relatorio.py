@@ -77,3 +77,21 @@ def test_executivo_no_estilo_da_previa():
     assert _tem_visual("Executivo", "slicer")
     assert _tem_visual("Executivo", "pageNavigator")
     assert _dentro_da_pagina("Executivo")
+
+
+def test_entrega_no_estilo_da_previa():
+    assert {"HTML Menu Entrega", "HTML Cabeçalho Entrega", "HTML Cartões Entrega", "HTML Atraso por Região",
+            "HTML Excesso por UF", "HTML Pedidos em Risco"} <= _medidas_html("Entrega e risco")
+    for nativo in ("cardVisual", "card", "clusteredBarChart", "tableEx", "textbox"):
+        assert not _tem_visual("Entrega e risco", nativo), nativo
+    assert _tem_visual("Entrega e risco", "slicer") and _tem_visual("Entrega e risco", "pageNavigator")
+    assert _dentro_da_pagina("Entrega e risco")
+
+
+def test_vendedores_no_estilo_da_previa():
+    assert {"HTML Menu Vendedores", "HTML Cabeçalho Vendedores", "HTML Cartões Vendedores", "HTML Grupos",
+            "HTML Vendedores"} <= _medidas_html("Vendedores")
+    for nativo in ("cardVisual", "card", "clusteredBarChart", "tableEx", "textbox"):
+        assert not _tem_visual("Vendedores", nativo), nativo
+    assert _tem_visual("Vendedores", "slicer") and _tem_visual("Vendedores", "pageNavigator")
+    assert _dentro_da_pagina("Vendedores")

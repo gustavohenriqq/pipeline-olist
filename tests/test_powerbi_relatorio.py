@@ -180,3 +180,45 @@ def test_texto_do_banco_entra_escapado_no_html():
     html = texto[texto.index("/// Menu lateral (molde)"):]
     nua = re.findall(r'&\s+((?:RELATED \( )?\w+\[[^\]]+\](?: \))?)\s+&', html)
     assert not nua, nua
+
+
+def _rodar_gerador(tmp_path, transformar):
+    import subprocess
+    import sys
+
+    relativo = Path("dashboards/powerbi/Olist.SemanticModel/definition/tables/_Medidas.tmdl")
+    original = (RELATORIO.parents[2] / relativo).read_text(encoding="utf-8")
+    copia = tmp_path / relativo
+    copia.parent.mkdir(parents=True)
+    antes = transformar(original)
+    copia.write_text(antes, encoding="utf-8", newline="")
+    r = subprocess.run([sys.executable, str(RELATORIO.parent / "gerar_medidas_html.py")], cwd=tmp_path,
+                       capture_output=True, text=True)
+    return r, antes, copia.read_text(encoding="utf-8")
+
+
+def test_gerador_nao_apaga_medida_que_nao_e_html(tmp_path):
+    """O Desktop poe medida nova no fim da tabela, dentro do trecho que o gerador regrava."""
+    nova = "\tmeasure 'Medida Nova' = 1\n\t\tlineageTag: 11111111-2222-3333-4444-555555555555\n\n"
+    r, antes, depois = _rodar_gerador(tmp_path, lambda t: t.replace("\tcolumn ", nova + "\tcolumn ", 1))
+    assert r.returncode != 0
+    assert depois == antes
+
+
+def test_gerador_nao_copia_etiqueta_da_medida_vizinha(tmp_path):
+    import re
+
+    def sem_etiqueta(t):
+        # tira o lineageTag so da medida de menu do Executivo
+        return re.sub(r"(measure 'HTML Menu Executivo' = [^\n]*\n\t\tdisplayFolder: HTML\r?\n)\t\tlineageTag: [0-9a-f-]+\r?\n",
+                      r"\1", t, count=1)
+
+    def por_medida(t):
+        blocos = re.split(r"\n\t(?=measure |column )", t)
+        return {re.match(r"measure '([^']+)'", b).group(1): (re.findall(r"lineageTag: ([0-9a-f-]+)", b) or [None])[0]
+                for b in blocos if b.startswith("measure '")}
+
+    r, antes, depois = _rodar_gerador(tmp_path, sem_etiqueta)
+    assert r.returncode == 0, r.stderr
+    assert por_medida(antes)["HTML Menu Executivo"] is None
+    assert por_medida(depois) == por_medida(antes)

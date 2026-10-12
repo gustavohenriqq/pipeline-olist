@@ -167,10 +167,10 @@ continuam nativos.
 
 ![Entrega e risco com o dicionário de métricas aberto](docs/prints/powerbi-dicionario.png)
 
-- **Nenhum número novo:** o HTML só formata as medidas que já existiam, e 20 casos
+- **Nenhum número novo:** o HTML só formata as medidas que já existiam, e 33 casos
   novos na conferência checam o texto que a pessoa lê ("R$ 15,79 Mi", +660 no RJ,
   50 linhas na tabela de risco, "sem dados" num ano vazio, eixo em mil com filtro
-  de região), com os valores tirados do SQL. Ao todo, 41 casos.
+  de região, zero alerta mostrado como 0), com os valores tirados do SQL. Ao todo, 54 casos.
 - **Dicionário de métricas** em todas as páginas: tabela calculada em TMDL, busca
   nativa e indicadores que abrem o painel sem desfazer o período escolhido.
 - **Gerado e testado:** as 19 medidas saem de um script versionado, e um teste

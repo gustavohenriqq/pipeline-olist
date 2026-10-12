@@ -1,12 +1,12 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "dd2acc7543560732fbbd",
+  "name": "3cd39034da55bf9d9b36",
   "position": {
     "x": 140,
     "y": 16,
     "z": 1100,
     "height": 80,
-    "width": 980,
+    "width": 1240,
     "tabOrder": 1100
   },
   "visual": {
@@ -23,11 +23,11 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "HTML Cabeçalho Executivo"
+                  "Property": "HTML Cabeçalho Vendedores"
                 }
               },
-              "queryRef": "_Medidas.HTML Cabeçalho Executivo",
-              "nativeQueryRef": "HTML Cabeçalho Executivo"
+              "queryRef": "_Medidas.HTML Cabeçalho Vendedores",
+              "nativeQueryRef": "HTML Cabeçalho Vendedores"
             }
           ]
         }

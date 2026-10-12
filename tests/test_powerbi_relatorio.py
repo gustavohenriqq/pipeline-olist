@@ -132,3 +132,9 @@ def test_indicadores_do_dicionario_nao_guardam_filtros():
     for b in _indicadores():
         if b["displayName"].startswith("Dicionário"):
             assert b["options"].get("suppressData") is True, b["displayName"]
+
+
+def test_medidas_html_sem_texto_em_degrade():
+    """background-clip:text vira um bloco colorido na exportacao para PDF (prints da Etapa 8)."""
+    medidas = RELATORIO.parent / "Olist.SemanticModel" / "definition" / "tables" / "_Medidas.tmdl"
+    assert "background-clip:text" not in medidas.read_text(encoding="utf-8")

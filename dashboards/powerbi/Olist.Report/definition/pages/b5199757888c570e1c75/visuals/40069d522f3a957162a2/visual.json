@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "ef8a2e366ee0fb3d25b7",
+  "name": "40069d522f3a957162a2",
   "position": {
     "x": 140,
-    "y": 700,
-    "z": 1400,
-    "height": 364,
-    "width": 560,
-    "tabOrder": 1400
+    "y": 16,
+    "z": 1100,
+    "height": 80,
+    "width": 980,
+    "tabOrder": 1100
   },
   "visual": {
     "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
@@ -23,11 +23,11 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "HTML Excesso por UF"
+                  "Property": "HTML Cabeçalho Executivo"
                 }
               },
-              "queryRef": "_Medidas.HTML Excesso por UF",
-              "nativeQueryRef": "HTML Excesso por UF"
+              "queryRef": "_Medidas.HTML Cabeçalho Executivo",
+              "nativeQueryRef": "HTML Cabeçalho Executivo"
             }
           ]
         }

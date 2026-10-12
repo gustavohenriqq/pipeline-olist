@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** faixa, cartões e tabelas das 3 páginas do Power BI em HTML/CSS gerado por medidas DAX (visual HTML Content lite), com dicionário de métricas, tema do painel web e um link público pela conta de estudante.
+**Goal:** as 3 páginas do Power BI no estilo "premium" da prévia aprovada (`docs/specs/assets/2026-10-12-previa-executivo.html`): menu, cabeçalho, cartões, anéis, gráficos e tabelas em HTML/SVG gerado por medidas DAX (visual HTML Content Standalone), com dicionário de métricas e um link público pela conta de estudante.
 
-**Architecture:** medidas novas na pasta "HTML" de `_Medidas.tmdl` montam strings HTML reaproveitando as medidas existentes; o relatório PBIR troca cartões, faixas e tabelas por visuais HTML Content; gráficos, segmentações e navegação continuam nativos. Conferência por DAX (`conferir.ps1`) ganha casos de "contém texto"; um teste Python confere a estrutura do PBIR.
+**Architecture:** medidas novas na pasta "HTML" de `_Medidas.tmdl` montam strings HTML/SVG reaproveitando as medidas existentes; o relatório PBIR troca os visuais das páginas por visuais HTML Content; segmentações e navegação (botões transparentes sobre os ícones do menu) continuam nativas. Conferência por DAX (`conferir.ps1`) ganha casos de "contém texto"; um teste Python confere a estrutura do PBIR.
 
 **Tech Stack:** Power BI Desktop (PBIP: TMDL + PBIR), DAX, HTML Content (lite) `.pbiviz`, PowerShell (conferência), pytest (estrutura do relatório).
 
@@ -21,7 +21,8 @@
 - O `.pbiviz` não é versionado; `dashboards/powerbi/publico/` vai para o `.gitignore`.
 - Medidas existentes não mudam; medidas HTML reaproveitam `[Receita]`, `[Δ Receita]`, `[Rótulo do Destaque]`, `[Cor Δ ...]` e demais, nunca recalculam.
 - Texto que vem do banco entra no HTML com escape de `&`, `<`, `>`.
-- Cores do painel web (`agente/tema.py`, paleta escura): fundo `#0B1220`, superfície `#111A2C`, borda `#1F2A40`, texto `#E2E8F0`, texto suave `#94A3B8`, destaque `#34D399`, azul `#60A5FA`, violeta `#A78BFA`, âmbar `#FBBF24`, vermelho `#F87171`.
+- Paleta da prévia aprovada: fundo `#070B1A`, bloco `#121A3A` (degradê para `#17214A`), borda `rgba(130,150,255,0.14)`, texto `#E8ECFF`, texto suave `#8E9AC8`, destaque em degradê `#22D3EE` para `#8B5CF6`, rosa `#EC4899`, melhora `#34D399`, piora `#F87171`, referência `#FBBF24`.
+- A prévia `docs/specs/assets/2026-10-12-previa-executivo.html` é a referência visual; cada página é conferida contra ela antes do commit.
 - Commit ao fim de cada task.
 
 ## Review Focus
@@ -62,16 +63,16 @@
 ```python
 def test_tema_segue_o_painel_web():
     tema = _tema()
-    assert tema["background"] == "#0B1220"
-    assert tema["foreground"] == "#E2E8F0"
-    assert tema["dataColors"][:3] == ["#34D399", "#60A5FA", "#A78BFA"]
+    assert tema["background"] == "#070B1A"
+    assert tema["foreground"] == "#E8ECFF"
+    assert tema["dataColors"][:3] == ["#22D3EE", "#8B5CF6", "#EC4899"]
 
 def test_tres_paginas_do_relatorio():
     assert set(_paginas()) == {"Executivo", "Entrega e risco", "Vendedores"}
 ```
 
 - [ ] **Step 2:** rodar `.venv/Scripts/python.exe -m pytest tests/test_powerbi_relatorio.py -q`; Expected: o teste do tema falha (cores atuais azuis).
-- [ ] **Step 3:** atualizar o tema (fundo, primeiro plano, `dataColors` = destaque, azul, violeta, âmbar, vermelho, texto suave; `textClasses` em texto claro; `visualStyles` com fundo de visual na superfície `#111A2C` e borda `#1F2A40`).
+- [ ] **Step 3:** atualizar o tema (fundo da página `#070B1A`, primeiro plano `#E8ECFF`, `dataColors` = ciano, violeta, rosa, menta, âmbar, vermelho; `textClasses` claros; fundo de visual `#121A3A`; segmentações e botões no mesmo fundo).
 - [ ] **Step 4:** testes verdes; no Desktop, "Aplicar alterações externas" e conferir as 3 páginas; rodar `conferir.ps1` (29 casos verdes).
 - [ ] **Step 5: commit** `feat(powerbi): tema escuro do painel web`.
 
@@ -82,7 +83,7 @@ def test_tres_paginas_do_relatorio():
 - Modify: `dashboards/powerbi/conferencia/conferir.ps1`, `dashboards/powerbi/conferencia/casos.json`
 
 **Interfaces:**
-- Produces (medidas, pasta `HTML`): `HTML Faixa Executivo`, `HTML Faixa Entrega`, `HTML Faixa Vendedores`, `HTML Cartões Executivo`, `HTML Cartões Entrega`, `HTML Cartões Vendedores`, `HTML Placar Mensal`, `HTML Pedidos em Risco`, `HTML Vendedores`. Escape de texto do banco: o padrão `SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(x, "&", "&amp;"), "<", "&lt;"), ">", "&gt;")`, repetido onde entra texto (o modelo não usa funções DAX definidas pelo usuário).
+- Produces (medidas, pasta `HTML`): `HTML Menu Executivo|Entrega|Vendedores`, `HTML Cabeçalho Executivo|Entrega|Vendedores`, `HTML Cartões Executivo|Entrega|Vendedores`, `HTML Receita Mensal`, `HTML Atraso por Região`, `HTML Excesso por UF`, `HTML Grupos Top 5`, `HTML Grupos`, `HTML Pedidos em Risco`, `HTML Vendedores`. Escape de texto do banco: o padrão `SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(x, "&", "&amp;"), "<", "&lt;"), ">", "&gt;")`, repetido onde entra texto.
 - Produces (conferência): caso com `"contem": [..]` e opcional `"nao_contem": [..]` é conferido por substring, sem SQL; grupo novo `html` em `casos.json`, incluído no padrão de `-Grupos`.
 
 - [ ] **Step 1: casos (grupo `html`)**
@@ -92,8 +93,14 @@ def test_tres_paginas_do_relatorio():
  "contem": ["R$ 15,79 Mi", "99.092", "93,2%", "ago/2018"]},
 {"caso": "html_cartoes_sem_dados", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Executivo], dim_tempo[ano] = 2015))",
  "contem": ["sem dados"], "nao_contem": ["R$ 0"]},
-{"caso": "html_faixa_outra_janela", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Faixa Executivo], DATESBETWEEN(dim_tempo[data], DATE(2018,1,1), DATE(2018,3,31))))",
+{"caso": "html_cabecalho_outra_janela", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cabeçalho Executivo], DATESBETWEEN(dim_tempo[data], DATE(2018,1,1), DATE(2018,3,31))))",
  "contem": ["mar/2018"]},
+{"caso": "html_receita_mensal", "dax": "EVALUATE ROW(\"v\", [HTML Receita Mensal])",
+ "contem": ["<svg", "R$ 1,18 Mi"], "contagem": {"<circle": 20}},
+{"caso": "html_atraso_regiao", "dax": "EVALUATE ROW(\"v\", [HTML Atraso por Região])",
+ "contem": ["Nordeste", "Sul"]},
+{"caso": "html_receita_sem_dados", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Receita Mensal], dim_tempo[ano] = 2015))",
+ "contem": ["sem dados"], "nao_contem": ["<svg"]},
 {"caso": "html_risco_linhas", "dax": "EVALUATE ROW(\"v\", [HTML Pedidos em Risco])",
  "contem": ["risco-alto", "#"], "nao_contem": ["<script"]},
 {"caso": "html_escape", "dax": "EVALUATE ROW(\"v\", SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(\"A & <b>\", \"&\", \"&amp;\"), \"<\", \"&lt;\"), \">\", \"&gt;\"))",
@@ -102,7 +109,7 @@ def test_tres_paginas_do_relatorio():
 
   O caso `html_risco_linhas` conta também 50 ocorrências de `<tr` no corpo (campo `"contagem": {"<tr": 51}` com o cabeçalho).
 - [ ] **Step 2:** `conferir.ps1` passa a tratar `contem`, `nao_contem` e `contagem`; rodar `.\conferir.ps1 -Grupos html` com o Desktop aberto. Expected: os casos `html_*` falham (medidas não existem), os outros grupos continuam verdes.
-- [ ] **Step 3:** escrever as medidas (CSS inline com as cores das Global Constraints; ícones em SVG inline; formatos iguais aos cartões atuais; "sem dados" quando a medida base é BLANK; tabelas com `CONCATENATEX` na mesma ordem e limite dos visuais atuais: placar por mês decrescente, risco 50 linhas por probabilidade decrescente com desempate pelo pedido, vendedores 50 por receita).
+- [ ] **Step 3:** escrever as medidas seguindo a prévia (CSS inline e SVG com as cores das Global Constraints; formatos iguais aos cartões atuais; "sem dados" quando a medida base é BLANK; SVG com `viewBox` fixo e `preserveAspectRatio` para escalar com o visual; geometria por `MAXX` e `RANKX` no recorte; tabelas com `CONCATENATEX`: risco 50 linhas por probabilidade decrescente com desempate pelo pedido, vendedores 50 por receita). O ponto de cada mês do gráfico de receita é um `<circle>`; o maior mês ganha rótulo.
 - [ ] **Step 4:** salvar no Desktop, aplicar alterações externas, rodar `.\conferir.ps1`. Expected: 29 casos antigos e os `html_*` verdes.
 - [ ] **Step 5: commit** `feat(powerbi): medidas HTML e conferencia de texto`.
 
@@ -118,15 +125,18 @@ def test_tres_paginas_do_relatorio():
 - [ ] **Step 1: teste**
 
 ```python
-def test_executivo_usa_html_para_faixa_cartoes_e_placar():
+def test_executivo_no_estilo_da_previa():
     medidas = _medidas_html("Executivo")
-    assert {"HTML Faixa Executivo", "HTML Cartões Executivo", "HTML Placar Mensal"} <= medidas
-    assert not _tem_visual("Executivo", "cardVisual")  # cartoes nativos sairam
-    assert _tem_visual("Executivo", "lineChart") or _tem_visual("Executivo", "areaChart")  # grafico nativo fica
+    assert {"HTML Menu Executivo", "HTML Cabeçalho Executivo", "HTML Cartões Executivo",
+            "HTML Receita Mensal", "HTML Atraso por Região", "HTML Grupos Top 5"} <= medidas
+    for nativo in ("cardVisual", "areaChart", "lineChart", "tableEx", "pivotTable"):
+        assert not _tem_visual("Executivo", nativo)
+    assert _tem_visual("Executivo", "slicer")
+    assert _botoes_de_navegacao("Executivo") >= 2
 ```
 
 - [ ] **Step 2:** rodar; Expected: falha.
-- [ ] **Step 3:** no Desktop (salvar antes), substituir os visuais: um HTML Content por bloco, ligado à medida; manter gráfico, segmentações e botões de navegação; posições no mesmo grid de hoje.
+- [ ] **Step 3:** no Desktop (salvar antes), refazer a página no layout da prévia: um HTML Content por bloco, ligado à medida; segmentações de período e região no cabeçalho; botões de navegação transparentes sobre os ícones do menu; tirar os visuais nativos antigos (faixa, cartões, gráfico, placar).
 - [ ] **Step 4:** salvar; teste verde; `conferir.ps1` verde; conferência visual da página no Desktop.
 - [ ] **Step 5: commit** `feat(powerbi): visao executiva em HTML`.
 
@@ -134,7 +144,7 @@ def test_executivo_usa_html_para_faixa_cartoes_e_placar():
 
 **Files:** páginas `<Entrega e risco>` e `<Vendedores>` do PBIR; `tests/test_powerbi_relatorio.py`.
 
-- [ ] **Step 1: testes** `test_entrega_usa_html` (`HTML Faixa Entrega`, `HTML Cartões Entrega`, `HTML Pedidos em Risco`; gráficos de região e UF continuam nativos) e `test_vendedores_usa_html` (`HTML Faixa Vendedores`, `HTML Cartões Vendedores`, `HTML Vendedores`; gráfico de grupos nativo).
+- [ ] **Step 1: testes** `test_entrega_no_estilo_da_previa` (`HTML Menu Entrega`, `HTML Cabeçalho Entrega`, `HTML Cartões Entrega`, `HTML Atraso por Região`, `HTML Excesso por UF`, `HTML Pedidos em Risco`; nenhum gráfico nativo; segmentação de período) e `test_vendedores_no_estilo_da_previa` (`HTML Menu Vendedores`, `HTML Cabeçalho Vendedores`, `HTML Cartões Vendedores`, `HTML Grupos`, `HTML Vendedores`; nenhum gráfico nativo).
 - [ ] **Step 2:** rodar; Expected: falham.
 - [ ] **Step 3:** substituir os visuais como na Task 4.
 - [ ] **Step 4:** testes, `conferir.ps1` e conferência visual verdes.

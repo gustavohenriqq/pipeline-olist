@@ -20,7 +20,7 @@ seed sao conferidos pelo "Exibir como" do Desktop (ver README.md desta pasta).
 Sai com 1 se algum caso falhar.
 #>
 param(
-    [string[]]$Grupos = @("modelo", "medidas"),
+    [string[]]$Grupos = @("modelo", "medidas", "html"),
     [string]$Papel
 )
 
@@ -87,7 +87,10 @@ if ($Papel) {
 } else {
     foreach ($g in $Grupos) {
         foreach ($c in $todos.$g) {
-            $casos += [pscustomobject]@{ caso = $c.caso; dax = $c.dax; erro = $false }
+            # Casos de texto (medidas HTML): "contem", "nao_contem" e "contagem" no
+            # lugar do valor do esperado.sql.
+            $casos += [pscustomobject]@{ caso = $c.caso; dax = $c.dax; erro = $false
+                contem = $c.contem; nao_contem = $c.nao_contem; contagem = $c.contagem }
         }
     }
 }
@@ -151,6 +154,21 @@ foreach ($c in $casos) {
         $ok = $false
         $mostrar = "ERRO: " + $erroMsg.Split([Environment]::NewLine)[0]
         $alvo = $esperado[$c.caso]
+    } elseif ($c.contem -or $c.nao_contem -or $c.contagem) {
+        $texto = if (($null -eq $valor) -or ($valor -is [System.DBNull])) { "" } else { [string]$valor }
+        $faltando = @($c.contem | Where-Object { $_ -and -not $texto.Contains($_) })
+        $sobrando = @($c.nao_contem | Where-Object { $_ -and $texto.Contains($_) })
+        $contagens = @()
+        if ($c.contagem) {
+            foreach ($p in $c.contagem.PSObject.Properties) {
+                $n = ([regex]::Matches($texto, [regex]::Escape($p.Name))).Count
+                if ($n -ne [int]$p.Value) { $contagens += "$($p.Name)=$n (esperado $($p.Value))" }
+            }
+        }
+        $ok = ($faltando.Count -eq 0) -and ($sobrando.Count -eq 0) -and ($contagens.Count -eq 0)
+        $alvo = "texto"
+        $mostrar = if ($ok) { "texto ok ($($texto.Length) caracteres)" } else {
+            (@($faltando | ForEach-Object { "falta '$_'" }) + @($sobrando | ForEach-Object { "sobra '$_'" }) + $contagens) -join "; " }
     } else {
         $alvo = $esperado[$c.caso]
         if ($null -eq $alvo) {

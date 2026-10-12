@@ -43,7 +43,8 @@
     {"caso": "html_cartoes_vendedores", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Vendedores], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["R$ 15,79 Mi", "112.279", "6,8%"]},
     {"caso": "html_risco_linhas", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Pedidos em Risco], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["#b6906ad8ff", "52,5%"], "nao_contem": ["<script"], "contagem": {"<tr": 51}},
     {"caso": "html_vendedores", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Vendedores], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["Guariba/SP", "249.640,70"], "contagem": {"<tr": 51}},
-    {"caso": "html_escape_padrao", "dax": "EVALUATE ROW(\"v\", SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(\"A & <b>\", \"&\", \"&amp;\"), \"<\", \"&lt;\"), \">\", \"&gt;\"))", "contem": ["A &amp; &lt;b&gt;"]}
+    {"caso": "html_receita_regiao_pequena", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Receita Mensal], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31)), dim_clientes[regiao] = \"Norte\"))", "contem": ["<svg", " mil"], "nao_contem": ["0,0 Mi", "R$ 0,0"]},
+    {"caso": "html_grupos_regiao_pequena", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Grupos], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31)), dim_clientes[regiao] = \"Norte\"))", "contem": [" mil"], "nao_contem": ["0,00 Mi"]}
   ],
   "seguranca": [
     {"caso": "pedidos@{usuario}", "dax": "EVALUATE ROW(\"v\", [Pedidos])"},

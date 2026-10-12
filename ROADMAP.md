@@ -280,7 +280,7 @@ como conferidos.
 
 **Objetivo:** quem visita o portfólio abrir um link só e ver o BI e o agente.
 
-**Por quê.** O Power BI não era publicado (publicar exige conta de trabalho ou de
+**Por quê.** O Power BI não é publicado (publicar exige conta de trabalho ou de
 escola, e a conta de trabalho do dono não entra neste projeto). O agente estava
 em outro link.
 
@@ -301,10 +301,11 @@ deploys e um agente que não enxerga a tela.
 
 ---
 
-## Etapa 8: HTML e CSS dentro do Power BI (concluída)
+## Etapa 8: HTML e CSS dentro do Power BI (concluída; link público pendente)
 
 **Objetivo:** o relatório do Power BI com o desenho premium do painel web, feito
-dentro do próprio Power BI, e um link público para ele.
+dentro do próprio Power BI, e um link público para ele. O desenho está entregue;
+a publicação, pela conta de estudante do dono, ainda não foi feita.
 
 **Por quê.** Mostra domínio de Power BI que o painel web não mostra: HTML, CSS e
 SVG gerados por DAX, sobre o mesmo modelo com RLS e OLS.
@@ -316,8 +317,9 @@ desenho em [docs/specs/2026-10-12-powerbi-html-design.md](docs/specs/2026-10-12-
   anterior tracejado, barras por região e por UF e tabelas com barra por linha.
   Filtros e navegação continuam nativos.
 - **Dicionário de métricas** em todas as páginas, a partir de uma tabela em TMDL.
-- **Conferência do texto:** 19 casos novos checam o que a medida escreve (valores,
-  quantidade de linhas, "sem dados", escape), somando 40 casos contra o SQL.
+- **Conferência do texto:** 20 casos novos checam o que a medida escreve (valores
+  tirados do SQL, quantidade de linhas, "sem dados", unidade com filtro de região),
+  somando 41 casos; o escape de texto do banco é checado por teste estrutural.
 - **Cópia sem RLS para "Publicar na Web"**, gerada por script fora do Git, com o
   roteiro de publicação pela conta de estudante.
 

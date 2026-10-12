@@ -24,10 +24,24 @@ foreach ($pasta in @("Olist.Report", "Olist.SemanticModel")) {
         throw "Destino dentro de $pasta`: $destinoCheio"
     }
 }
-if ($destinoCheio -ieq [IO.Path]::GetFullPath($origem).TrimEnd('\', '/')) { throw "Destino igual a origem" }
+# nem igual a origem, nem uma pasta que a contenha (apagaria o projeto inteiro)
+$origemCheia = [IO.Path]::GetFullPath($origem).TrimEnd('\', '/')
+if (($origemCheia + [IO.Path]::DirectorySeparatorChar).StartsWith($destinoCheio + [IO.Path]::DirectorySeparatorChar,
+        [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Destino igual ou acima da origem: $destinoCheio"
+}
 
-if (Test-Path $Destino) { Remove-Item -Recurse -Force $Destino }
+# so apaga pasta vazia ou gerada por este script (marcador), nunca uma pasta qualquer
+$marcador = ".gerado-por-gerar_versao_publica"
+if (Test-Path $Destino) {
+    $vazia = -not (Get-ChildItem -Force $Destino | Select-Object -First 1)
+    if (-not $vazia -and -not (Test-Path (Join-Path $Destino $marcador))) {
+        throw "Destino existe e nao foi gerado por este script: $destinoCheio"
+    }
+    Remove-Item -Recurse -Force $Destino
+}
 New-Item -ItemType Directory -Path $Destino | Out-Null
+Set-Content -Path (Join-Path $Destino $marcador) -Value "Copia publica gerada por gerar_versao_publica.ps1; pode ser apagada e regerada."
 foreach ($item in $itens) { Copy-Item -Recurse -Force (Join-Path $origem $item) $Destino }
 
 $modelo = Join-Path $Destino "Olist.SemanticModel/definition"

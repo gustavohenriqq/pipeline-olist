@@ -154,3 +154,29 @@ def test_gerador_reproduz_as_medidas_html(tmp_path):
     r = subprocess.run([sys.executable, str(gerador)], cwd=tmp_path, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert copia.read_bytes() == original.read_bytes()
+
+
+def test_segmentacoes_suspensas_abrem_no_tema_escuro():
+    """Sem cor nos itens, a lista suspensa abre branca com texto claro (ilegivel)."""
+    for pagina in _paginas():
+        for v in _visuais(pagina):
+            objetos = v["visual"].get("objects", {})
+            if v["visual"]["visualType"] != "slicer":
+                continue
+            modo = objetos.get("data", [{}])[0].get("properties", {}).get("mode", {})
+            if modo.get("expr", {}).get("Literal", {}).get("Value") != "'Dropdown'":
+                continue
+            itens = objetos.get("items", [{}])[0].get("properties", {})
+            fundo = itens.get("background", {}).get("solid", {}).get("color", {})
+            assert fundo.get("expr", {}).get("Literal", {}).get("Value") == "'#17214A'", (pagina, v["name"])
+
+
+def test_texto_do_banco_entra_escapado_no_html():
+    """Coluna concatenada direto no HTML (sem o SUBSTITUTE de & < >) quebra o desenho
+    no dia em que um rotulo tiver esses caracteres."""
+    import re
+
+    texto = (RELATORIO.parent / "Olist.SemanticModel" / "definition" / "tables" / "_Medidas.tmdl").read_text(encoding="utf-8")
+    html = texto[texto.index("/// Menu lateral (molde)"):]
+    nua = re.findall(r'&\s+((?:RELATED \( )?\w+\[[^\]]+\](?: \))?)\s+&', html)
+    assert not nua, nua

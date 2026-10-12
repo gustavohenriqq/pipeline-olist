@@ -61,7 +61,8 @@ o visual sumir, importe o `HTML-Content-Standalone.2.0.0.pbiviz` em Visualizaç�
 - **Coordenada de SVG com ponto.** `FORMAT(x, "0.0", "en-US")`: na cultura pt-BR o
   separador seria vírgula e o SVG quebraria.
 - **Medida grande é difícil de ler.** As 19 medidas são geradas por um script e
-  ficam com um comentário `///` cada; mude a medida pelo texto, não pelo editor.
+  ficam com um comentário `///` cada; mude a medida pelo gerador, nunca direto no
+  TMDL (um teste falha se os dois divergirem).
 
 ## Dicionário de métricas
 
@@ -214,15 +215,18 @@ por DAX e compara com o mesmo número calculado em SQL.
 |---|---|---|
 | Linhas de cada tabela | 8 | iguais ao banco |
 | Medidas (receita, ticket, % no prazo, nota, excesso do RJ, acumulado no ano até mar/2018, variações, destaques do último mês, risco) | 13 | diferença abaixo de 0,000001 |
-| HTML e dicionário (texto que a medida deve conter, não conter ou contar, na janela padrão) | 19 | todos ok |
+| HTML e dicionário (texto que a medida deve conter, não conter ou contar, na janela padrão) | 20 | todos ok |
 | Papéis (usuário fora do seed e OLS) | 8 | ok nos três papéis |
 | Usuários do seed e um e-mail fora dele, pelo "Exibir como" | 6 | iguais ao SQL |
 
 Os casos de HTML conferem o que a pessoa lê: "R$ 15,79 Mi" e "99.092" nos
 cartões, 20 pontos no gráfico de receita com nov/2017 em destaque, +660 e -926 no
 excesso por UF, 51 linhas (cabeçalho e 50) nas tabelas, "sem dados" num ano sem
-pedido, o escape de `&` e o dicionário sem seleção, com uma e com quatro
-métricas. A execução padrão roda modelo, medidas e HTML (40 casos).
+pedido, eixo e grupos em mil com a região Norte (em milhões apareceria "0,0 Mi")
+e o dicionário sem seleção, com uma e com quatro métricas. Os valores esperados
+saem do SQL, mas a comparação é de texto. A execução padrão roda modelo, medidas
+e HTML (41 casos). O escape do texto do banco é checado por um teste em Python:
+nenhuma coluna entra no HTML sem o `SUBSTITUTE` de `&`, `<` e `>`.
 
 O motor local do Desktop não aceita personificar um e-mail que não é conta do
 Windows, então os usuários do seed são conferidos pelo "Exibir como". O
@@ -245,8 +249,10 @@ powershell -ExecutionPolicy Bypass -File dashboards/powerbi/gerar_versao_publica
 
 O script copia `Olist.pbip`, o relatório e o modelo (com o cache de dados
 `.pbi/cache.abf`, para abrir sem atualizar) para `dashboards/powerbi/publico/`,
-apaga `definition/roles` e tira as linhas `ref role` do `model.tmdl`. Um teste roda
-o script de verdade e confere que a cópia não tem papel e que o resto é idêntico.
+apaga `definition/roles` e tira as linhas `ref role` do `model.tmdl`. Por segurança,
+recusa destino que contenha a origem e só apaga uma pasta que ele mesmo gerou
+(marcador `.gerado-por-gerar_versao_publica`). Testes rodam o script de verdade e
+conferem que a cópia não tem papel e que tabelas e relatório são idênticos.
 A tabela `seguranca_bi` vai junto: só tem e-mails fictícios.
 
 **Roteiro de publicação (feito pelo dono, pela conta de estudante):**

@@ -189,6 +189,9 @@ linhas = [
     'VAR n = COUNTROWS ( t )',
     'VAR mx = MAXX ( t, [@v] )',
     'VAR topo = MAX ( mx, MAXX ( t, [@a] ) ) * 1.08',
+    # unidade pelo tamanho: com filtro de regiao a receita mensal fica em milhares
+    'VAR div = IF ( topo >= 1000000, 1000000, 1000 )',
+    'VAR suf = IF ( div = 1000000, " Mi", " mil" )',
     f'VAR pts = CONCATENATEX ( t, {X} & "," & FORMAT ( 300 - [@v] / topo * 280, "0.0", "en-US" ), " L ", dim_tempo[ano_mes], ASC )',
     'VAR ta = FILTER ( t, NOT ISBLANK ( [@a] ) )',
     f'VAR ptsa = CONCATENATEX ( ta, {X} & "," & FORMAT ( 300 - [@a] / topo * 280, "0.0", "en-US" ), " L ", dim_tempo[ano_mes], ASC )',
@@ -196,9 +199,9 @@ linhas = [
     'VAR pico = TOPN ( 1, t, [@v], DESC, dim_tempo[ano_mes], ASC )',
     'VAR pico_mes = MAXX ( pico, dim_tempo[ano_mes] )',
     f'VAR pico_x = MAXX ( pico, {X} )',
-    'VAR pico_txt = IF ( n > 0, FORMAT ( DATEVALUE ( pico_mes & "-01" ), "mmm/yy" ) & ": R$ " & FORMAT ( mx / 1000000, "#,0.00" ) & " Mi" )',
+    'VAR pico_txt = IF ( n > 0, FORMAT ( DATEVALUE ( pico_mes & "-01" ), "mmm/yy" ) & ": R$ " & FORMAT ( mx / IF ( mx >= 1000000, 1000000, 1000 ), "#,0.00" ) & IF ( mx >= 1000000, " Mi", " mil" ) )',
     f'VAR rotulos = CONCATENATEX ( FILTER ( t, MOD ( RANKX ( t, dim_tempo[ano_mes], , ASC ) - 1, 2 ) = 0 ), "<text x=\'" & {X} & "\' y=\'318\' text-anchor=\'middle\' fill=\'{SUAVE}\' font-size=\'10.5\'>" & FORMAT ( DATEVALUE ( dim_tempo[ano_mes] & "-01" ), "mm/yy" ) & "</text>", "", dim_tempo[ano_mes], ASC )',
-    f'VAR grade = CONCATENATEX ( GENERATESERIES ( 0, 3, 1 ), "<line x1=\'48\' x2=\'750\' y1=\'" & FORMAT ( 300 - [Value] / 3 * 280, "0.0", "en-US" ) & "\' y2=\'" & FORMAT ( 300 - [Value] / 3 * 280, "0.0", "en-US" ) & "\' stroke=\'rgba(130,150,255,0.10)\'/><text x=\'40\' y=\'" & FORMAT ( 304 - [Value] / 3 * 280, "0.0", "en-US" ) & "\' text-anchor=\'end\' fill=\'{SUAVE}\' font-size=\'11\'>" & IF ( [Value] = 0, "0", FORMAT ( topo * [Value] / 3 / 1000000, "0.0" ) & " Mi" ) & "</text>", "", [Value], ASC )',
+    f'VAR grade = CONCATENATEX ( GENERATESERIES ( 0, 3, 1 ), "<line x1=\'48\' x2=\'750\' y1=\'" & FORMAT ( 300 - [Value] / 3 * 280, "0.0", "en-US" ) & "\' y2=\'" & FORMAT ( 300 - [Value] / 3 * 280, "0.0", "en-US" ) & "\' stroke=\'rgba(130,150,255,0.10)\'/><text x=\'40\' y=\'" & FORMAT ( 304 - [Value] / 3 * 280, "0.0", "en-US" ) & "\' text-anchor=\'end\' fill=\'{SUAVE}\' font-size=\'11\'>" & IF ( [Value] = 0, "0", FORMAT ( topo * [Value] / 3 / div, "#,0.0" ) & suf ) & "</text>", "", [Value], ASC )',
     "RETURN",
     'IF ( n = 0, "' + VAZIO + '", "' + CAIXA + titulo_bloco("Receita por mês e no mesmo mês do ano anterior")
     + f"<div style='display:flex;gap:14px;font-size:11px;color:{SUAVE};margin-top:6px'><span><i style='display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle;background:linear-gradient(90deg,{CIANO},{VIOLETA})'></i>Receita</span><span><i style='display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle;background:{ROSA}'></i>Ano anterior</span></div>"
@@ -217,7 +220,7 @@ linhas = [
     'VAR nac = [Taxa Nacional de Atraso]',
     'VAR t = FILTER ( ADDCOLUMNS ( VALUES ( dim_clientes[regiao] ), "@v", [Taxa de Atraso] ), NOT ISBLANK ( [@v] ) )',
     'VAR esc = MAX ( MAXX ( t, [@v] ), nac ) * 1.1',
-    f'VAR linhas = CONCATENATEX ( t, "<div style=\'{LINHA}\'><span style=\'width:96px\'>" & dim_clientes[regiao] & "</span><div style=\'{TRILHO}\'><div style=\'width:" & FORMAT ( [@v] / esc * 100, "0.0", "en-US" ) & "%;height:8px;border-radius:6px;background:" & IF ( [@v] > nac, "linear-gradient(90deg,{VERM},{ROSA})", "linear-gradient(90deg,{CIANO},{MENTA})" ) & "\'></div><div style=\'position:absolute;left:" & FORMAT ( nac / esc * 100, "0.0", "en-US" ) & "%;top:-3px;width:2px;height:14px;background:{AMBAR}\'></div></div><span style=\'width:52px;text-align:right\'>" & FORMAT ( [@v], "0.0%" ) & "</span></div>", "", [@v], DESC )',
+    f'VAR linhas = CONCATENATEX ( t, "<div style=\'{LINHA}\'><span style=\'width:96px\'>" & {esc("dim_clientes[regiao]")} & "</span><div style=\'{TRILHO}\'><div style=\'width:" & FORMAT ( [@v] / esc * 100, "0.0", "en-US" ) & "%;height:8px;border-radius:6px;background:" & IF ( [@v] > nac, "linear-gradient(90deg,{VERM},{ROSA})", "linear-gradient(90deg,{CIANO},{MENTA})" ) & "\'></div><div style=\'position:absolute;left:" & FORMAT ( nac / esc * 100, "0.0", "en-US" ) & "%;top:-3px;width:2px;height:14px;background:{AMBAR}\'></div></div><span style=\'width:52px;text-align:right\'>" & FORMAT ( [@v], "0.0%" ) & "</span></div>", "", [@v], DESC )',
     "RETURN",
     'IF ( ISEMPTY ( t ), "' + VAZIO + '", "' + CAIXA + titulo_bloco("Taxa de atraso por região", '" & "Linha: média nacional (" & FORMAT ( nac, "0.0%" ) & ")') + '" & linhas & "</div>" )',
 ]
@@ -226,7 +229,7 @@ medidas.append(medida("HTML Atraso por Região", linhas, ["Taxa de atraso por re
 linhas = [
     'VAR t = FILTER ( ADDCOLUMNS ( VALUES ( dim_clientes[uf] ), "@v", [Atraso em Excesso] ), NOT ISBLANK ( [@v] ) )',
     'VAR esc = MAX ( MAXX ( t, ABS ( [@v] ) ), 1 )',
-    f'VAR linhas = CONCATENATEX ( t, "<div style=\'display:flex;align-items:center;gap:8px;font-size:11.5px;margin-top:4px;color:{TEXTO}\'><span style=\'width:24px\'>" & dim_clientes[uf] & "</span><div style=\'flex:1;height:10px;position:relative\'><div style=\'position:absolute;left:50%;top:-2px;width:1px;height:14px;background:rgba(130,150,255,0.35)\'></div><div style=\'position:absolute;top:0;height:10px;border-radius:4px;left:" & FORMAT ( IF ( [@v] >= 0, 50, 50 - ABS ( [@v] ) / esc * 50 ), "0.0", "en-US" ) & "%;width:" & FORMAT ( ABS ( [@v] ) / esc * 50, "0.0", "en-US" ) & "%;background:" & IF ( [@v] > 0, "linear-gradient(90deg,{ROSA},{VERM})", "linear-gradient(90deg,{MENTA},{CIANO})" ) & "\'></div></div><span style=\'width:46px;text-align:right\'>" & FORMAT ( [@v], "+#,0;-#,0;0" ) & "</span></div>", "", [@v], DESC )',
+    f'VAR linhas = CONCATENATEX ( t, "<div style=\'display:flex;align-items:center;gap:8px;font-size:11.5px;margin-top:4px;color:{TEXTO}\'><span style=\'width:24px\'>" & {esc("dim_clientes[uf]")} & "</span><div style=\'flex:1;height:10px;position:relative\'><div style=\'position:absolute;left:50%;top:-2px;width:1px;height:14px;background:rgba(130,150,255,0.35)\'></div><div style=\'position:absolute;top:0;height:10px;border-radius:4px;left:" & FORMAT ( IF ( [@v] >= 0, 50, 50 - ABS ( [@v] ) / esc * 50 ), "0.0", "en-US" ) & "%;width:" & FORMAT ( ABS ( [@v] ) / esc * 50, "0.0", "en-US" ) & "%;background:" & IF ( [@v] > 0, "linear-gradient(90deg,{ROSA},{VERM})", "linear-gradient(90deg,{MENTA},{CIANO})" ) & "\'></div></div><span style=\'width:46px;text-align:right\'>" & FORMAT ( [@v], "+#,0;-#,0;0" ) & "</span></div>", "", [@v], DESC )',
     "RETURN",
     # 27 UFs nao cabem no bloco: lista com rolagem, senao SP (o maior negativo) some
     'IF ( ISEMPTY ( t ), "' + VAZIO + '", "' + CAIXA + titulo_bloco("Atraso em excesso por UF", "Vermelho: acima do esperado pela taxa nacional (role para ver todas)") + "<div style='height:calc(100vh - 80px);overflow-y:auto;padding-right:4px'>" + '" & linhas & "</div></div>" )',
@@ -241,7 +244,7 @@ def grupos(top):
     return [
         f'VAR t = {tabela}',
         'VAR mx = MAXX ( t, [@v] )',
-        f'VAR linhas = CONCATENATEX ( t, "<div data-grupo=\'1\' style=\'{LINHA}\'><span style=\'width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\'>" & {esc("dim_produtos[categoria_grupo]")} & "</span><div style=\'{TRILHO}\'><div style=\'width:" & FORMAT ( [@v] / mx * 100, "0.0", "en-US" ) & "%;height:8px;border-radius:6px;background:linear-gradient(90deg,{VIOLETA},{CIANO})\'></div></div><span style=\'width:62px;text-align:right\'>" & FORMAT ( [@v] / 1000000, "0.00" ) & " Mi</span></div>", "", [@v], DESC, dim_produtos[categoria_grupo], ASC )',
+        f'VAR linhas = CONCATENATEX ( t, "<div data-grupo=\'1\' style=\'{LINHA}\'><span style=\'width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\'>" & {esc("dim_produtos[categoria_grupo]")} & "</span><div style=\'{TRILHO}\'><div style=\'width:" & FORMAT ( [@v] / mx * 100, "0.0", "en-US" ) & "%;height:8px;border-radius:6px;background:linear-gradient(90deg,{VIOLETA},{CIANO})\'></div></div><span style=\'width:62px;text-align:right\'>" & FORMAT ( [@v] / IF ( mx >= 1000000, 1000000, 1000 ), "#,0.00" ) & IF ( mx >= 1000000, " Mi", " mil" ) & "</span></div>", "", [@v], DESC, dim_produtos[categoria_grupo], ASC )',
         "RETURN",
         'IF ( ISEMPTY ( t ), "' + VAZIO + '", "' + CAIXA + titulo_bloco(titulo) + '" & linhas & "</div>" )',
     ]
@@ -257,7 +260,7 @@ TABELA = f"<div style='{FONTE};{BLOCO};padding:14px 16px;height:100vh;display:fl
 ROLAGEM = f"<div style='flex:1;overflow:auto;margin-top:8px'><table style='width:100%;border-collapse:collapse;font-size:12px;color:{TEXTO}'>"
 linhas = [
     'VAR t = TOPN ( 50, FILTER ( previsao_atraso, previsao_atraso[conjunto] = "em_andamento" ), previsao_atraso[prob_atraso], DESC, RELATED ( fato_pedidos[pedido_codigo] ), ASC )',
-    f'VAR linhas = CONCATENATEX ( t, "<tr style=\'" & IF ( previsao_atraso[prob_atraso] >= 0.4, "background:rgba(248,113,113,0.18)", IF ( previsao_atraso[prob_atraso] >= 0.3, "background:rgba(251,191,36,0.16)" ) ) & "\'><td style=\'{TD}\'>" & {esc("RELATED ( fato_pedidos[pedido_codigo] )")} & "</td><td style=\'{TD}\'>" & FORMAT ( RELATED ( fato_pedidos[data_compra] ), "dd/mm/yyyy" ) & "</td><td style=\'{TD}\'>" & FORMAT ( RELATED ( fato_pedidos[entrega_prevista] ), "dd/mm/yyyy" ) & "</td><td style=\'{TD}\'>" & RELATED ( dim_clientes[uf] ) & "</td><td style=\'{TD};text-align:right\'>R$ " & FORMAT ( RELATED ( fato_pedidos[valor_total] ), "#,0.00" ) & "</td><td style=\'{TD};text-align:right;font-weight:600\'>" & FORMAT ( previsao_atraso[prob_atraso], "0.0%" ) & "</td></tr>", "", previsao_atraso[prob_atraso], DESC, RELATED ( fato_pedidos[pedido_codigo] ), ASC )',
+    f'VAR linhas = CONCATENATEX ( t, "<tr style=\'" & IF ( previsao_atraso[prob_atraso] >= 0.4, "background:rgba(248,113,113,0.18)", IF ( previsao_atraso[prob_atraso] >= 0.3, "background:rgba(251,191,36,0.16)" ) ) & "\'><td style=\'{TD}\'>" & {esc("RELATED ( fato_pedidos[pedido_codigo] )")} & "</td><td style=\'{TD}\'>" & FORMAT ( RELATED ( fato_pedidos[data_compra] ), "dd/mm/yyyy" ) & "</td><td style=\'{TD}\'>" & FORMAT ( RELATED ( fato_pedidos[entrega_prevista] ), "dd/mm/yyyy" ) & "</td><td style=\'{TD}\'>" & {esc("RELATED ( dim_clientes[uf] )")} & "</td><td style=\'{TD};text-align:right\'>R$ " & FORMAT ( RELATED ( fato_pedidos[valor_total] ), "#,0.00" ) & "</td><td style=\'{TD};text-align:right;font-weight:600\'>" & FORMAT ( previsao_atraso[prob_atraso], "0.0%" ) & "</td></tr>", "", previsao_atraso[prob_atraso], DESC, RELATED ( fato_pedidos[pedido_codigo] ), ASC )',
     "RETURN",
     'IF ( ISEMPTY ( t ), "' + VAZIO + '", "' + TABELA + titulo_bloco("Pedidos em andamento por probabilidade de atraso", "Os 50 de maior risco comprados no período")
     + ROLAGEM + f"<tr><th style='{TH}'>Pedido</th><th style='{TH}'>Compra</th><th style='{TH}'>Entrega prevista</th><th style='{TH}'>UF</th><th style='{TH};text-align:right'>Valor</th><th style='{TH};text-align:right'>Prob.</th></tr>"

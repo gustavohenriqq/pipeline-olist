@@ -1,37 +1,37 @@
 {
   "name": "Olist",
   "dataColors": [
-    "#0F52BA",
-    "#60A5FA",
-    "#475569",
-    "#93C5FD",
-    "#1E3A8A",
-    "#94A3B8"
+    "#22D3EE",
+    "#8B5CF6",
+    "#EC4899",
+    "#34D399",
+    "#FBBF24",
+    "#F87171"
   ],
-  "foreground": "#0F172A",
-  "foregroundNeutralSecondary": "#475569",
-  "background": "#FFFFFF",
-  "tableAccent": "#0F52BA",
+  "foreground": "#E8ECFF",
+  "foregroundNeutralSecondary": "#8E9AC8",
+  "background": "#070B1A",
+  "tableAccent": "#22D3EE",
   "textClasses": {
     "callout": {
       "fontSize": 24,
       "fontFace": "Segoe UI Semibold",
-      "color": "#0F172A"
+      "color": "#E8ECFF"
     },
     "title": {
       "fontSize": 13,
       "fontFace": "Segoe UI Semibold",
-      "color": "#0F172A"
+      "color": "#E8ECFF"
     },
     "header": {
       "fontSize": 12,
       "fontFace": "Segoe UI Semibold",
-      "color": "#0F172A"
+      "color": "#E8ECFF"
     },
     "label": {
       "fontSize": 10,
       "fontFace": "Segoe UI",
-      "color": "#475569"
+      "color": "#8E9AC8"
     }
   },
   "visualStyles": {
@@ -41,7 +41,7 @@
           {
             "color": {
               "solid": {
-                "color": "#F1F5F9"
+                "color": "#070B1A"
               }
             },
             "transparency": 0
@@ -56,7 +56,7 @@
             "show": true,
             "color": {
               "solid": {
-                "color": "#FFFFFF"
+                "color": "#121A3A"
               }
             },
             "transparency": 0
@@ -67,7 +67,7 @@
             "show": true,
             "color": {
               "solid": {
-                "color": "#E2E8F0"
+                "color": "#232C5C"
               }
             },
             "radius": 12,
@@ -79,7 +79,7 @@
             "show": true,
             "color": {
               "solid": {
-                "color": "#0F172A"
+                "color": "#000000"
               }
             },
             "position": "Outer",
@@ -88,7 +88,7 @@
             "shadowDistance": 2,
             "shadowBlur": 12,
             "shadowSpread": 0,
-            "transparency": 90
+            "transparency": 60
           }
         ],
         "title": [
@@ -97,7 +97,7 @@
             "fontSize": 13,
             "fontColor": {
               "solid": {
-                "color": "#0F172A"
+                "color": "#E8ECFF"
               }
             },
             "bold": true,
@@ -123,7 +123,7 @@
             "position": "Left",
             "color": {
               "solid": {
-                "color": "#0F52BA"
+                "color": "#22D3EE"
               }
             },
             "width": 5
@@ -136,7 +136,7 @@
             "fontSize": 11,
             "fontColor": {
               "solid": {
-                "color": "#475569"
+                "color": "#8E9AC8"
               }
             }
           }
@@ -157,7 +157,7 @@
             "show": true,
             "fillColor": {
               "solid": {
-                "color": "#13315C"
+                "color": "#17214A"
               }
             }
           },
@@ -165,7 +165,7 @@
             "$id": "hover",
             "fillColor": {
               "solid": {
-                "color": "#1E4A80"
+                "color": "#232C5C"
               }
             }
           },
@@ -173,7 +173,7 @@
             "$id": "selected",
             "fillColor": {
               "solid": {
-                "color": "#0F52BA"
+                "color": "#22D3EE"
               }
             }
           }
@@ -184,7 +184,7 @@
             "fontSize": 11,
             "fontColor": {
               "solid": {
-                "color": "#CBD5E1"
+                "color": "#8E9AC8"
               }
             }
           },
@@ -193,7 +193,7 @@
             "fontSize": 11,
             "fontColor": {
               "solid": {
-                "color": "#FFFFFF"
+                "color": "#070B1A"
               }
             },
             "bold": true
@@ -251,7 +251,7 @@
             "fontSize": 11,
             "fontColor": {
               "solid": {
-                "color": "#475569"
+                "color": "#8E9AC8"
               }
             },
             "bold": false
@@ -283,7 +283,7 @@
             "gridHorizontal": true,
             "gridHorizontalColor": {
               "solid": {
-                "color": "#EEF2F7"
+                "color": "#17214A"
               }
             }
           }
@@ -292,12 +292,12 @@
           {
             "fontColor": {
               "solid": {
-                "color": "#475569"
+                "color": "#8E9AC8"
               }
             },
             "backColor": {
               "solid": {
-                "color": "#F1F5F9"
+                "color": "#070B1A"
               }
             },
             "bold": true

@@ -181,6 +181,21 @@ continuam nativos.
 
 Como o HTML é montado, limites do visual, publicação e armadilhas: [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 
+### Erros, decisões e tempo (diário de bordo)
+
+O que deu errado, como foi percebido e quanto tempo cada etapa levou estão em
+**[docs/diario-de-bordo.md](docs/diario-de-bordo.md)**. Três exemplos:
+
+- **Uma conclusão errada ficou 34 dias publicada:** "o Nordeste responde por 94%
+  do atraso em excesso". Por região a conta fechava; por estado, o Rio de Janeiro
+  sozinho tinha mais excesso que o Nordeste inteiro. A correção ficou visível.
+- **A conferência DAX contra SQL pegou um erro na primeira execução:** em DAX,
+  `BLANK() = FALSE()` é verdadeiro, e 2.965 pedidos sem entrega contavam como
+  atraso.
+- **Um teste de dado pegou distâncias de 20 mil km:** no Postgres,
+  `least(1, null)` devolve 1, e 493 pedidos sem coordenada viravam a volta ao
+  mundo.
+
 Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn, Power BI e Streamlit.**
 
 ---

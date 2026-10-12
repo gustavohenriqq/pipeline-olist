@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "6a6039ca54cc91494ede",
+  "name": "751573f21be4f3104a40",
   "position": {
     "x": 140,
-    "y": 108,
-    "z": 1200,
-    "height": 196,
-    "width": 1764,
-    "tabOrder": 1200
+    "y": 16,
+    "z": 1100,
+    "height": 80,
+    "width": 980,
+    "tabOrder": 1100
   },
   "visual": {
     "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
@@ -23,11 +23,11 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "HTML Cartões Vendedores"
+                  "Property": "HTML Cabeçalho Executivo"
                 }
               },
-              "queryRef": "_Medidas.HTML Cartões Vendedores",
-              "nativeQueryRef": "HTML Cartões Vendedores"
+              "queryRef": "_Medidas.HTML Cabeçalho Executivo",
+              "nativeQueryRef": "HTML Cabeçalho Executivo"
             }
           ]
         }

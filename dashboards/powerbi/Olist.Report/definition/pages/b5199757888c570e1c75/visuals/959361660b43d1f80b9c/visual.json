@@ -1,20 +1,19 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "7219b1a56c1b44b1c04b",
+  "name": "959361660b43d1f80b9c",
   "position": {
-    "x": 606,
-    "y": 250,
-    "z": 8000,
-    "height": 70,
-    "width": 140,
-    "tabOrder": 8000
+    "x": 140,
+    "y": 320,
+    "z": 1300,
+    "height": 744,
+    "width": 1110,
+    "tabOrder": 1300
   },
   "visual": {
-    "visualType": "card",
-    "drillFilterOtherVisuals": true,
+    "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
     "query": {
       "queryState": {
-        "Values": {
+        "content": {
           "projections": [
             {
               "field": {
@@ -24,79 +23,24 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "Δ Pedidos"
+                  "Property": "HTML Receita Mensal"
                 }
               },
-              "queryRef": "_Medidas.Δ Pedidos",
-              "nativeQueryRef": "Δ Pedidos",
-              "displayName": "contra o mês anterior"
+              "queryRef": "_Medidas.HTML Receita Mensal",
+              "nativeQueryRef": "HTML Receita Mensal"
             }
           ]
         }
       }
     },
     "objects": {
-      "labels": [
+      "compatibility": [
         {
           "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "_Medidas"
-                        }
-                      },
-                      "Property": "Cor Δ Pedidos"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "14D"
-                }
-              }
-            },
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "categoryLabels": [
-        {
-          "properties": {
-            "show": {
+            "legacyRendering": {
               "expr": {
                 "Literal": {
                   "Value": "true"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#475569'"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
                 }
               }
             }
@@ -204,6 +148,7 @@
           }
         }
       ]
-    }
+    },
+    "drillFilterOtherVisuals": true
   }
 }

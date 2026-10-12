@@ -48,3 +48,32 @@ def test_visual_html_registrado_no_relatorio():
     pacotes = [p["name"] for p in _ler(RELATORIO / "definition" / "report.json")["resourcePackages"]]
     assert VISUAL_HTML in pacotes
     assert (RELATORIO / "CustomVisuals" / VISUAL_HTML / "package.json").exists()
+
+
+def _medidas_html(pagina: str) -> set[str]:
+    medidas = set()
+    for v in _visuais(pagina):
+        if v["visual"]["visualType"] != VISUAL_HTML:
+            continue
+        for p in v["visual"]["query"]["queryState"]["content"]["projections"]:
+            medidas.add(p["field"]["Measure"]["Property"])
+    return medidas
+
+
+def _tem_visual(pagina: str, tipo: str) -> bool:
+    return any(v["visual"]["visualType"] == tipo for v in _visuais(pagina))
+
+
+def _dentro_da_pagina(pagina: str) -> bool:
+    return all(v["position"]["x"] + v["position"]["width"] <= 1920
+               and v["position"]["y"] + v["position"]["height"] <= 1080 for v in _visuais(pagina))
+
+
+def test_executivo_no_estilo_da_previa():
+    assert {"HTML Menu Executivo", "HTML Cabeçalho Executivo", "HTML Cartões Executivo",
+            "HTML Receita Mensal", "HTML Atraso por Região", "HTML Grupos Top 5"} <= _medidas_html("Executivo")
+    for nativo in ("cardVisual", "card", "areaChart", "lineChart", "tableEx", "textbox"):
+        assert not _tem_visual("Executivo", nativo), nativo
+    assert _tem_visual("Executivo", "slicer")
+    assert _tem_visual("Executivo", "pageNavigator")
+    assert _dentro_da_pagina("Executivo")

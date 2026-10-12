@@ -1,20 +1,19 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "386a770be254356c09d4",
+  "name": "202c84710ec709b35668",
   "position": {
-    "x": 1737,
-    "y": 250,
-    "z": 14000,
-    "height": 70,
-    "width": 140,
-    "tabOrder": 14000
+    "x": 16,
+    "y": 16,
+    "z": 1000,
+    "height": 1048,
+    "width": 104,
+    "tabOrder": 1000
   },
   "visual": {
-    "visualType": "card",
-    "drillFilterOtherVisuals": true,
+    "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
     "query": {
       "queryState": {
-        "Values": {
+        "content": {
           "projections": [
             {
               "field": {
@@ -24,79 +23,24 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "Δ Nota Média"
+                  "Property": "HTML Menu Executivo"
                 }
               },
-              "queryRef": "_Medidas.Δ Nota Média",
-              "nativeQueryRef": "Δ Nota Média",
-              "displayName": "contra o mês anterior"
+              "queryRef": "_Medidas.HTML Menu Executivo",
+              "nativeQueryRef": "HTML Menu Executivo"
             }
           ]
         }
       }
     },
     "objects": {
-      "labels": [
+      "compatibility": [
         {
           "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "_Medidas"
-                        }
-                      },
-                      "Property": "Cor Δ Nota Média"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "14D"
-                }
-              }
-            },
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "categoryLabels": [
-        {
-          "properties": {
-            "show": {
+            "legacyRendering": {
               "expr": {
                 "Literal": {
                   "Value": "true"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#475569'"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
                 }
               }
             }
@@ -204,6 +148,7 @@
           }
         }
       ]
-    }
+    },
+    "drillFilterOtherVisuals": true
   }
 }

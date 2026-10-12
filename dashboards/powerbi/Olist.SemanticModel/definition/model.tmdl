@@ -22,6 +22,7 @@ ref table fato_pedidos
 ref table previsao_atraso
 ref table seguranca_bi
 ref table _Medidas
+ref table dicionario_metricas
 
 ref role Diretoria
 ref role 'Gerente regional'

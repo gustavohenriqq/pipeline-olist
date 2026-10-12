@@ -95,3 +95,40 @@ def test_vendedores_no_estilo_da_previa():
         assert not _tem_visual("Vendedores", nativo), nativo
     assert _tem_visual("Vendedores", "slicer") and _tem_visual("Vendedores", "pageNavigator")
     assert _dentro_da_pagina("Vendedores")
+
+
+def _tem_segmentacao(pagina: str, tabela: str, coluna: str) -> bool:
+    for v in _visuais(pagina):
+        if v["visual"]["visualType"] != "slicer":
+            continue
+        for p in v["visual"]["query"]["queryState"]["Values"]["projections"]:
+            campo = p["field"].get("Column", {})
+            if campo.get("Expression", {}).get("SourceRef", {}).get("Entity") == tabela and campo.get("Property") == coluna:
+                return True
+    return False
+
+
+def _indicadores() -> list[dict]:
+    pasta = RELATORIO / "definition" / "bookmarks"
+    return [_ler(b) for b in pasta.glob("*.bookmark.json")]
+
+
+def test_dicionario_em_todas_as_paginas():
+    for pagina in ("Executivo", "Entrega e risco", "Vendedores"):
+        assert "HTML Dicionário" in _medidas_html(pagina), pagina
+        assert _tem_segmentacao(pagina, "dicionario_metricas", "Métrica"), pagina
+        assert _dentro_da_pagina(pagina), pagina
+        # salvar no Desktop com o painel aberto grava o estado aberto: o relatorio deve abrir fechado
+        painel = [v for v in _visuais(pagina) if "HTML Dicionário" in json.dumps(v, ensure_ascii=False)
+                  or "dicionario_metricas" in json.dumps(v)]
+        assert painel and all(v.get("isHidden") for v in painel), pagina
+
+
+def test_indicadores_do_dicionario_nao_guardam_filtros():
+    """Dois por pagina (aberto e fechado), so de exibicao: abrir o dicionario nao pode desfazer o periodo."""
+    nomes = {b["displayName"] for b in _indicadores()}
+    for pagina in ("Executivo", "Entrega", "Vendedores"):
+        assert {f"Dicionário aberto {pagina}", f"Dicionário fechado {pagina}"} <= nomes
+    for b in _indicadores():
+        if b["displayName"].startswith("Dicionário"):
+            assert b["options"].get("suppressData") is True, b["displayName"]

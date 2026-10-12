@@ -535,6 +535,19 @@ table _Medidas
 		displayFolder: HTML
 		lineageTag: 790b2952-c680-4c33-9db3-ecb9ed8afa49
 
+	/// Painel do dicionario: ate 3 metricas marcadas na segmentacao, sem selecao pede para escolher.
+	measure 'HTML Dicionário' =
+			VAR filtrado = ISFILTERED ( dicionario_metricas[Métrica] )
+			VAR n = COUNTROWS ( dicionario_metricas )
+			VAR t = TOPN ( 3, dicionario_metricas, dicionario_metricas[Ordem], ASC )
+			VAR cartoes = CONCATENATEX ( t, "<div data-metrica='1' style='border:1.4px solid rgba(130,150,255,0.14);border-radius:19.6px;padding:15.4px 18.2px;margin-top:14px;background:rgba(255,255,255,0.03)'><div style='display:flex;align-items:baseline;gap:11.2px'><div style='font-size:19.6px;font-weight:700;color:#E8ECFF'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dicionario_metricas[Métrica], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</div><div style='flex:1'></div><div style='font-size:14px;color:#22D3EE'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dicionario_metricas[Página], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</div></div><div style='font-size:14px;letter-spacing:0.06em;text-transform:uppercase;color:#8E9AC8;margin-top:11.2px'>O que é</div><div style='font-size:16.8px;line-height:1.45;color:#E8ECFF;margin-top:2.8px'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dicionario_metricas[O que é], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</div><div style='font-size:14px;letter-spacing:0.06em;text-transform:uppercase;color:#8E9AC8;margin-top:11.2px'>Cálculo</div><div style='font-size:16.8px;line-height:1.45;color:#E8ECFF;margin-top:2.8px'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dicionario_metricas[Cálculo], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</div><div style='font-size:14px;letter-spacing:0.06em;text-transform:uppercase;color:#8E9AC8;margin-top:11.2px'>Exemplo</div><div style='font-size:16.8px;line-height:1.45;color:#E8ECFF;margin-top:2.8px'>" & SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( dicionario_metricas[Exemplo], "&", "&amp;" ), "<", "&lt;" ), ">", "&gt;" ) & "</div></div>", "", dicionario_metricas[Ordem], ASC )
+			VAR mais = IF ( n > 3, "<div style='font-size:16.1px;color:#FBBF24;margin-top:14px'>e mais " & ( n - 3 ) & " marcadas: o painel mostra até 3 de cada vez.</div>" )
+			VAR pedido = "<div style='font-size:17.5px;line-height:1.5;color:#8E9AC8;margin-top:16.8px'>Escolha uma métrica na busca acima para ver o que ela significa, como é calculada e um exemplo com os números do painel.</div>"
+			RETURN
+			"<div style='font-family:Segoe UI,sans-serif;box-sizing:border-box;background:linear-gradient(160deg,#17214A,#121A3A);border:1.4px solid rgba(130,150,255,0.14);border-radius:25.2px;padding:22.4px 22.4px;height:100vh;display:flex;flex-direction:column;box-shadow:0 33.6px 84px rgba(0,0,0,0.55)'><div style='display:flex;align-items:center;gap:11.2px'><div style='font-size:22.4px;font-weight:700;color:#E8ECFF'>Dicionário de <span style='background:linear-gradient(90deg,#22D3EE,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent'>métricas</span></div><div style='flex:1'></div><div style='width:36.4px;height:36.4px;border-radius:12.6px;display:flex;align-items:center;justify-content:center;background:rgba(130,150,255,0.12);color:#8E9AC8;font-size:22.4px'>×</div></div><div style='font-size:16.1px;color:#8E9AC8;margin-top:2.8px'>Busque e marque até 3 métricas</div><div style='height:86.8px;flex:none'></div><div style='flex:1;overflow:auto'>" & IF ( NOT filtrado || n = 0, pedido, cartoes & mais ) & "</div></div>"
+		displayFolder: HTML
+		lineageTag: b41ae63e-be74-4a73-b343-820ce029006f
+
 	column Coluna
 		isHidden
 		lineageTag: 37c6b28b-c0ed-4d92-a8b3-687101d8ad85

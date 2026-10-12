@@ -6,7 +6,7 @@ Desktop sobe) e compara cada caso de casos.json com o valor de esperado.sql,
 calculado direto nas marts do Postgres local.
 
 Uso (com o Olist.pbip aberto e atualizado no Desktop):
-  .\conferir.ps1                                   # modelo e medidas
+  .\conferir.ps1                                   # modelo, medidas e HTML
   .\conferir.ps1 -Grupos modelo                    # so contagens de linhas
   .\conferir.ps1 -Papel Vendedor                   # RLS e OLS do papel
 

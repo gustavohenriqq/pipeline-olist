@@ -317,9 +317,9 @@ desenho em [docs/specs/2026-10-12-powerbi-html-design.md](docs/specs/2026-10-12-
   anterior tracejado, barras por região e por UF e tabelas com barra por linha.
   Filtros e navegação continuam nativos.
 - **Dicionário de métricas** em todas as páginas, a partir de uma tabela em TMDL.
-- **Conferência do texto:** 20 casos novos checam o que a medida escreve (valores
+- **Conferência do texto:** 33 casos novos checam o que a medida escreve (valores
   tirados do SQL, quantidade de linhas, "sem dados", unidade com filtro de região),
-  somando 41 casos; o escape de texto do banco é checado por teste estrutural.
+  somando 54 casos; o escape de texto do banco é checado por teste estrutural.
 - **Cópia sem RLS para "Publicar na Web"**, gerada por script fora do Git, com o
   roteiro de publicação pela conta de estudante.
 

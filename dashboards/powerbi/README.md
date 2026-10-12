@@ -12,8 +12,8 @@ nenhum número. Tudo versionado em texto: o modelo em **TMDL** e o relatório em
 | Página | O que mostra |
 |---|---|
 | [Visão executiva](../../docs/prints/powerbi-executivo.png) | receita, pedidos e ticket médio com a variação do último mês e mini-gráfico; anéis de % no prazo e nota média; receita por mês contra o mesmo mês do ano anterior (destaque no maior mês); taxa de atraso por região contra a nacional; os 5 maiores grupos de categoria |
-| [Entrega e risco](../../docs/prints/powerbi-entrega-risco.png) | taxa de atraso com a variação em pontos percentuais; pedidos em alerta e receita em risco; atraso por região; atraso em excesso por UF em barras divergentes (RJ no topo, SP no fim da lista); os 50 pedidos em andamento de maior probabilidade de atraso |
-| [Vendedores](../../docs/prints/powerbi-vendedores.png) | receita de itens, itens e taxa de atraso dos itens; receita por grupo de categoria; os 50 vendedores de maior receita com barra em cada linha. É a página do perfil Vendedor |
+| [Entrega e risco](../../docs/prints/powerbi-entrega-risco.png) | taxa de atraso em anel, com a variação em pontos percentuais; pedidos em alerta e receita em risco; atraso por região; atraso em excesso por UF em barras divergentes (RJ no topo, SP no fim da lista); os 50 pedidos em andamento de maior probabilidade de atraso |
+| [Vendedores](../../docs/prints/powerbi-vendedores.png) | receita de itens, itens e taxa de atraso dos itens (em anel); receita por grupo de categoria; os 50 vendedores de maior receita com barra em cada linha. É a página do perfil Vendedor |
 | [Dicionário de métricas](../../docs/prints/powerbi-dicionario.png) | painel lateral em todas as páginas (ícone de livro no menu): busca uma métrica e mostra o que é, como é calculada e um exemplo com os números do painel |
 
 PDF com as três páginas e o dicionário aberto: [docs/prints/powerbi-olist.pdf](../../docs/prints/powerbi-olist.pdf).
@@ -215,17 +215,18 @@ por DAX e compara com o mesmo número calculado em SQL.
 |---|---|---|
 | Linhas de cada tabela | 8 | iguais ao banco |
 | Medidas (receita, ticket, % no prazo, nota, excesso do RJ, acumulado no ano até mar/2018, variações, destaques do último mês, risco) | 13 | diferença abaixo de 0,000001 |
-| HTML e dicionário (texto que a medida deve conter, não conter ou contar, na janela padrão) | 20 | todos ok |
+| HTML e dicionário (texto que a medida deve conter, não conter ou contar, na janela padrão) | 33 | todos ok |
 | Papéis (usuário fora do seed e OLS) | 8 | ok nos três papéis |
 | Usuários do seed e um e-mail fora dele, pelo "Exibir como" | 6 | iguais ao SQL |
 
 Os casos de HTML conferem o que a pessoa lê: "R$ 15,79 Mi" e "99.092" nos
 cartões, 20 pontos no gráfico de receita com nov/2017 em destaque, +660 e -926 no
 excesso por UF, 51 linhas (cabeçalho e 50) nas tabelas, "sem dados" num ano sem
-pedido, eixo e grupos em mil com a região Norte (em milhões apareceria "0,0 Mi")
+pedido em cada uma das 10 medidas de bloco, zero alerta mostrado como 0 (out/2016),
+um mês só com o ponto no centro, eixo e grupos em mil com a região Norte (em milhões apareceria "0,0 Mi")
 e o dicionário sem seleção, com uma e com quatro métricas. Os valores esperados
 saem do SQL, mas a comparação é de texto. A execução padrão roda modelo, medidas
-e HTML (41 casos). O escape do texto do banco é checado por um teste em Python:
+e HTML (54 casos). O escape do texto do banco é checado por um teste em Python:
 nenhuma coluna entra no HTML sem o `SUBSTITUTE` de `&`, `<` e `>`.
 
 O motor local do Desktop não aceita personificar um e-mail que não é conta do

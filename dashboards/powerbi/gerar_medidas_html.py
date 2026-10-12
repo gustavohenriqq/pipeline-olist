@@ -42,7 +42,7 @@ def spark(chave, medida_serie, cor):
         f'VAR mx_{k} = MAXX ( t_{k}, [@v] )',
         f'VAR mn_{k} = MINX ( t_{k}, [@v] )',
         f'VAR pts_{k} = CONCATENATEX ( t_{k}, FORMAT ( ( RANKX ( t_{k}, dim_tempo[ano_mes], , ASC ) - 1 ) * 300 / MAX ( n_{k} - 1, 1 ), "0.0", "en-US" ) & "," & FORMAT ( 42 - DIVIDE ( [@v] - mn_{k}, mx_{k} - mn_{k}, 0.5 ) * 34, "0.0", "en-US" ), " L ", dim_tempo[ano_mes], ASC )',
-        f'VAR spark_{k} = IF ( n_{k} > 1, "<svg viewBox=\'0 0 300 46\' preserveAspectRatio=\'none\' style=\'position:absolute;left:0;bottom:0;width:100%;height:46px\'><defs><linearGradient id=\'g{k}\' x1=\'0\' y1=\'0\' x2=\'0\' y2=\'1\'><stop offset=\'0\' stop-color=\'{cor}\' stop-opacity=\'0.45\'/><stop offset=\'1\' stop-color=\'{cor}\' stop-opacity=\'0\'/></linearGradient></defs><path d=\'M0,46 L " & pts_{k} & " L300,46 Z\' fill=\'url(#g{k})\'/><path d=\'M" & pts_{k} & "\' fill=\'none\' stroke=\'{cor}\' stroke-width=\'2\'/></svg>" )',
+        f'VAR spark_{k} = IF ( n_{k} > 1, "<svg viewBox=\'0 0 300 46\' preserveAspectRatio=\'none\' style=\'position:absolute;left:0;bottom:0;width:100%;height:32px\'><defs><linearGradient id=\'g{k}\' x1=\'0\' y1=\'0\' x2=\'0\' y2=\'1\'><stop offset=\'0\' stop-color=\'{cor}\' stop-opacity=\'0.45\'/><stop offset=\'1\' stop-color=\'{cor}\' stop-opacity=\'0\'/></linearGradient></defs><path d=\'M0,46 L " & pts_{k} & " L300,46 Z\' fill=\'url(#g{k})\'/><path d=\'M" & pts_{k} & "\' fill=\'none\' stroke=\'{cor}\' stroke-width=\'2\'/></svg>" )',
     ]
 
 
@@ -69,6 +69,14 @@ def anel(chave, frac_expr, texto_expr, c1, c2):
             f'<stop offset=\'1\' stop-color=\'{c2}\'/></linearGradient></defs><circle cx=\'39\' cy=\'39\' r=\'31\' fill=\'none\' stroke=\'rgba(130,150,255,0.14)\' stroke-width=\'8\'/>'
             f'<circle cx=\'39\' cy=\'39\' r=\'31\' fill=\'none\' stroke=\'url(#a{chave})\' stroke-width=\'8\' stroke-linecap=\'round\' stroke-dasharray=\'" & FORMAT ( 194.8 * {frac_expr}, "0.0", "en-US" ) & " 195\' transform=\'rotate(-90 39 39)\'/>'
             f'<text x=\'39\' y=\'44\' text-anchor=\'middle\' fill=\'{TEXTO}\' font-size=\'15\' font-weight=\'700\'>" & {texto_expr} & "</text></svg>"')
+
+
+def cartao_anel(rotulo, chave, frac_expr, texto_expr, c1, c2, delta_var=None):
+    """Cartao com o anel a esquerda e o rotulo (e a variacao) a direita."""
+    d = f' & "<div style=\'font-size:11.5px;color:{SUAVE};margin-top:6px\'>" & {delta_var} & "</div>"' if delta_var else ""
+    return (f'"<div style=\'{CARTAO};display:flex;align-items:center;gap:18px\'>" & '
+            + anel(chave, frac_expr, texto_expr, c1, c2)
+            + f' & "<div><div style=\'font-size:12px;color:{SUAVE}\'>{rotulo}</div>"{d} & "</div></div>"')
 
 
 MOEDA_MI = 'IF ( {v} >= 1000000, "R$ " & FORMAT ( {v} / 1000000, "#,0.00" ) & " Mi", "R$ " & FORMAT ( {v}, "#,0.00" ) )'
@@ -119,7 +127,7 @@ for nome, ativo in (("Executivo", 1), ("Entrega", 2), ("Vendedores", 3)):
 GRAD_TXT = f"color:{CIANO}"
 cab = (f"<div style='{FONTE};display:flex;flex-direction:column;justify-content:center;height:100vh;box-sizing:border-box;overflow:hidden'>"
        f"<div style='font-size:26px;font-weight:700;color:{TEXTO};letter-spacing:-0.01em'>{{T}}</div>"
-       f"<div style='font-size:12.5px;color:{SUAVE};margin-top:2px'>{{S}} · \" & [Rótulo do Destaque] & \"</div></div>")
+       f"<div style='font-size:12.5px;color:{SUAVE};margin-top:2px'>{{S}}\" & IF ( NOT ISBLANK ( [Rótulo do Destaque] ), \" · \" & [Rótulo do Destaque] ) & \"</div></div>")
 medidas.append(medida("HTML Cabeçalho Base", [f'"{cab}"'], ["Cabecalho (molde): {T} titulo, {S} subtitulo."], oculta=True))
 for nome, titulo, sub in (
         ("Executivo", f"Visão <span style='{GRAD_TXT}'>executiva</span>", "Receita, volume, prazo e satisfação"),
@@ -154,14 +162,16 @@ linhas = (spark("rec", "Receita", CIANO) + spark("ped", "Pedidos", VIOLETA) + sp
 medidas.append(medida("HTML Cartões Executivo", linhas,
                       ["Cartoes da visao executiva: receita, pedidos e ticket com mini-grafico; aneis de % no prazo e nota."]))
 
-linhas = (spark("atr", "Taxa de Atraso", ROSA) + delta("atr", "Δ Taxa de Atraso", "0.0", " pp", piora_quando_sobe=True)
+linhas = (delta("atr", "Δ Taxa de Atraso", "0.0", " pp", piora_quando_sobe=True)
           + ["VAR tem = NOT ISBLANK ( [Taxa de Atraso] )",
+             # zero alerta num periodo com pedidos e 0, nao "sem dados" (as medidas de risco devolvem BLANK)
+             "VAR tem_ped = NOT ISBLANK ( [Pedidos] )",
              "VAR v_atr = " + ou_sem_dados("[Taxa de Atraso]", 'FORMAT ( [Taxa de Atraso], "0.0%" )'),
-             "VAR v_ale = " + ou_sem_dados("[Pedidos em Alerta]", 'FORMAT ( [Pedidos em Alerta], "#,0" )'),
-             "VAR v_ris = " + ou_sem_dados("[Receita em Risco]", MOEDA_MI.format(v="[Receita em Risco]")),
+             'VAR v_ale = IF ( tem_ped, FORMAT ( [Pedidos em Alerta] + 0, "#,0" ), "sem dados" )',
+             "VAR v_ris = IF ( tem_ped, " + MOEDA_MI.format(v="( [Receita em Risco] + 0 )") + ', "sem dados" )',
              "RETURN",
              linha_flex() + " & "
-             + cartao("Taxa de atraso", "!", ROSA, "rgba(236,72,153,0.16)", "v_atr", "IF ( tem, dt_atr )", "spark_atr") + " & "
+             + cartao_anel("Taxa de atraso", "atr", "COALESCE ( [Taxa de Atraso], 0 )", "v_atr", ROSA, VERM, "IF ( tem, dt_atr )") + " & "
              + cartao("Pedidos em alerta", "◔", VIOLETA, "rgba(139,92,246,0.18)", "v_ale") + " & "
              + cartao("Receita em risco", "R$", CIANO, "rgba(34,211,238,0.16)", "v_ris") + " & \"</div>\""])
 medidas.append(medida("HTML Cartões Entrega", linhas,
@@ -176,14 +186,15 @@ linhas = (spark("rit", "Receita de Itens", CIANO) + delta("rit", "Δ Receita de 
              linha_flex() + " & "
              + cartao("Receita de itens", "R$", CIANO, "rgba(34,211,238,0.16)", "v_rit", "IF ( tem, dt_rit )", "spark_rit") + " & "
              + cartao("Itens", "#", VIOLETA, "rgba(139,92,246,0.18)", "v_ite") + " & "
-             + cartao("Taxa de atraso dos itens", "!", ROSA, "rgba(236,72,153,0.16)", "v_tai") + " & \"</div>\""])
+             + cartao_anel("Taxa de atraso dos itens", "tai", "COALESCE ( [Taxa de Atraso dos Itens], 0 )", "v_tai", ROSA, VERM)
+             + " & \"</div>\""])
 medidas.append(medida("HTML Cartões Vendedores", linhas, ["Cartoes da pagina de vendedores."]))
 
 # --- Grafico de receita -------------------------------------------------------
 titulo_bloco = lambda t, sub="": (f"<div style='font-size:14px;font-weight:600;color:{TEXTO}'>{t}</div>"
                                   + (f"<div style='font-size:11.5px;color:{SUAVE};margin-top:2px'>{sub}</div>" if sub else ""))
 CAIXA = f"<div style='{FONTE};{BLOCO};padding:14px 16px;height:100vh;overflow:hidden'>"
-X = 'FORMAT ( 48 + ( RANKX ( t, dim_tempo[ano_mes], , ASC ) - 1 ) * 690 / MAX ( n - 1, 1 ), "0.0", "en-US" )'
+X = 'FORMAT ( IF ( n = 1, 393, 48 + ( RANKX ( t, dim_tempo[ano_mes], , ASC ) - 1 ) * 690 / ( n - 1 ) ), "0.0", "en-US" )'
 linhas = [
     'VAR t = FILTER ( ADDCOLUMNS ( VALUES ( dim_tempo[ano_mes] ), "@v", [Receita], "@a", [Receita Ano Anterior] ), NOT ISBLANK ( [@v] ) )',
     'VAR n = COUNTROWS ( t )',
@@ -208,7 +219,7 @@ linhas = [
     + "<svg width='100%' height='88%' viewBox='0 0 760 330' preserveAspectRatio='none'><defs>"
     + f"<linearGradient id='ga' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='{CIANO}' stop-opacity='0.45'/><stop offset='1' stop-color='{VIOLETA}' stop-opacity='0'/></linearGradient>"
     + f"<linearGradient id='gl' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='{CIANO}'/><stop offset='1' stop-color='{VIOLETA}'/></linearGradient></defs>"
-    + '" & grade & rotulos & "<path d=\'M48,300 L " & pts & " L738,300 Z\' fill=\'url(#ga)\'/><path d=\'M" & pts & "\' fill=\'none\' stroke=\'url(#gl)\' stroke-width=\'3\'/>" & IF ( COUNTROWS ( ta ) > 1, "<path d=\'M" & ptsa & "\' fill=\'none\' stroke=\'' + ROSA + '\' stroke-width=\'2\' stroke-dasharray=\'6 5\'/>" ) & pontos & "<text x=\'" & pico_x & "\' y=\'" & FORMAT ( 300 - mx / topo * 280 - 14, "0.0", "en-US" ) & "\' text-anchor=\'middle\' fill=\'' + TEXTO + '\' font-size=\'12\' font-weight=\'700\'>" & pico_txt & "</text></svg></div>" )',
+    + '" & grade & rotulos & "" & IF ( n > 1, "<path d=\'M48,300 L " & pts & " L738,300 Z\' fill=\'url(#ga)\'/>" ) & "<path d=\'M" & pts & "\' fill=\'none\' stroke=\'url(#gl)\' stroke-width=\'3\'/>" & IF ( COUNTROWS ( ta ) > 1, "<path d=\'M" & ptsa & "\' fill=\'none\' stroke=\'' + ROSA + '\' stroke-width=\'2\' stroke-dasharray=\'6 5\'/>" ) & pontos & "<text x=\'" & pico_x & "\' y=\'" & FORMAT ( 300 - mx / topo * 280 - 14, "0.0", "en-US" ) & "\' text-anchor=\'middle\' fill=\'' + TEXTO + '\' font-size=\'12\' font-weight=\'700\'>" & pico_txt & "</text></svg></div>" )',
 ]
 medidas.append(medida("HTML Receita Mensal", linhas,
                       ["Receita por mes em area com degrade, ano anterior tracejado e o maior mes em destaque (SVG)."]))
@@ -270,7 +281,8 @@ medidas.append(medida("HTML Pedidos em Risco", linhas,
                       ["Os 50 pedidos em andamento de maior probabilidade de atraso (vermelho a partir de 40%, ambar de 30%)."]))
 
 linhas = [
-    'VAR t = TOPN ( 50, FILTER ( ADDCOLUMNS ( VALUES ( dim_vendedores[vendedor_rotulo] ), "@r", [Receita de Itens], "@i", [Itens], "@t", [Taxa de Atraso dos Itens] ), NOT ISBLANK ( [@r] ) ), [@r], DESC, dim_vendedores[vendedor_rotulo], ASC )',
+    # itens e taxa (com TREATAS) so para os 50 do topo, nao para os ~3 mil vendedores
+    'VAR t = ADDCOLUMNS ( TOPN ( 50, FILTER ( ADDCOLUMNS ( VALUES ( dim_vendedores[vendedor_rotulo] ), "@r", [Receita de Itens] ), NOT ISBLANK ( [@r] ) ), [@r], DESC, dim_vendedores[vendedor_rotulo], ASC ), "@i", [Itens], "@t", [Taxa de Atraso dos Itens] )',
     'VAR mx = MAXX ( t, [@r] )',
     f'VAR linhas = CONCATENATEX ( t, "<tr><td style=\'{TD};white-space:nowrap\'>" & {esc("dim_vendedores[vendedor_rotulo]")} & "</td><td style=\'{TD};width:34%\'><div style=\'display:flex;align-items:center;gap:8px\'><div style=\'{TRILHO}\'><div style=\'width:" & FORMAT ( [@r] / mx * 100, "0.0", "en-US" ) & "%;height:8px;border-radius:6px;background:linear-gradient(90deg,{VIOLETA},{CIANO})\'></div></div><span style=\'white-space:nowrap\'>" & FORMAT ( [@r], "#,0.00" ) & "</span></div></td><td style=\'{TD};text-align:right\'>" & FORMAT ( [@i], "#,0" ) & "</td><td style=\'{TD};text-align:right\'>" & FORMAT ( [@t], "0.0%" ) & "</td></tr>", "", [@r], DESC, dim_vendedores[vendedor_rotulo], ASC )',
     "RETURN",
@@ -314,12 +326,22 @@ medidas.append(medida("HTML Dicionário", linhas,
 texto = open(ARQ, encoding='utf-8', newline='').read()
 crlf = '\r\n' in texto
 texto = texto.replace('\r\n', '\n')
-# o Desktop grava um lineageTag em cada medida; manter o mesmo evita mudanca a toa
-TAGS = dict(re.findall(r"\tmeasure '(HTML [^']+)' =.*\n(?:.*\n)*?\t\tlineageTag: ([0-9a-f-]+)\n", texto))
+# o Desktop grava um lineageTag em cada medida; manter o mesmo evita mudanca a toa.
+# Cada medida e lida sozinha: uma sem etiqueta nao pode herdar a da vizinha.
+TAGS = {}
+for bloco in re.split(r"\n\t(?=measure |column )", texto):
+    nome = re.match(r"measure '(HTML [^']+)' =", bloco)
+    tag = re.search(r"\n\t\tlineageTag: ([0-9a-f-]+)", bloco)
+    if nome and tag:
+        TAGS[nome.group(1)] = tag.group(1)
 if "measure 'HTML " in texto:
     # regera: tira o bloco anterior (do primeiro molde ate a coluna da tabela)
     inicio = texto.index("\t/// Menu lateral (molde)")
     fim = texto.index("\n\tcolumn ")
+    # o Desktop poe medida nova no fim da tabela, dentro deste trecho: nunca apagar
+    alheias = [m for m in re.findall(r"\n\tmeasure '?([^'=\n]+?)'? =", texto[inicio - 1:fim]) if not m.startswith("HTML ")]
+    if alheias:
+        raise SystemExit("Medidas que nao sao HTML no trecho do gerador (mova para antes do molde): " + ", ".join(alheias))
     texto = texto[:inicio].rstrip("\n") + texto[fim:]
 
 # a previa foi desenhada em 1280 px de largura; a pagina do relatorio tem 1920

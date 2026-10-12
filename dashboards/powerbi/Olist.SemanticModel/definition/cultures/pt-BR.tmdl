@@ -77,16 +77,6 @@ cultureInfo pt-BR
 			            "State": "Generated",
 			            "Weight": 0.99
 			          }
-			        },
-			        {
-			          "Mês": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
 			        }
 			      ]
 			    },
@@ -2763,16 +2753,6 @@ cultureInfo pt-BR
 			            },
 			            "Weight": 0.739
 			          }
-			        },
-			        {
-			          "Var. mensal": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
 			        }
 			      ]
 			    },
@@ -3131,16 +3111,6 @@ cultureInfo pt-BR
 			          "δ receita": {
 			            "State": "Generated"
 			          }
-			        },
-			        {
-			          "contra o mês anterior": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
 			        }
 			      ]
 			    },
@@ -3157,16 +3127,6 @@ cultureInfo pt-BR
 			          "δ pedidos": {
 			            "State": "Generated"
 			          }
-			        },
-			        {
-			          "contra o mês anterior": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
 			        }
 			      ]
 			    },
@@ -3182,16 +3142,6 @@ cultureInfo pt-BR
 			        {
 			          "δ ticket médio": {
 			            "State": "Generated"
-			          }
-			        },
-			        {
-			          "contra o mês anterior": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
 			          }
 			        }
 			      ]
@@ -3239,16 +3189,6 @@ cultureInfo pt-BR
 			            },
 			            "Weight": 0.599
 			          }
-			        },
-			        {
-			          "contra o mês anterior": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
 			        }
 			      ]
 			    },
@@ -3264,16 +3204,6 @@ cultureInfo pt-BR
 			        {
 			          "δ nota média": {
 			            "State": "Generated"
-			          }
-			        },
-			        {
-			          "contra o mês anterior": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
 			          }
 			        }
 			      ]

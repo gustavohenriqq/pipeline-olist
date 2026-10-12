@@ -1,20 +1,19 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "60fb476a0ee0578e81bc",
+  "name": "879980f54709df80bee5",
   "position": {
-    "x": 1476,
-    "y": 108,
-    "z": 4000,
-    "height": 80,
-    "width": 420,
-    "tabOrder": 4000
+    "x": 1266,
+    "y": 320,
+    "z": 1400,
+    "height": 364,
+    "width": 638,
+    "tabOrder": 1400
   },
   "visual": {
-    "visualType": "card",
-    "drillFilterOtherVisuals": true,
+    "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
     "query": {
       "queryState": {
-        "Values": {
+        "content": {
           "projections": [
             {
               "field": {
@@ -24,74 +23,24 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "Rótulo do Destaque"
+                  "Property": "HTML Atraso por Região"
                 }
               },
-              "queryRef": "_Medidas.Rótulo do Destaque",
-              "nativeQueryRef": "Rótulo do Destaque",
-              "displayName": "mês de referência dos destaques ▲▼"
+              "queryRef": "_Medidas.HTML Atraso por Região",
+              "nativeQueryRef": "HTML Atraso por Região"
             }
           ]
         }
       }
     },
     "objects": {
-      "labels": [
+      "compatibility": [
         {
           "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#475569'"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "12D"
-                }
-              }
-            },
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "categoryLabels": [
-        {
-          "properties": {
-            "show": {
+            "legacyRendering": {
               "expr": {
                 "Literal": {
                   "Value": "true"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#475569'"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
                 }
               }
             }
@@ -199,6 +148,7 @@
           }
         }
       ]
-    }
+    },
+    "drillFilterOtherVisuals": true
   }
 }

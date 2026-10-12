@@ -1,20 +1,19 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "ce457bdaa74eac9a09ea",
+  "name": "dd2acc7543560732fbbd",
   "position": {
-    "x": 983,
-    "y": 250,
-    "z": 10000,
-    "height": 70,
-    "width": 140,
-    "tabOrder": 10000
+    "x": 140,
+    "y": 16,
+    "z": 1100,
+    "height": 80,
+    "width": 980,
+    "tabOrder": 1100
   },
   "visual": {
-    "visualType": "card",
-    "drillFilterOtherVisuals": true,
+    "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
     "query": {
       "queryState": {
-        "Values": {
+        "content": {
           "projections": [
             {
               "field": {
@@ -24,79 +23,24 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "Δ Ticket Médio"
+                  "Property": "HTML Cabeçalho Executivo"
                 }
               },
-              "queryRef": "_Medidas.Δ Ticket Médio",
-              "nativeQueryRef": "Δ Ticket Médio",
-              "displayName": "contra o mês anterior"
+              "queryRef": "_Medidas.HTML Cabeçalho Executivo",
+              "nativeQueryRef": "HTML Cabeçalho Executivo"
             }
           ]
         }
       }
     },
     "objects": {
-      "labels": [
+      "compatibility": [
         {
           "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "_Medidas"
-                        }
-                      },
-                      "Property": "Cor Δ Ticket Médio"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "14D"
-                }
-              }
-            },
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "categoryLabels": [
-        {
-          "properties": {
-            "show": {
+            "legacyRendering": {
               "expr": {
                 "Literal": {
                   "Value": "true"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#475569'"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
                 }
               }
             }
@@ -204,6 +148,7 @@
           }
         }
       ]
-    }
+    },
+    "drillFilterOtherVisuals": true
   }
 }

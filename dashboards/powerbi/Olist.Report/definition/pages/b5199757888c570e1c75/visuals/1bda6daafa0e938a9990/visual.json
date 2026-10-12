@@ -1,20 +1,19 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "baa56206486e1b8ff295",
+  "name": "1bda6daafa0e938a9990",
   "position": {
-    "x": 229,
-    "y": 250,
-    "z": 6000,
-    "height": 70,
-    "width": 140,
-    "tabOrder": 6000
+    "x": 140,
+    "y": 108,
+    "z": 1200,
+    "height": 196,
+    "width": 1764,
+    "tabOrder": 1200
   },
   "visual": {
-    "visualType": "card",
-    "drillFilterOtherVisuals": true,
+    "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
     "query": {
       "queryState": {
-        "Values": {
+        "content": {
           "projections": [
             {
               "field": {
@@ -24,79 +23,24 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "Δ Receita"
+                  "Property": "HTML Cartões Executivo"
                 }
               },
-              "queryRef": "_Medidas.Δ Receita",
-              "nativeQueryRef": "Δ Receita",
-              "displayName": "contra o mês anterior"
+              "queryRef": "_Medidas.HTML Cartões Executivo",
+              "nativeQueryRef": "HTML Cartões Executivo"
             }
           ]
         }
       }
     },
     "objects": {
-      "labels": [
+      "compatibility": [
         {
           "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "_Medidas"
-                        }
-                      },
-                      "Property": "Cor Δ Receita"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "14D"
-                }
-              }
-            },
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "categoryLabels": [
-        {
-          "properties": {
-            "show": {
+            "legacyRendering": {
               "expr": {
                 "Literal": {
                   "Value": "true"
-                }
-              }
-            },
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#475569'"
-                    }
-                  }
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "9D"
                 }
               }
             }
@@ -204,6 +148,7 @@
           }
         }
       ]
-    }
+    },
+    "drillFilterOtherVisuals": true
   }
 }

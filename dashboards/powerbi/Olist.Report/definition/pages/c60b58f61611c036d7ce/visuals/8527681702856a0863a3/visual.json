@@ -1,6 +1,6 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "f4d2d9f237cebfecd798",
+  "name": "8527681702856a0863a3",
   "position": {
     "x": 140,
     "y": 16,
@@ -23,11 +23,11 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "HTML Cabeçalho Vendedores"
+                  "Property": "HTML Cabeçalho Entrega"
                 }
               },
-              "queryRef": "_Medidas.HTML Cabeçalho Vendedores",
-              "nativeQueryRef": "HTML Cabeçalho Vendedores"
+              "queryRef": "_Medidas.HTML Cabeçalho Entrega",
+              "nativeQueryRef": "HTML Cabeçalho Entrega"
             }
           ]
         }

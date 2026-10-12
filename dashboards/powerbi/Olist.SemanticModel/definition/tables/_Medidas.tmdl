@@ -354,23 +354,23 @@ table _Medidas
 		lineageTag: adca144c-3a97-466d-a2d7-bf61876ba39c
 
 	/// Cabecalho (molde): {T} titulo, {S} subtitulo.
-	measure 'HTML Cabeçalho Base' = "<div style='font-family:Segoe UI,sans-serif;display:flex;flex-direction:column;justify-content:center;height:100vh'><div style='font-size:36.4px;font-weight:700;color:#E8ECFF;letter-spacing:-0.01em'>{T}</div><div style='font-size:17.5px;color:#8E9AC8;margin-top:2.8px'>{S} · " & [Rótulo do Destaque] & "</div></div>"
+	measure 'HTML Cabeçalho Base' = "<div style='font-family:Segoe UI,sans-serif;display:flex;flex-direction:column;justify-content:center;height:100vh;box-sizing:border-box;overflow:hidden'><div style='font-size:36.4px;font-weight:700;color:#E8ECFF;letter-spacing:-0.01em'>{T}</div><div style='font-size:17.5px;color:#8E9AC8;margin-top:2.8px'>{S} · " & [Rótulo do Destaque] & "</div></div>"
 		isHidden
 		displayFolder: HTML
 		lineageTag: ae548730-ad9f-4df5-a301-c9d1865161d1
 
 	/// Cabecalho da pagina Executivo.
-	measure 'HTML Cabeçalho Executivo' = SUBSTITUTE ( SUBSTITUTE ( [HTML Cabeçalho Base], "{T}", "Visão <span style='background:linear-gradient(90deg,#22D3EE,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent'>executiva</span>" ), "{S}", "Receita, volume, prazo e satisfação" )
+	measure 'HTML Cabeçalho Executivo' = SUBSTITUTE ( SUBSTITUTE ( [HTML Cabeçalho Base], "{T}", "Visão <span style='color:#22D3EE'>executiva</span>" ), "{S}", "Receita, volume, prazo e satisfação" )
 		displayFolder: HTML
 		lineageTag: a57f264b-c1ba-4115-9f9c-dd872bc6fcf2
 
 	/// Cabecalho da pagina Entrega.
-	measure 'HTML Cabeçalho Entrega' = SUBSTITUTE ( SUBSTITUTE ( [HTML Cabeçalho Base], "{T}", "Entrega <span style='background:linear-gradient(90deg,#22D3EE,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent'>e risco</span>" ), "{S}", "Atraso por região e UF e pedidos em andamento com maior risco previsto" )
+	measure 'HTML Cabeçalho Entrega' = SUBSTITUTE ( SUBSTITUTE ( [HTML Cabeçalho Base], "{T}", "Entrega <span style='color:#22D3EE'>e risco</span>" ), "{S}", "Atraso por região e UF e pedidos em andamento com maior risco previsto" )
 		displayFolder: HTML
 		lineageTag: 2b53328f-e32e-4c02-891f-1912cf2fe6dd
 
 	/// Cabecalho da pagina Vendedores.
-	measure 'HTML Cabeçalho Vendedores' = SUBSTITUTE ( SUBSTITUTE ( [HTML Cabeçalho Base], "{T}", "<span style='background:linear-gradient(90deg,#22D3EE,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent'>Vendedores</span>" ), "{S}", "No grão de item: exato para cada vendedor" )
+	measure 'HTML Cabeçalho Vendedores' = SUBSTITUTE ( SUBSTITUTE ( [HTML Cabeçalho Base], "{T}", "<span style='color:#22D3EE'>Vendedores</span>" ), "{S}", "No grão de item: exato para cada vendedor" )
 		displayFolder: HTML
 		lineageTag: 8e169fd6-3a64-4393-85d8-84ab6043622e
 
@@ -492,7 +492,7 @@ table _Medidas
 			VAR esc = MAX ( MAXX ( t, ABS ( [@v] ) ), 1 )
 			VAR linhas = CONCATENATEX ( t, "<div style='display:flex;align-items:center;gap:11.2px;font-size:16.1px;margin-top:5.6px;color:#E8ECFF'><span style='width:33.6px'>" & dim_clientes[uf] & "</span><div style='flex:1;height:14px;position:relative'><div style='position:absolute;left:50%;top:-2.8px;width:1.4px;height:19.6px;background:rgba(130,150,255,0.35)'></div><div style='position:absolute;top:0;height:14px;border-radius:5.6px;left:" & FORMAT ( IF ( [@v] >= 0, 50, 50 - ABS ( [@v] ) / esc * 50 ), "0.0", "en-US" ) & "%;width:" & FORMAT ( ABS ( [@v] ) / esc * 50, "0.0", "en-US" ) & "%;background:" & IF ( [@v] > 0, "linear-gradient(90deg,#EC4899,#F87171)", "linear-gradient(90deg,#34D399,#22D3EE)" ) & "'></div></div><span style='width:64.4px;text-align:right'>" & FORMAT ( [@v], "+#,0;-#,0;0" ) & "</span></div>", "", [@v], DESC )
 			RETURN
-			IF ( ISEMPTY ( t ), "<div style='font-family:Segoe UI,sans-serif;color:#8E9AC8;font-size:18.2px;padding:25.2px'>sem dados</div>", "<div style='font-family:Segoe UI,sans-serif;box-sizing:border-box;background:linear-gradient(160deg,#17214A,#121A3A);border:1.4px solid rgba(130,150,255,0.14);border-radius:25.2px;padding:19.6px 22.4px;height:100vh;overflow:hidden'><div style='font-size:19.6px;font-weight:600;color:#E8ECFF'>Atraso em excesso por UF</div><div style='font-size:16.1px;color:#8E9AC8;margin-top:2.8px'>Vermelho: acima do esperado pela taxa nacional</div>" & linhas & "</div>" )
+			IF ( ISEMPTY ( t ), "<div style='font-family:Segoe UI,sans-serif;color:#8E9AC8;font-size:18.2px;padding:25.2px'>sem dados</div>", "<div style='font-family:Segoe UI,sans-serif;box-sizing:border-box;background:linear-gradient(160deg,#17214A,#121A3A);border:1.4px solid rgba(130,150,255,0.14);border-radius:25.2px;padding:19.6px 22.4px;height:100vh;overflow:hidden'><div style='font-size:19.6px;font-weight:600;color:#E8ECFF'>Atraso em excesso por UF</div><div style='font-size:16.1px;color:#8E9AC8;margin-top:2.8px'>Vermelho: acima do esperado pela taxa nacional (role para ver todas)</div><div style='height:calc(100vh - 112px);overflow-y:auto;padding-right:5.6px'>" & linhas & "</div></div>" )
 		displayFolder: HTML
 		lineageTag: f246dddf-ffca-4e26-b3d4-f96f368bd56c
 
@@ -544,7 +544,7 @@ table _Medidas
 			VAR mais = IF ( n > 3, "<div style='font-size:16.1px;color:#FBBF24;margin-top:14px'>e mais " & ( n - 3 ) & " marcadas: o painel mostra até 3 de cada vez.</div>" )
 			VAR pedido = "<div style='font-size:17.5px;line-height:1.5;color:#8E9AC8;margin-top:16.8px'>Escolha uma métrica na busca acima para ver o que ela significa, como é calculada e um exemplo com os números do painel.</div>"
 			RETURN
-			"<div style='font-family:Segoe UI,sans-serif;box-sizing:border-box;background:linear-gradient(160deg,#17214A,#121A3A);border:1.4px solid rgba(130,150,255,0.14);border-radius:25.2px;padding:22.4px 22.4px;height:100vh;display:flex;flex-direction:column;box-shadow:0 33.6px 84px rgba(0,0,0,0.55)'><div style='display:flex;align-items:center;gap:11.2px'><div style='font-size:22.4px;font-weight:700;color:#E8ECFF'>Dicionário de <span style='background:linear-gradient(90deg,#22D3EE,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent'>métricas</span></div><div style='flex:1'></div><div style='width:36.4px;height:36.4px;border-radius:12.6px;display:flex;align-items:center;justify-content:center;background:rgba(130,150,255,0.12);color:#8E9AC8;font-size:22.4px'>×</div></div><div style='font-size:16.1px;color:#8E9AC8;margin-top:2.8px'>Busque e marque até 3 métricas</div><div style='height:86.8px;flex:none'></div><div style='flex:1;overflow:auto'>" & IF ( NOT filtrado || n = 0, pedido, cartoes & mais ) & "</div></div>"
+			"<div style='font-family:Segoe UI,sans-serif;box-sizing:border-box;background:linear-gradient(160deg,#17214A,#121A3A);border:1.4px solid rgba(130,150,255,0.14);border-radius:25.2px;padding:22.4px 22.4px;height:100vh;display:flex;flex-direction:column;box-shadow:0 33.6px 84px rgba(0,0,0,0.55)'><div style='display:flex;align-items:center;gap:11.2px'><div style='font-size:22.4px;font-weight:700;color:#E8ECFF'>Dicionário de <span style='color:#22D3EE'>métricas</span></div><div style='flex:1'></div><div style='width:36.4px;height:36.4px;border-radius:12.6px;display:flex;align-items:center;justify-content:center;background:rgba(130,150,255,0.12);color:#8E9AC8;font-size:22.4px'>×</div></div><div style='font-size:16.1px;color:#8E9AC8;margin-top:2.8px'>Busque e marque até 3 métricas</div><div style='height:86.8px;flex:none'></div><div style='flex:1;overflow:auto'>" & IF ( NOT filtrado || n = 0, pedido, cartoes & mais ) & "</div></div>"
 		displayFolder: HTML
 		lineageTag: b41ae63e-be74-4a73-b343-820ce029006f
 

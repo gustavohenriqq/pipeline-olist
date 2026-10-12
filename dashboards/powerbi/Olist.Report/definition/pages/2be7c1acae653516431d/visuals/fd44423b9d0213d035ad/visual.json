@@ -1,6 +1,6 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
-  "name": "1bda6daafa0e938a9990",
+  "name": "fd44423b9d0213d035ad",
   "position": {
     "x": 140,
     "y": 108,
@@ -23,11 +23,11 @@
                       "Entity": "_Medidas"
                     }
                   },
-                  "Property": "HTML Cartões Executivo"
+                  "Property": "HTML Cartões Vendedores"
                 }
               },
-              "queryRef": "_Medidas.HTML Cartões Executivo",
-              "nativeQueryRef": "HTML Cartões Executivo"
+              "queryRef": "_Medidas.HTML Cartões Vendedores",
+              "nativeQueryRef": "HTML Cartões Vendedores"
             }
           ]
         }

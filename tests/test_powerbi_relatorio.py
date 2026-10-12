@@ -138,3 +138,19 @@ def test_medidas_html_sem_texto_em_degrade():
     """background-clip:text vira um bloco colorido na exportacao para PDF (prints da Etapa 8)."""
     medidas = RELATORIO.parent / "Olist.SemanticModel" / "definition" / "tables" / "_Medidas.tmdl"
     assert "background-clip:text" not in medidas.read_text(encoding="utf-8")
+
+
+def test_gerador_reproduz_as_medidas_html(tmp_path):
+    """Quem editar uma medida HTML direto no TMDL perde a edicao na proxima geracao."""
+    import subprocess
+    import sys
+
+    relativo = Path("dashboards/powerbi/Olist.SemanticModel/definition/tables/_Medidas.tmdl")
+    original = RELATORIO.parents[2] / relativo
+    copia = tmp_path / relativo
+    copia.parent.mkdir(parents=True)
+    copia.write_bytes(original.read_bytes())
+    gerador = RELATORIO.parent / "gerar_medidas_html.py"
+    r = subprocess.run([sys.executable, str(gerador)], cwd=tmp_path, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert copia.read_bytes() == original.read_bytes()

@@ -55,7 +55,13 @@ O download do arquivo é pedido ao dono antes. Se (a) ou (b) falhar, a execuçã
 e volta ao dono com as opções: conta Microsoft gratuita para o login, ou o caminho
 de SVG nativo por DAX.
 
-O `.pbiviz` não é versionado no repositório; o relatório guarda a referência ao
+**Na execução (12/10/2026):** foi usada a edição **Standalone** 2.0.0, não a lite: as
+edições da loja (a Secure, certificada, e a regular) usam o identificador da loja e só carregam como visual
+da organização. A Standalone passou no teste de viabilidade (sem pedir conta, aparece
+no PDF) e fica guardada dentro do relatório, então é versionada, com a licença em
+`dashboards/powerbi/terceiros/`.
+
+No plano original, o `.pbiviz` não seria versionado; o relatório guarda a referência ao
 visual, e o README explica de onde baixá-lo.
 
 ## Revisão de estilo (12/10/2026)

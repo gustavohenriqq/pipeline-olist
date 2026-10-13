@@ -465,10 +465,12 @@ O passo a passo completo de conexão, as páginas sugeridas e os números de con
 
 ---
 
-## 8. Próximos passos
+## 8. Etapas e mudanças de rota
 
-O plano completo, com as decisões descartadas e a evidência por trás de cada
-uma, está no [ROADMAP.md](ROADMAP.md). Resumo:
+As oito etapas do plano estão concluídas. O histórico de cada uma, com as
+decisões descartadas e a evidência por trás delas, está no [ROADMAP.md](ROADMAP.md);
+os erros do caminho e o tempo de cada etapa, no
+[diário de bordo](docs/diario-de-bordo.md). Resumo:
 
 1. **Fundação** (concluída, com o dashboard publicado): ingestão, Postgres, dbt, 74 testes e camada de serviço no Neon.
 2. **Análise do atraso** (concluída): documento com recomendação e número, investigando por que a curva de nota não é monótona.

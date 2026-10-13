@@ -66,3 +66,21 @@ def test_janela_de_comparacao_como_o_power_bi():
     # fim de mes curto vira fim do mes anterior
     assert janela_comparacao(Filtros(d(2018, 1, 1), d(2018, 3, 31)))[2:] == (d(2018, 2, 1), d(2018, 2, 28))
     assert janela_comparacao(Filtros(d(2018, 1, 1), d(2018, 2, 28)))[2:] == (d(2018, 1, 1), d(2018, 1, 31))
+
+
+def test_mes_de_referencia_e_o_ultimo_com_venda_no_periodo():
+    """Como o 'Mês de Referência' do Power BI: o ultimo mes com venda dentro do periodo."""
+    from painel.filtros import janela_comparacao
+    d = date
+    # nov/2016 nao tem pedido: a referencia e out/2016 inteiro contra set/2016 inteiro
+    f = Filtros(d(2016, 9, 1), d(2016, 11, 30))
+    assert mes_referencia(f, d(2016, 10, 30)) == "2016-10"
+    assert janela_comparacao(f, d(2016, 10, 30)) == (d(2016, 10, 1), d(2016, 10, 31), d(2016, 9, 1), d(2016, 9, 30))
+    # ultima venda no mes do fim: a regra dos mesmos dias continua (1 a 15 de agosto contra julho)
+    f = Filtros(d(2018, 1, 1), d(2018, 8, 15))
+    assert janela_comparacao(f, d(2018, 8, 14)) == (d(2018, 8, 1), d(2018, 8, 15), d(2018, 7, 1), d(2018, 7, 15))
+    # periodo dentro de um mes so: a janela nao passa do inicio do periodo
+    f = Filtros(d(2018, 8, 10), d(2018, 9, 20))
+    assert janela_comparacao(f, d(2018, 8, 29)) == (d(2018, 8, 10), d(2018, 8, 31), d(2018, 7, 10), d(2018, 7, 31))
+    # sem venda no periodo: cai no mes do fim, como antes
+    assert mes_referencia(PADRAO, None) == "2018-08"

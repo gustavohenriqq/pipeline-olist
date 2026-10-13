@@ -39,28 +39,34 @@ def valor_br(valor, tipo: str) -> str:
     raise ValueError(f"tipo de valor desconhecido: {tipo}")
 
 
-def _delta(variacao, taxa: bool, piora_quando_sobe: bool, sem_anterior: bool) -> str:
+def _delta(variacao, taxa: bool, piora_quando_sobe: bool, sem_anterior: bool, absoluto: bool = False) -> str:
     if sem_anterior:
         return '<div class="cartao-delta">sem mês anterior</div>'
     if _vazio(variacao):
         return ""
     variacao = float(variacao)
     seta = "▲" if variacao > 0 else "▼" if variacao < 0 else "="
-    numero = f"{numero_br(abs(variacao), 1)} pp" if taxa else f"{numero_br(abs(variacao) * 100, 1)}%"
+    if absoluto:  # nota media: diferenca simples com 2 casas, como o Power BI
+        numero = numero_br(abs(variacao), 2)
+    elif taxa:
+        numero = f"{numero_br(abs(variacao), 1)} pp"
+    else:
+        numero = f"{numero_br(abs(variacao) * 100, 1)}%"
     subiu = variacao > 0
     classe = "" if variacao == 0 else ("piora" if subiu == piora_quando_sobe else "melhora")
     return (f'<div class="cartao-delta {classe}"><b>{seta} {numero}</b> vs. mês anterior</div>')
 
 
 def cartao(rotulo: str, valor: str, icone: str, cor: str, variacao: float | None = None, *,
-           taxa: bool = False, piora_quando_sobe: bool = False, sem_anterior: bool = False) -> str:
+           taxa: bool = False, piora_quando_sobe: bool = False, sem_anterior: bool = False,
+           absoluto: bool = False) -> str:
     cor = cor if cor in CORES else "menta"
     icone = icone if re.fullmatch(r"[a-z0-9_]+", icone or "") else "insights"
     return (f'<div class="cartao cor-{cor}">'
             f'<div class="cartao-icone"><span>{icone}</span></div>'
             f'<div><div class="cartao-rotulo">{escape(rotulo)}</div>'
             f'<div class="cartao-valor">{escape(valor)}</div>'
-            f"{_delta(variacao, taxa, piora_quando_sobe, sem_anterior)}</div></div>")
+            f"{_delta(variacao, taxa, piora_quando_sobe, sem_anterior, absoluto)}</div></div>")
 
 
 def linha_de_cartoes(cartoes: list[str]) -> str:

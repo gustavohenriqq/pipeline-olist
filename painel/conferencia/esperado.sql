@@ -30,6 +30,12 @@ vendedores as (
 ),
 pedidos_dos_itens as (
     select distinct order_id from marts.fato_itens_pedido
+),
+receita_2016 as (
+    select to_char(purchased_at, 'YYYY-MM') as mes, sum(valor_total) as receita
+    from marts.fato_pedidos
+    where purchased_at >= '2016-09-01' and purchased_at < '2016-12-01'
+    group by 1
 )
 select 'taxa_nacional', (select taxa from nacional)::text
 union all select 'taxa_regiao_nordeste',
@@ -47,4 +53,13 @@ union all select 'primeiro_grupo', (select categoria_grupo from grupos order by 
 union all select 'receita_primeiro_grupo', (select max(receita) from grupos)::text
 union all select 'primeiro_vendedor', (select vendedor_rotulo from vendedores order by receita desc, vendedor_rotulo limit 1)
 union all select 'pedidos_em_risco_linhas',
-    least(50, count(*))::text from marts.previsao_atraso where conjunto = 'em_andamento';
+    least(50, count(*))::text from marts.previsao_atraso where conjunto = 'em_andamento'
+-- Destaque com o fim do periodo num mes sem venda (01/09/2016 a 30/11/2016; nov/2016
+-- nao tem pedido na base completa). Como o 'Mes de Referencia' do Power BI: o ultimo
+-- mes com venda no periodo contra o mes anterior a ele.
+union all select 'mes_referencia_2016_09_a_11', (select max(mes) from receita_2016)
+union all select 'delta_receita_2016_09_a_11',
+    ((select receita from receita_2016 where mes = (select max(mes) from receita_2016))
+      / (select receita from receita_2016
+         where mes = to_char(to_date((select max(mes) from receita_2016), 'YYYY-MM') - interval '1 month',
+                             'YYYY-MM')) - 1)::text;

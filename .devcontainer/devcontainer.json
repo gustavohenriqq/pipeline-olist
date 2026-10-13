@@ -17,9 +17,14 @@
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  // Mesmo arquivo que a hospedagem do Streamlit le para o app (a pasta do
+  // agente/app.py vem antes da raiz). O requirements.txt da raiz e o do dbt e da
+  // ingestao, sem o streamlit; e o "pip install streamlit" sem versao instalava a
+  // mais recente, nao a 1.65.0 fixada no agente/requirements.txt.
+  "updateContentCommand": "pip3 install --user -r agente/requirements.txt && echo 'Dependencias do app instaladas'",
   "postAttachCommand": {
-    "server": "streamlit run agente/app.py --server.enableCORS false --server.enableXsrfProtection false"
+    // Sem desligar XSRF e CORS: o app nao recebe upload, e o padrao do Streamlit e o seguro.
+    "server": "streamlit run agente/app.py"
   },
   "portsAttributes": {
     "8501": {

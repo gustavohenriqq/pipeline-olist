@@ -66,6 +66,13 @@ def mostrar(item: dict, compacto: bool = False) -> None:
                 st.code(r.sql, language="sql")
 
 
+def _falha_do_sistema(r: nucleo.Resposta) -> bool:
+    """Sem resposta e sem culpa de quem perguntou: cota ou sobrecarga do modelo, modelo fora
+    do ar, banco caido. Recusa, fora do escopo e SQL que nao saiu depois das tentativas
+    contam: o modelo trabalhou na pergunta (e gastou a cota gratuita)."""
+    return r.tipo in ("cota", "banco") or (r.tipo == "erro" and r.texto == nucleo.FALHA_MODELO)
+
+
 def processar(pergunta: str, contexto: str | None = None) -> None:
     estado = st.session_state
     if len(pergunta) > MAX_PERGUNTA:
@@ -82,16 +89,23 @@ def processar(pergunta: str, contexto: str | None = None) -> None:
     except Exception:  # noqa: BLE001
         st.warning("O banco está acordando; tente de novo em alguns segundos.")
         return
-    estado.perguntas_feitas += 1
+    falhou = False
     try:
         with st.spinner("Consultando os dados..."):
             extra = {"contexto": contexto} if contexto else {}
             resposta = nucleo.responder(pergunta, estado.historico, _cliente(),
                                         lambda sql: banco.executar(conexao, sql), ESQUEMA, **extra)
     except Exception:  # noqa: BLE001 (ultima defesa: nada chega cru na tela)
-        resposta = nucleo.Resposta("erro", "Algo deu errado ao responder; tente de novo.")
+        resposta, falhou = nucleo.Resposta("erro", "Algo deu errado ao responder; tente de novo."), True
     finally:
         conexao.close()
+    # Falha do sistema vira aviso, como o banco acordando acima: nao gasta pergunta do
+    # limite da sessao nem entra na conversa (nem na lista "Nesta conversa").
+    if falhou or _falha_do_sistema(resposta):
+        aviso = st.error if resposta.tipo == "erro" else st.warning
+        aviso(escapar_markdown(resposta.texto))
+        return
+    estado.perguntas_feitas += 1
     estado.conversa.append({"pergunta": pergunta, "resposta": resposta})
     if resposta.sql and resposta.tipo in ("ok", "vazio"):
         estado.historico.append(nucleo.Turno(pergunta, resposta.sql))

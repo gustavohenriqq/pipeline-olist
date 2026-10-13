@@ -170,8 +170,9 @@ cada PR rodava duas vezes, e todo push reconstruía o projeto inteiro.
 
 | Evento | O que roda |
 |---|---|
-| `pull_request` | pytest, ingestão, freshness; `dbt build --select @state:modified` contra o manifest da branch base; validação incremental só se os fatos estiverem na seleção |
+| `pull_request` | pytest, ingestão, freshness; `dbt build --select @state:modified` contra o manifest da branch base; validação incremental se os fatos estiverem na seleção. `dbt build` completo e validação também quando o PR mexe no que o `@state:modified` não enxerga: ingestão, script de validação, macros dos hooks (`metadados`, `previsao_atraso`, `generate_schema_name`), `dbt_project.yml`, `requirements.txt` ou o próprio CI |
 | `push` na `main` | pytest, ingestão, freshness, `dbt build` completo e validação incremental |
+| testes de integração (PR e `main`) | rodam com um plugin (`scripts/pytest_exige_banco.py`) que transforma "Postgres indisponível" em falha: sem banco, o passo fica vermelho em vez de verde com zero testes. Localmente, sem o plugin, os testes continuam sendo pulados sem Docker |
 
 O manifest da base vem de um `git worktree` da branch base com `dbt parse`, que
 não precisa de banco. Um PR que só mexe em documentação, no dashboard ou no Python

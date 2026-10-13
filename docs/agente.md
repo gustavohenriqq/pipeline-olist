@@ -87,7 +87,7 @@ aviso, nunca erro na tela. Cada pergunta abre e fecha a própria conexão: uma
 conexão guardada morre quando o Neon dorme e, compartilhada entre visitantes,
 misturaria transações.
 
-Tudo isso tem teste: 126 testes automáticos (guarda com casos de ataque, checagem
+Tudo isso tem teste: 197 testes automáticos (guarda com casos de ataque, checagem
 de números, gráfico, fluxo com modelo falso, tela com `AppTest`) e testes de
 integração que, no CI, criam o usuário com o mesmo código do Neon e confirmam que
 `DROP`, `INSERT`, leitura fora da lista e consulta longa falham.

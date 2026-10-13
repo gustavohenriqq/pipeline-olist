@@ -5,7 +5,8 @@ name: pipeline-ci
 # Dois modos (docs/confiabilidade.md):
 # - pull_request: roda uma vez por PR e constroi so o que mudou no dbt em
 #   relacao a branch base (state:modified). PR so de docs ou de ML nao
-#   reconstroi nenhum model.
+#   reconstroi nenhum model. Excecao: PR que mexe no painel ou na infra
+#   (ingestao, validacao, hooks do dbt, o proprio CI) faz build completo.
 # - push na main: build completo e validacao incremental, a rede de seguranca
 #   depois do merge.
 # Antes, o push em qualquer branch tambem disparava: cada PR rodava duas vezes.
@@ -101,26 +102,42 @@ jobs:
             echo "fatos=sim" >> "$GITHUB_OUTPUT"
           fi
 
-      # O painel (Etapa 7) le as marts de verdade e confere os numeros contra o
-      # esperado do Power BI: PR que mexe nele precisa das marts inteiras. Na
-      # amostra, o build completo leva menos de um minuto.
+      # O state:modified so enxerga models, seeds, testes e as macros que eles
+      # chamam. Dois grupos de caminhos ficam fora disso e pedem build completo:
+      # - painel: le as marts de verdade e confere os numeros contra o esperado
+      #   do Power BI, entao precisa das marts inteiras;
+      # - infra: ingestao, validacao incremental, hooks do dbt (metadados.sql,
+      #   previsao_atraso.sql), generate_schema_name, dbt_project.yml,
+      #   requirements e o proprio CI. Mudar so isso selecionava zero models, e
+      #   build e validacao so rodavam depois do merge, na main.
+      # Na amostra, o build completo leva menos de um minuto.
       - name: Arquivos alterados fora do dbt (PR)
         if: github.event_name == 'pull_request'
         id: arquivos
         env:
           BASE_REF: ${{ github.base_ref }}
+          PADRAO_PAINEL: '^(painel/|agente/|tests/integracao/test_painel|dashboards/powerbi/conferencia/)'
+          PADRAO_INFRA: '^(ingestion/|scripts/validate_incremental\.py|dbt/dbt_project\.yml|dbt/macros/(metadados|previsao_atraso|generate_schema_name)\.sql|requirements\.txt|\.github/workflows/)'
         run: |
-          if git diff --name-only "origin/$BASE_REF"...HEAD               | grep -qE '^(painel/|agente/|tests/integracao/test_painel|dashboards/powerbi/conferencia/)'; then
+          git diff --name-only "origin/$BASE_REF"...HEAD > "$RUNNER_TEMP/alterados.txt"
+          cat "$RUNNER_TEMP/alterados.txt"
+          if grep -qE "$PADRAO_PAINEL" "$RUNNER_TEMP/alterados.txt"; then
             echo "painel=sim" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -qE "$PADRAO_INFRA" "$RUNNER_TEMP/alterados.txt"; then
+            echo "infra=sim" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -qE "$PADRAO_PAINEL|$PADRAO_INFRA" "$RUNNER_TEMP/alterados.txt"; then
+            echo "completo=sim" >> "$GITHUB_OUTPUT"
           fi
 
       - name: dbt build so do que mudou (PR)
-        if: github.event_name == 'pull_request' && steps.arquivos.outputs.painel != 'sim'
+        if: github.event_name == 'pull_request' && steps.arquivos.outputs.completo != 'sim'
         working-directory: dbt
         run: dbt build --profiles-dir . --select @state:modified --state "$RUNNER_TEMP/estado_base"
 
-      - name: dbt build completo (PR que mexe no painel)
-        if: github.event_name == 'pull_request' && steps.arquivos.outputs.painel == 'sim'
+      - name: dbt build completo (PR que mexe no painel ou na infra)
+        if: github.event_name == 'pull_request' && steps.arquivos.outputs.completo == 'sim'
         working-directory: dbt
         run: dbt build --profiles-dir .
 
@@ -131,18 +148,31 @@ jobs:
         working-directory: dbt
         run: dbt build --profiles-dir .
 
+      # Os testes de integracao pulam com "Postgres indisponivel" quando o banco
+      # nao responde (bom para quem roda local sem Docker). Aqui o plugin
+      # scripts/pytest_exige_banco.py transforma esse skip em falha e exige pelo
+      # menos um teste aprovado: sem ele, banco fora deixava o passo verde.
+
       # Permissoes reais do usuario do agente: le so as marts permitidas, nao
       # escreve, nao passa do tempo. Cria tabelas minimas se o PR nao construiu.
       - name: Testes de integracao do agente (permissoes no banco)
-        run: python -m pytest tests/integracao/test_agente_permissoes.py -q
+        env:
+          PYTHONPATH: scripts
+        run: python -m pytest tests/integracao/test_agente_permissoes.py -q -p pytest_exige_banco
 
       # Numeros do painel contra o esperado.sql do Power BI: so com as marts
-      # inteiras (main, ou PR que mexe no painel). Nunca contra tabela minima.
+      # inteiras (main, ou PR com build completo). Nunca contra tabela minima.
       - name: Numeros do painel contra o Power BI
-        if: github.event_name == 'push' || steps.arquivos.outputs.painel == 'sim'
-        run: python -m pytest tests/integracao/test_painel_numeros.py -q
+        if: github.event_name == 'push' || steps.arquivos.outputs.completo == 'sim'
+        env:
+          PYTHONPATH: scripts
+        run: python -m pytest tests/integracao/test_painel_numeros.py -q -p pytest_exige_banco
 
-      # Na main sempre; no PR, so quando os fatos incrementais estao na selecao.
+      # Na main sempre; no PR, quando os fatos incrementais estao na selecao ou
+      # quando muda a infra (ingestao, hooks de metadados, o proprio script).
       - name: Validar incrementalidade, janela e metadados (banco descartavel)
-        if: github.event_name == 'push' || steps.selecao.outputs.fatos == 'sim'
+        if: >-
+          github.event_name == 'push'
+          || steps.selecao.outputs.fatos == 'sim'
+          || steps.arquivos.outputs.infra == 'sim'
         run: python scripts/validate_incremental.py

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Prévia: Visão executiva</title>
+<style>
+:root{--fundo:#070B1A;--fundo2:#0E1430;--card:#121A3A;--card2:#17214A;--borda:rgba(130,150,255,.14);--texto:#E8ECFF;--suave:#8E9AC8;
+--ciano:#22D3EE;--violeta:#8B5CF6;--rosa:#EC4899;--menta:#34D399;--ambar:#FBBF24;--verm:#F87171}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(circle at 15% 0%,#1B2460 0,transparent 40%),radial-gradient(circle at 100% 100%,#2A1650 0,transparent 45%),var(--fundo);
+color:var(--texto);font-family:"Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;padding:24px}
+.tela{width:1280px;height:720px;display:grid;grid-template-columns:76px 1fr;gap:16px}
+.menu{background:linear-gradient(180deg,#141C44,#0D1330);border:1px solid var(--borda);border-radius:22px;display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:14px}
+.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--ciano),var(--violeta));display:grid;place-items:center;box-shadow:0 0 22px rgba(34,211,238,.45);margin-bottom:10px}
+.item{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:var(--suave)}
+.item.ativo{background:rgba(34,211,238,.14);color:var(--ciano);box-shadow:inset 3px 0 0 var(--ciano)}
+.item svg{width:22px;height:22px}
+.corpo{display:grid;grid-template-rows:58px 128px 1fr;gap:14px}
+.topo{display:flex;align-items:center;justify-content:space-between}
+.topo h1{font-size:26px;font-weight:700;letter-spacing:-.01em}.topo h1 span{background:linear-gradient(90deg,var(--ciano),var(--violeta));-webkit-background-clip:text;color:transparent}
+.topo p{color:var(--suave);font-size:12.5px;margin-top:2px}
+.filtros{display:flex;gap:10px}.pilula{background:var(--card);border:1px solid var(--borda);border-radius:12px;padding:8px 14px;font-size:12.5px;color:var(--suave)}.pilula b{color:var(--texto);font-weight:600}
+.btn{background:linear-gradient(135deg,var(--ciano),var(--violeta));color:#06102A;font-weight:700;border-radius:12px;padding:8px 14px;font-size:12.5px;box-shadow:0 0 18px rgba(139,92,246,.45)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr) 1.15fr;gap:14px}
+.card{background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--borda);border-radius:18px;padding:14px 16px;position:relative;overflow:hidden}
+.rot{font-size:12px;color:var(--suave);display:flex;align-items:center;gap:8px}.ic{width:26px;height:26px;border-radius:9px;display:grid;place-items:center}
+.val{font-size:25px;font-weight:700;margin:6px 0 2px;letter-spacing:-.01em}.delta{font-size:11.5px;color:var(--suave)}.delta b.ruim{color:var(--verm)}.delta b.bom{color:var(--menta)}
+.spark{position:absolute;left:0;bottom:0;width:100%;height:46px;opacity:.9}
+.aneis{display:flex;gap:16px;align-items:center;justify-content:space-around}
+.anel{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--suave)}
+.baixo{display:grid;grid-template-columns:1.65fr 1fr;gap:14px}
+.titulo{font-size:14px;font-weight:600}.sub{font-size:11.5px;color:var(--suave);margin-top:2px}
+.leg{display:flex;gap:14px;font-size:11px;color:var(--suave);margin-top:6px}.leg i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.lado{display:grid;grid-template-rows:1fr 1fr;gap:14px}
+.barra{display:grid;grid-template-columns:96px 1fr 52px;align-items:center;gap:10px;font-size:12px;margin-top:9px}
+.trilho{height:8px;border-radius:6px;background:rgba(130,150,255,.12);overflow:hidden}.trilho div{height:100%;border-radius:6px}
+.num{text-align:right;color:var(--texto);font-variant-numeric:tabular-nums}
+.nota{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--suave)}
+</style></head><body>
+<div class="tela">
+ <nav class="menu">
+  <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06102A" stroke-width="2.6" stroke-linecap="round"><path d="M5 19V11M12 19V5M19 19v-6"/></svg></div>
+  <div class="item ativo" title="Visão executiva"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12l9-8 9 8M5 10v10h14V10"/></svg></div>
+  <div class="item" title="Entrega e risco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 100-4 2 2 0 000 4zM17 19a2 2 0 100-4 2 2 0 000 4z"/></svg></div>
+  <div class="item" title="Vendedores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9l2-5h12l2 5M4 9v11h16V9M4 9h16M9 20v-6h6v6"/></svg></div>
+  <div style="flex:1"></div>
+  <div class="item" title="Dicionário de métricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h11"/></svg></div>
+ </nav>
+ <main class="corpo">
+  <div class="topo">
+   <div><h1>Visão <span>executiva</span></h1><p>Receita, volume, prazo e satisfação · ago/2018 contra o mês anterior</p></div>
+   <div class="filtros"><div class="pilula">Período <b>01/01/2017 a 31/08/2018</b></div><div class="pilula">Região <b>Todas</b></div><div class="btn">Dicionário</div></div>
+  </div>
+  <section class="kpis">
+   <div class="card"><div class="rot"><span class="ic" style="background:rgba(34,211,238,.16);color:var(--ciano)">R$</span>Receita</div>
+    <div class="val">R$ 15,79 Mi</div><div class="delta"><b class="ruim">▼ 5,2%</b> vs. mês anterior</div><svg class="spark" id="s1"></svg></div>
+   <div class="card"><div class="rot"><span class="ic" style="background:rgba(139,92,246,.18);color:var(--violeta)">#</span>Pedidos</div>
+    <div class="val">99.092</div><div class="delta"><b class="bom">▲ 3,5%</b> vs. mês anterior</div><svg class="spark" id="s2"></svg></div>
+   <div class="card"><div class="rot"><span class="ic" style="background:rgba(236,72,153,.16);color:var(--rosa)">≈</span>Ticket médio</div>
+    <div class="val">R$ 159,31</div><div class="delta"><b class="ruim">▼ 8,4%</b> vs. mês anterior</div><svg class="spark" id="s3"></svg></div>
+   <div class="card aneis">
+    <div class="anel"><svg width="78" height="78" id="a1"></svg>% no prazo<span style="font-size:11px"><b style="color:var(--verm)">▼ 2,8 pp</b></span></div>
+    <div class="anel"><svg width="78" height="78" id="a2"></svg>Nota média<span style="font-size:11px"><b style="color:var(--verm)">▼ 0,01</b></span></div>
+   </div>
+  </section>
+  <section class="baixo">
+   <div class="card"><div class="titulo">Receita por mês e no mesmo mês do ano anterior</div>
+    <div class="leg"><span><i style="background:linear-gradient(90deg,var(--ciano),var(--violeta))"></i>Receita</span><span><i style="background:var(--rosa)"></i>Ano anterior</span></div>
+    <svg id="area" width="100%" height="330" viewBox="0 0 760 330"></svg></div>
+   <div class="lado">
+    <div class="card"><div class="titulo">Taxa de atraso por região</div><div class="sub">Linha: média nacional (6,8%)</div><div id="reg"></div></div>
+    <div class="card"><div class="titulo">Receita de itens: 5 maiores grupos</div><div id="grp"></div></div>
+   </div>
+  </section>
+ </main>
+</div>
+<div class="nota">Prévia estática com os números reais da janela padrão. No Power BI, cada bloco vira SVG/HTML gerado por medida DAX; filtros e navegação continuam nativos.</div>
+<script>
+const meses=["2017-01","2017-02","2017-03","2017-04","2017-05","2017-06","2017-07","2017-08","2017-09","2017-10","2017-11","2017-12","2018-01","2018-02","2018-03","2018-04","2018-05","2018-06","2018-07","2018-08"];
+const receita=[137188,286281,432049,412422,586191,502963,584972,668205,720399,769312,1179144,863547,1107302,986909,1155127,1159698,1149782,1022677,1058728,1003308];
+const pedidos=[800,1780,2682,2404,3700,3245,4026,4331,4285,4631,7544,5673,7269,6728,7211,6939,6873,6167,6292,6512];
+const ticket=receita.map((r,i)=>r/pedidos[i]);
+const NS="http://www.w3.org/2000/svg";
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e}
+function grad(svg,id,c1,c2,op){const d=el("defs",{},svg);const g=el("linearGradient",{id,x1:0,y1:0,x2:0,y2:1},d);el("stop",{offset:0,"stop-color":c1,"stop-opacity":op},g);el("stop",{offset:1,"stop-color":c2,"stop-opacity":0},g);return d}
+function spark(id,dados,cor){const s=document.getElementById(id);const w=300,h=46;s.setAttribute('viewBox','0 0 300 46');s.setAttribute('preserveAspectRatio','none');const mx=Math.max(...dados),mn=Math.min(...dados);
+ const pts=dados.map((v,i)=>[i*(w/(dados.length-1)),h-4-(v-mn)/(mx-mn)*(h-12)]);grad(s,id+"g",cor,cor,.45);
+ el("path",{d:"M"+pts.map(p=>p.join(",")).join("L")+`L${w},${h}L0,${h}Z`,fill:`url(#${id}g)`},s);
+ el("path",{d:"M"+pts.map(p=>p.join(",")).join("L"),fill:"none",stroke:cor,"stroke-width":2},s)}
+spark("s1",receita,"#22D3EE");spark("s2",pedidos,"#8B5CF6");spark("s3",ticket,"#EC4899");
+function anel(id,frac,txt,c1,c2){const s=document.getElementById(id);const r=31,c=2*Math.PI*r;const d=el("defs",{},s);const g=el("linearGradient",{id:id+"g"},d);
+ el("stop",{offset:0,"stop-color":c1},g);el("stop",{offset:1,"stop-color":c2},g);
+ el("circle",{cx:39,cy:39,r,fill:"none",stroke:"rgba(130,150,255,.14)","stroke-width":8},s);
+ el("circle",{cx:39,cy:39,r,fill:"none",stroke:`url(#${id}g)`,"stroke-width":8,"stroke-linecap":"round","stroke-dasharray":`${c*frac} ${c}`,transform:"rotate(-90 39 39)",style:"filter:drop-shadow(0 0 6px "+c1+")"},s);
+ const t=el("text",{x:39,y:44,"text-anchor":"middle",fill:"#E8ECFF","font-size":15,"font-weight":700},s);t.textContent=txt}
+anel("a1",.932,"93,2%","#22D3EE","#34D399");anel("a2",4.09/5,"4,09","#8B5CF6","#EC4899");
+// grafico de area
+(function(){const s=document.getElementById("area");const W=760,H=330,L=48,B=300,T=16,mx=1300000;
+ const x=i=>L+i*((W-L-10)/(meses.length-1)),y=v=>B-(v/mx)*(B-T);
+ const d=el("defs",{},s);const g=el("linearGradient",{id:"ga",x1:0,y1:0,x2:0,y2:1},d);el("stop",{offset:0,"stop-color":"#22D3EE","stop-opacity":.45},g);el("stop",{offset:1,"stop-color":"#8B5CF6","stop-opacity":0},g);
+ const gl=el("linearGradient",{id:"gl",x1:0,y1:0,x2:1,y2:0},d);el("stop",{offset:0,"stop-color":"#22D3EE"},gl);el("stop",{offset:1,"stop-color":"#8B5CF6"},gl);
+ [0,.4e6,.8e6,1.2e6].forEach(v=>{el("line",{x1:L,x2:W-10,y1:y(v),y2:y(v),stroke:"rgba(130,150,255,.10)"},s);const t=el("text",{x:L-8,y:y(v)+4,"text-anchor":"end",fill:"#8E9AC8","font-size":11},s);t.textContent=v?("R$ "+(v/1e6).toLocaleString("pt-BR")+" mi"):"0"});
+ meses.forEach((m,i)=>{if(i%2==0){const t=el("text",{x:x(i),y:B+18,"text-anchor":"middle",fill:"#8E9AC8","font-size":10.5},s);t.textContent=m.slice(5)+"/"+m.slice(2,4)}});
+ const pts=receita.map((v,i)=>[x(i),y(v)]);const curva="M"+pts.map(p=>p.join(",")).join("L");
+ el("path",{d:curva+`L${x(meses.length-1)},${B}L${L},${B}Z`,fill:"url(#ga)"},s);
+ el("path",{d:curva,fill:"none",stroke:"url(#gl)","stroke-width":3,style:"filter:drop-shadow(0 0 6px rgba(34,211,238,.6))"},s);
+ const ant=receita.slice(0,8).map((v,i)=>[x(i+12),y(v)]);el("path",{d:"M"+ant.map(p=>p.join(",")).join("L"),fill:"none",stroke:"#EC4899","stroke-width":2,"stroke-dasharray":"6 5"},s);
+ pts.forEach(([a,b],i)=>{if(i>=12){el("circle",{cx:a,cy:b,r:4.5,fill:"#0E1430",stroke:"#8B5CF6","stroke-width":2.5,style:"filter:drop-shadow(0 0 5px #8B5CF6)"},s)}});
+ const [px,py]=pts[10];el("circle",{cx:px,cy:py,r:6,fill:"#22D3EE",style:"filter:drop-shadow(0 0 10px #22D3EE)"},s);
+ const t=el("text",{x:px,y:py-14,"text-anchor":"middle",fill:"#E8ECFF","font-size":12,"font-weight":700},s);t.textContent="nov/17: R$ 1,18 mi";})();
+const reg=[["Nordeste",.1275],["Norte",.0859],["Centro-Oeste",.0652],["Sudeste",.0613],["Sul",.0592]];
+document.getElementById("reg").innerHTML=reg.map(([n,v])=>`<div class="barra"><span>${n}</span><div class="trilho" style="position:relative"><div style="width:${v/.14*100}%;background:${v>.068?'linear-gradient(90deg,#F87171,#EC4899)':'linear-gradient(90deg,#22D3EE,#34D399)'}"></div><span style="position:absolute;left:${.068/.14*100}%;top:-3px;width:2px;height:14px;background:#FBBF24"></span></div><span class="num">${(v*100).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})}%</span></div>`).join("");
+const grp=[["Casa e Decoração",3233006],["Eletrônicos",2201473],["Beleza e Saúde",1884716],["Moda",1716078],["Esporte e Lazer",1152729]];
+document.getElementById("grp").innerHTML=grp.map(([n,v])=>`<div class="barra"><span>${n}</span><div class="trilho"><div style="width:${v/3233006*100}%;background:linear-gradient(90deg,#8B5CF6,#22D3EE)"></div></div><span class="num">${(v/1e6).toLocaleString("pt-BR",{maximumFractionDigits:2})} mi</span></div>`).join("");
+</script></body></html>

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/2.1.0/schema.json",
+  "displayName": "Dicionário aberto Executivo",
+  "name": "dicAbertoExecutivo",
+  "options": {
+    "applyOnlyToTargetVisuals": true,
+    "targetVisualNames": [
+      "ce333d6f489fe53aae67",
+      "3596d1d78b574fcda374",
+      "6b4f4ff39d533cf0d83a"
+    ],
+    "suppressActiveSection": true,
+    "suppressData": true
+  },
+  "explorationState": {
+    "version": "1.0",
+    "activeSection": "b5199757888c570e1c75",
+    "sections": {
+      "b5199757888c570e1c75": {
+        "visualContainers": {
+          "ce333d6f489fe53aae67": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {}
+            }
+          },
+          "3596d1d78b574fcda374": {
+            "singleVisual": {
+              "visualType": "slicer",
+              "objects": {}
+            }
+          },
+          "6b4f4ff39d533cf0d83a": {
+            "singleVisual": {
+              "visualType": "actionButton",
+              "objects": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

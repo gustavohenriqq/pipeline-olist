@@ -56,8 +56,10 @@ O ciclo fecha quando a previsão do modelo aparece no mesmo dashboard que a
 análise usou para achar o problema. O plano completo, incluindo o que foi
 descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 
-> Status: **Etapas 1 a 5 concluídas** no dataset completo, com o dashboard
-> publicado e o relatório do Power BI versionado. `dbt build` com 0 erro (22
+> Status: **Etapas 1 a 8 concluídas** no dataset completo, com o dashboard
+> publicado, o painel web com o agente no ar e o relatório do Power BI
+> versionado e redesenhado em HTML (sem link público: a instituição da conta de
+> estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (22
 > models, 1 seed e 93 testes, 3 deles avisos propositais), e cada execução fica
 > registrada no próprio banco. No CI,
 > cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
@@ -140,7 +142,8 @@ Como funciona, defesas, avaliação e limites: [docs/agente.md](docs/agente.md).
 
 ### Painel web com o agente (Etapa 7)
 
-O Power BI não é publicado (publicar exige conta corporativa), então as três
+O Power BI não tem link público ("Publicar na Web" depende do administrador da
+conta, e a instituição da conta de estudante bloqueia o recurso), então as três
 páginas dele foram para o mesmo app público do agente:
 **[Painel Olist](https://painel-olist.streamlit.app/)**, em HTML e CSS, tema escuro
 ou claro, com o agente abrindo ao lado do painel ("Tire sua dúvida") e já sabendo
@@ -155,6 +158,47 @@ a página e os filtros da tela.
 - **Um link reproduz a visão:** filtros e tema ficam no endereço.
 
 Páginas, garantias e limites: [docs/painel-web.md](docs/painel-web.md).
+
+### Power BI desenhado em HTML e CSS (Etapa 8)
+
+O relatório do Power BI ganhou o mesmo desenho do painel web, feito dentro dele:
+cada bloco é HTML e CSS (com gráficos em SVG) **gerado por uma medida DAX** e
+desenhado pelo visual HTML Content. Filtros, navegação e o painel do dicionário
+continuam nativos.
+
+![Relatório no Power BI Service: filtro de região, navegação pelo menu, dicionário de métricas e vendedores](docs/prints/powerbi.gif)
+
+*Gravado no Power BI Service, no workspace pessoal da conta de estudante.*
+
+- **Nenhum número novo:** o HTML só formata as medidas que já existiam, e 34 casos
+  novos na conferência checam o texto que a pessoa lê ("R$ 15,79 Mi", +660 no RJ,
+  50 linhas na tabela de risco, "sem dados" num ano vazio, eixo em mil com filtro
+  de região, zero alerta mostrado como 0), com os valores tirados do SQL. Ao todo, 55 casos.
+- **Dicionário de métricas** em todas as páginas: tabela calculada em TMDL, busca
+  nativa e indicadores que abrem o painel sem desfazer o período escolhido.
+- **Gerado e testado:** as 19 medidas saem de um script versionado, e um teste
+  falha se alguém editar o TMDL à mão e divergir do gerador.
+- **Publicação na web por uma cópia sem RLS:** "Publicar na Web" não aceita papéis,
+  então um script gera a cópia pública fora do Git; o relatório versionado
+  continua com RLS e OLS. O relatório está publicado no workspace pessoal da conta
+  de estudante, mas o link aberto ficou bloqueado pelo administrador da instituição.
+
+Como o HTML é montado, limites do visual, publicação e armadilhas: [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
+
+### Erros, decisões e tempo (diário de bordo)
+
+O que deu errado, como foi percebido e quanto tempo cada etapa levou estão em
+**[docs/diario-de-bordo.md](docs/diario-de-bordo.md)**. Três exemplos:
+
+- **Uma conclusão errada ficou 34 dias publicada:** "o Nordeste responde por 94%
+  do atraso em excesso". Por região a conta fechava; por estado, o Rio de Janeiro
+  sozinho tinha mais excesso que o Nordeste inteiro. A correção ficou visível.
+- **A conferência DAX contra SQL pegou um erro na primeira execução:** em DAX,
+  `BLANK() = FALSE()` é verdadeiro, e 2.965 pedidos sem entrega contavam como
+  atraso.
+- **Um teste de dado pegou distâncias de 20 mil km:** no Postgres,
+  `least(1, null)` devolve 1, e 493 pedidos sem coordenada viravam a volta ao
+  mundo.
 
 Stack: **Python, SQL, dbt, PostgreSQL, Docker, scikit-learn, Power BI e Streamlit.**
 
@@ -409,7 +453,7 @@ python scripts/publicar_marts.py                # espelha as marts no Neon
 O passo a passo completo de conexão, as páginas sugeridas e os números de conferência estão em [dashboards/README.md](dashboards/README.md).
 
 - **Looker Studio (público):** **[Visão Geral Comercial](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)**. Cards, evolução de vendas, taxa de atraso por região, receita por categoria, distribuição das notas e mapa de receita por estado, todos conferidos contra o banco. A configuração de cada componente e as armadilhas do Looker encontradas no caminho estão em [dashboards/README.md](dashboards/README.md).
-- **Power BI (versionado, não publicado):** relatório executivo em três páginas com DAX de inteligência de tempo, RLS dinâmico por região e vendedor e OLS sobre os dados do cliente. Consome o star schema, não as OBTs. Projeto, prints e PDF em [dashboards/powerbi/](dashboards/powerbi/README.md).
+- **Power BI (versionado):** relatório executivo em três páginas com DAX de inteligência de tempo, RLS dinâmico por região e vendedor e OLS sobre os dados do cliente, desenhado em HTML e CSS gerados por medidas DAX e com um dicionário de métricas. Consome o star schema, não as OBTs. Projeto, prints, PDF e roteiro de publicação em [dashboards/powerbi/](dashboards/powerbi/README.md).
 
 [![Visão Geral Comercial no Looker Studio](docs/prints/visao-geral-comercial.png)](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7)
 
@@ -417,7 +461,7 @@ O passo a passo completo de conexão, as páginas sugeridas e os números de con
 
 ![Visão executiva no Power BI](docs/prints/powerbi-executivo.png)
 
-*Visão executiva do Power BI, na mesma janela. As outras páginas: [Entrega e risco](docs/prints/powerbi-entrega-risco.png) e [Vendedores](docs/prints/powerbi-vendedores.png).*
+*Visão executiva do Power BI, na mesma janela. As outras páginas: [Entrega e risco](docs/prints/powerbi-entrega-risco.png), [Vendedores](docs/prints/powerbi-vendedores.png) e o [dicionário de métricas](docs/prints/powerbi-dicionario.png).*
 
 ---
 
@@ -433,7 +477,7 @@ uma, está no [ROADMAP.md](ROADMAP.md). Resumo:
 5. **Power BI avançado** (concluída): DAX de inteligência de tempo, RLS dinâmico por região e vendedor e OLS, conferidos contra o SQL. Detalhes em [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 6. **Agente de IA** (concluída): pergunta em português vira SQL nas marts, num usuário só de leitura, com checagem dos números da resposta. App público em [painel-olist.streamlit.app](https://painel-olist.streamlit.app/); detalhes em [docs/agente.md](docs/agente.md).
 7. **Painel web com o agente** (concluída): as três páginas do Power BI no app público, com os números conferidos contra o mesmo SQL do Power BI e o agente ao lado. Detalhes em [docs/painel-web.md](docs/painel-web.md).
-8. **HTML e CSS dentro do Power BI** (planejada): o relatório desenhado em HTML por medida DAX, com desenho próprio.
+8. **HTML e CSS dentro do Power BI** (concluída; sem link público, bloqueado pela instituição): o relatório desenhado em HTML e SVG por medidas DAX, com dicionário de métricas e conferência do texto contra o SQL. Detalhes em [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 
 Três mudanças de rota, todas por evidência nos dados:
 

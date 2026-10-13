@@ -1,29 +1,86 @@
-# Power BI: relatório executivo (Etapa 5)
+# Power BI: relatório executivo (Etapas 5 e 8)
 
 Relatório em três páginas sobre o star schema das marts, com DAX de inteligência
 de tempo, RLS dinâmico por região e por vendedor e OLS sobre os dados do cliente.
-Tudo versionado em texto: o modelo em **TMDL** e o relatório em **PBIR**, dentro de
-um projeto **PBIP**. Nada é publicado no Power BI Service; o PDF e os prints estão
-em `docs/prints/`.
+Na Etapa 8 o desenho inteiro passou a ser **HTML e CSS gerados por medidas DAX**
+(cartões, anéis, gráficos em SVG, tabelas e um dicionário de métricas), sem mudar
+nenhum número. Tudo versionado em texto: o modelo em **TMDL** e o relatório em
+**PBIR**, dentro de um projeto **PBIP**. O PDF e os prints estão em `docs/prints/`.
 
-![Visão executiva](../../docs/prints/powerbi-executivo.png)
+![Relatório no Power BI Service](../../docs/prints/powerbi.gif)
+
+*Gravado no Power BI Service: filtro de região, navegação pelo menu, o livro abrindo
+o dicionário e a busca de métricas.*
 
 | Página | O que mostra |
 |---|---|
-| [Visão executiva](../../docs/prints/powerbi-executivo.png) | receita, pedidos, ticket médio, % no prazo e nota, cada um com a variação do último mês; receita por mês contra o mesmo mês do ano anterior; placar mensal |
-| [Entrega e risco](../../docs/prints/powerbi-entrega-risco.png) | taxa de atraso por região contra a nacional; atraso em excesso por UF (RJ no topo); pedidos em andamento por probabilidade de atraso; pedidos em alerta e receita em risco |
-| [Vendedores](../../docs/prints/powerbi-vendedores.png) | receita de itens por grupo de categoria e por vendedor, com a taxa de atraso de cada um. É a página do perfil Vendedor |
+| [Visão executiva](../../docs/prints/powerbi-executivo.png) | receita, pedidos e ticket médio com a variação do último mês e mini-gráfico; anéis de % no prazo e nota média; receita por mês contra o mesmo mês do ano anterior (destaque no maior mês); taxa de atraso por região contra a nacional; os 5 maiores grupos de categoria |
+| [Entrega e risco](../../docs/prints/powerbi-entrega-risco.png) | taxa de atraso em anel, com a variação em pontos percentuais; pedidos em alerta e receita em risco; atraso por região; atraso em excesso por UF em barras divergentes (RJ no topo, SP no fim da lista); os 50 pedidos em andamento de maior probabilidade de atraso |
+| [Vendedores](../../docs/prints/powerbi-vendedores.png) | receita de itens, itens e taxa de atraso dos itens (em anel); receita por grupo de categoria; os 50 vendedores de maior receita com barra em cada linha. É a página do perfil Vendedor |
+| [Dicionário de métricas](../../docs/prints/powerbi-dicionario.png) | painel lateral em todas as páginas (ícone de livro no menu): busca uma métrica e mostra o que é, como é calculada e um exemplo com os números do painel |
 
-PDF com as três páginas: [docs/prints/powerbi-olist.pdf](../../docs/prints/powerbi-olist.pdf).
+PDF com as três páginas e o dicionário aberto: [docs/prints/powerbi-olist.pdf](../../docs/prints/powerbi-olist.pdf).
 
-**Visual.** Faixa azul-marinho com navegação entre as páginas, cartões com barra de
-destaque, cantos arredondados e sombra leve, nas cores do dashboard do Looker. A
-cor só aparece quando diz algo: ▲ verde e ▼ vermelho na variação do último mês
-(na taxa de atraso, subir é vermelho), atraso em excesso acima da taxa nacional
-em vermelho e probabilidade de atraso com fundo âmbar (30%+) ou vermelho (40%+).
-Quase todo o estilo fica no tema (`tema-olist.json`), não em cada visual. No
-Desktop, em modo de edição, o navegador de páginas responde a Ctrl + clique; no
-modo de leitura e no PDF, a um clique.
+**Visual.** Fundo azul-marinho, blocos com degradê e borda fina, destaque em ciano e
+violeta, mesma paleta do painel web. A cor só aparece quando diz algo: ▲ verde e
+▼ vermelho na variação do último mês (na taxa de atraso, subir é vermelho), barras
+de região acima da taxa nacional em vermelho, atraso em excesso acima do esperado
+em rosa e vermelho e probabilidade de atraso com fundo âmbar (30%+) ou vermelho
+(40%+). Segmentações, navegação e botões continuam nativos, por cima do HTML: o
+menu lateral é desenhado em HTML e um navegador de páginas invisível fica sobre os
+ícones. No Desktop, em modo de edição, navegador e botões respondem a Ctrl +
+clique; no modo de leitura e no Service, a um clique.
+
+## HTML por DAX (Etapa 8)
+
+Cada bloco da página é um visual **HTML Content** com uma medida só (pasta `HTML`
+de `_Medidas`, 19 medidas). A medida monta o HTML como texto: `FORMAT` para os
+números, `CONCATENATEX` para linhas de tabela e barras, `RANKX` para a posição de
+cada mês no SVG. Os números vêm das medidas que já existiam (`[Receita]`,
+`[Taxa de Atraso]`, `[Δ Receita]`...), nunca recalculados, então a conferência
+continua valendo. Dois moldes ocultos (`HTML Menu Base`, `HTML Cabeçalho Base`)
+evitam repetir o menu e o cabeçalho nas três páginas.
+
+**Por que assim.** Os visuais nativos não fazem anel com degradê, mini-gráfico
+dentro do cartão nem tabela com barra por linha. Um visual próprio em TypeScript
+faria, mas sairia do Power BI (outro projeto, outro build); HTML por DAX fica no
+modelo, versionado e testável como qualquer medida.
+
+**O visual.** HTML Content 2.0.0 na edição **Standalone**, importada de arquivo e
+guardada dentro do relatório (`Olist.Report/CustomVisuals/`). As edições da loja
+usam o identificador da loja e só carregam como visual da organização, o que pede
+um administrador. Origem e licença (MIT) em [terceiros/](terceiros/README.md). Se
+o visual sumir, importe o `HTML-Content-Standalone.2.0.0.pbiviz` em Visualizações
+> ... > Importar um visual de um arquivo.
+
+**Limites que valem para quem for mexer:**
+
+- **Sem JavaScript.** O visual remove scripts; tudo que é interativo (filtros, abas,
+  painel do dicionário) é nativo do Power BI.
+- **Nada carregado de fora.** Ícones são SVG escritos na própria medida; fonte é a
+  do sistema.
+- **Texto escapado.** Rótulos que vêm do banco (vendedor, categoria, texto do
+  dicionário) passam por `SUBSTITUTE` de `&`, `<` e `>` antes de entrar no HTML.
+- **Coordenada de SVG com ponto.** `FORMAT(x, "0.0", "en-US")`: na cultura pt-BR o
+  separador seria vírgula e o SVG quebraria.
+- **Medida grande é difícil de ler.** As 19 medidas são geradas por um script e
+  ficam com um comentário `///` cada; mude a medida pelo gerador, nunca direto no
+  TMDL (um teste falha se os dois divergirem).
+
+## Dicionário de métricas
+
+Tabela `dicionario_metricas`, calculada com `DATATABLE` no próprio TMDL (texto
+versionado, uma linha por métrica: `Métrica`, `O que é`, `Cálculo`, `Exemplo`,
+`Página`). Não se relaciona com nada e não entra no RLS. Os exemplos são os
+números da janela padrão, conferidos contra o SQL.
+
+Em cada página, o ícone de livro no pé do menu abre o painel: segmentação com
+busca na coluna `Métrica` (várias marcadas sem Ctrl) e o visual `HTML Dicionário`,
+que mostra até 3 métricas como cartões ("e mais N" acima disso; sem seleção, pede
+para escolher). Abrir e fechar são dois **indicadores por página**, aplicados só
+aos visuais do painel e **sem dados** (`suppressData`): abrir o dicionário não
+desfaz o período escolhido. O relatório é salvo com o painel fechado, e um teste
+garante isso.
 
 ## Como abrir
 
@@ -52,12 +109,18 @@ obrigatória: não aceite o aviso de conexão sem criptografia.
 Olist.pbip
 Olist.SemanticModel/definition/   modelo em TMDL
   expressions.tmdl                parâmetros de conexão
-  tables/                         uma tabela por arquivo (Import, Power Query)
+  tables/                         uma tabela por arquivo (Import, Power Query);
+                                  dicionario_metricas é calculada (DATATABLE)
   relationships.tmdl              7 relações, todas um para muitos
   roles/                          papéis de RLS e OLS
 Olist.Report/definition/          relatório em PBIR (páginas e visuais em JSON)
-Olist.Report/StaticResources/     tema nas cores do dashboard do Looker
+  bookmarks/                      indicadores que abrem e fecham o dicionário
+Olist.Report/CustomVisuals/       visual HTML Content (Standalone), guardado no relatório
+Olist.Report/StaticResources/     tema na paleta do painel web
+gerar_medidas_html.py             gera as 19 medidas HTML em _Medidas.tmdl
+gerar_versao_publica.ps1          cópia sem RLS para "Publicar na Web" (em publico/, fora do Git)
 conferencia/                      teste automático do modelo contra o SQL
+terceiros/                        origem e licença do visual HTML Content
 ```
 
 ## Modelo
@@ -80,17 +143,18 @@ Segurança).
 
 ## Medidas
 
-30 medidas na tabela `_Medidas`, em pastas: Vendas, Tempo, Entrega, Satisfação,
-Risco, Vendedores e Destaques, mais 10 medidas de cor ocultas (pasta Cores), que
-devolvem o hex usado na formatação condicional. Cada uma tem descrição no próprio
-modelo. Pontos que valem a leitura:
+30 medidas de número na tabela `_Medidas`, em pastas: Vendas, Tempo, Entrega,
+Satisfação, Risco, Vendedores e Destaques, mais 10 medidas de cor ocultas (pasta
+Cores, da Etapa 5) e as 19 medidas de desenho da pasta HTML (Etapa 8, ver acima).
+Cada uma tem descrição no próprio modelo. Pontos que valem a leitura:
 
 - **`Atrasos` usa `==`, não `=`.** Em DAX, `BLANK() = FALSE()` é verdadeiro: com `=`,
   os 2.965 pedidos sem entrega entravam como atraso (9.500 em vez de 6.535), e o %
   no prazo caía de 93,2% para 90,2%. A conferência pegou na primeira execução.
 - **`Taxa Nacional de Atraso`** tira o filtro de cliente com `REMOVEFILTERS`, e
-  `Atraso em Excesso` compara cada recorte com ela. O RJ fica em +659, o mesmo
-  número da análise da Etapa 2.
+  `Atraso em Excesso` compara cada recorte com ela. O RJ fica em +659 na base
+  inteira, o mesmo número da análise da Etapa 2 (+660 na janela padrão em que o
+  relatório abre, e SP em -926).
 - **`Variação Mensal %`** de jan/2017 dá +69.127,8%: dez/2016 teve um único pedido
   (R$ 19,62). O número é real e o título da tabela explica. Uma versão que
   deixava em branco o mês cujo anterior está fora do período foi descartada: com
@@ -154,8 +218,19 @@ por DAX e compara com o mesmo número calculado em SQL.
 |---|---|---|
 | Linhas de cada tabela | 8 | iguais ao banco |
 | Medidas (receita, ticket, % no prazo, nota, excesso do RJ, acumulado no ano até mar/2018, variações, destaques do último mês, risco) | 13 | diferença abaixo de 0,000001 |
+| HTML e dicionário (texto que a medida deve conter, não conter ou contar, na janela padrão) | 34 | todos ok |
 | Papéis (usuário fora do seed e OLS) | 8 | ok nos três papéis |
 | Usuários do seed e um e-mail fora dele, pelo "Exibir como" | 6 | iguais ao SQL |
+
+Os casos de HTML conferem o que a pessoa lê: "R$ 15,79 Mi" e "99.092" nos
+cartões, 20 pontos no gráfico de receita com nov/2017 em destaque, +660 e -926 no
+excesso por UF, 51 linhas (cabeçalho e 50) nas tabelas, "sem dados" num ano sem
+pedido em cada uma das 10 medidas de bloco, zero alerta mostrado como 0 (out/2016),
+um mês só com o ponto no centro, eixo e grupos em mil com a região Norte (em milhões apareceria "0,0 Mi")
+e o dicionário sem seleção, com uma e com quatro métricas. Os valores esperados
+saem do SQL, mas a comparação é de texto. A execução padrão roda modelo, medidas
+e HTML (55 casos). O escape do texto do banco é checado por um teste em Python:
+nenhuma coluna entra no HTML sem o `SUBSTITUTE` de `&`, `<` e `>`.
 
 O motor local do Desktop não aceita personificar um e-mail que não é conta do
 Windows, então os usuários do seed são conferidos pelo "Exibir como". O
@@ -165,6 +240,46 @@ O relatório abre com a janela de jan/2017 a ago/2018, a mesma do Looker, e nela
 os cartões mostram 99.092 pedidos e R$ 15,79 mi, conferidos contra o SQL da
 janela. Sem a janela, os totais são os da conferência: 99.441 pedidos e
 R$ 15,84 mi.
+
+## Publicação
+
+**"Publicar na Web" não aceita modelo com RLS.** O relatório versionado continua
+com os papéis e o OLS; o que vai para a web é uma cópia sem eles, gerada por
+script numa pasta fora do Git:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File dashboards/powerbi/gerar_versao_publica.ps1
+```
+
+O script copia `Olist.pbip`, o relatório e o modelo (com o cache de dados
+`.pbi/cache.abf`, para abrir sem atualizar) para `dashboards/powerbi/publico/`,
+apaga `definition/roles` e tira as linhas `ref role` do `model.tmdl`. Por segurança,
+recusa destino que contenha a origem e só apaga uma pasta que ele mesmo gerou
+(marcador `.gerado-por-gerar_versao_publica`). Testes rodam o script de verdade e
+conferem que a cópia não tem papel e que tabelas e relatório são idênticos.
+A tabela `seguranca_bi` vai junto: só tem e-mails fictícios.
+
+**Roteiro de publicação (feito pelo dono, pela conta de estudante):**
+
+1. Gere a cópia com o comando acima.
+2. No Power BI Desktop, entre com a **conta de estudante** (nunca a de trabalho:
+   o relatório ficaria no ambiente da empresa e o link sairia em nome dela).
+3. Abra `dashboards/powerbi/publico/Olist.pbip` e confira em Modelagem >
+   Gerenciar funções que não há nenhum papel.
+4. Página Inicial > Publicar > **Meu workspace**.
+5. No Service, abra o relatório: Arquivo > Inserir relatório > **Publicar na Web
+   (público)** e copie o link.
+
+Cuidados: "Publicar na Web" deixa o relatório aberto para qualquer pessoa, sem
+login, e é indexável; aqui os dados são um dataset público, mas em empresa isso
+quase nunca é permitido. O administrador do ambiente de estudante precisa
+permitir o recurso. **Foi o que aconteceu (12/10/2026):** o relatório subiu para o
+workspace pessoal, mas o Service respondeu "Entre em contato com o administrador
+para habilitar a criação de código de inserção". A Etapa 8 fechou sem link público,
+com o GIF gravado no Service no lugar. Lá, os botões e indicadores funcionam com um
+clique (o livro abre o dicionário, o × fecha), o que o Desktop não deixa testar. O
+relatório publicado é um retrato: a base é estática e não há atualização
+agendada (o Service não alcança o Postgres local).
 
 ## Armadilhas encontradas
 
@@ -180,3 +295,26 @@ R$ 15,84 mi.
   `entregue_no_prazo` mostrar a interseção, não o total.
 - **Exportar PDF sob "Exibir como"** gera uma imagem cortada da tela. Os prints
   saem do PDF exportado sem papel nenhum.
+
+Da Etapa 8 (HTML Content no Desktop):
+
+- **A exportação para PDF só desenha o HTML da página aberta,** e na escala do
+  zoom da tela: com 46% de zoom a página sai num canto, reduzida. Os prints saem
+  um por exportação, com a página aberta e zoom de 100% ("Tamanho real"), e o PDF
+  versionado junta as quatro imagens.
+- **A exportação guarda cache por visual.** Depois de mudar uma medida HTML, o PDF
+  ainda trazia o desenho antigo, mesmo com a tela certa. Dar um nome novo à pasta
+  do visual força o redesenho.
+- **Texto em degradê (`background-clip:text`) sai como um bloco colorido** no
+  PDF. O destaque do título é ciano sólido, e um teste impede a volta.
+- **Bloco com `height:100vh` sem `overflow:hidden`** ganha uma barra de rolagem
+  fina na borda.
+- **Medida nova aparece com o desenho antigo** até Otimizar > Atualizar visuais.
+- **Salvar com o dicionário aberto grava o painel aberto** no PBIR. Um teste
+  garante que os visuais do painel estão ocultos nos arquivos.
+- **O Desktop escreve sinônimos de Q&A** em `cultures/pt-BR.tmdl` a cada medida
+  nova (mais de mil linhas). Não muda o relatório; esse ruído não entra nos
+  commits.
+- **Formatação de um visual existente não é relida** do JSON em "Apply external
+  changes" (o navegador de páginas continuou com texto e borda). Visual novo é
+  lido inteiro; para um existente, ajuste no painel de formato.

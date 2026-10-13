@@ -108,11 +108,17 @@ def formatadores(df: pd.DataFrame) -> dict[str, Callable[[float], str]]:
     return saida
 
 
+def _uma_linha(texto: str) -> str:
+    """Quebra de linha vira espaco: no markdown do Streamlit, uma linha em branco encerra
+    o bloco HTML e o resto da tabela aparece como texto solto."""
+    return re.sub(r"\s*[\r\n]\s*", " ", texto)
+
+
 def _celula(valor) -> str:
     if isinstance(valor, (date, datetime)):
         return valor.strftime("%d/%m/%Y")
     texto = "" if valor is None or (not isinstance(valor, str) and pd.isna(valor)) else str(valor)
-    return escape(texto).replace("$", "&#36;")
+    return escape(_uma_linha(texto)).replace("$", "&#36;")
 
 
 def tabela_html(df: pd.DataFrame, classe_linha=None) -> str:
@@ -125,8 +131,8 @@ def tabela_html(df: pd.DataFrame, classe_linha=None) -> str:
     # numero alinhado a direita; ano e mes ficam como rotulo, a esquerda
     numericas = {c for c in formatos if str(c).lower() not in COLUNAS_DE_TEMPO | {"dia"}}
     cabecalho = "".join(
-        f'<th class="num">{escape(rotulo_coluna(str(c)))}</th>' if c in numericas
-        else f"<th>{escape(rotulo_coluna(str(c)))}</th>"
+        f'<th class="num">{_celula(rotulo_coluna(str(c)))}</th>' if c in numericas
+        else f"<th>{_celula(rotulo_coluna(str(c)))}</th>"
         for c in df.columns)
     linhas = []
     for (_, linha), registro in zip(df.iterrows(), df.itertuples(index=False)):

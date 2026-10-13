@@ -1,4 +1,5 @@
 """Cliente de modelo: provedor de reserva quando a cota estoura."""
+import urllib.error
 from types import SimpleNamespace
 
 import openai
@@ -146,3 +147,90 @@ def test_todos_sobrecarregados_levanta_modelo_indisponivel():
     lite = Provedor("gemini-lite", "http://g/v1beta", "gemini-lite-x", "chave-g", api="gemini")
     with pytest.raises(ModeloIndisponivel):
         ClienteLLM([G, lite], enviar=http).completar(MSG)
+
+
+def _429_gemini(quota_id):
+    # formato real da API: QuotaFailure com o quotaId que diz se o limite e por minuto ou por dia
+    return 429, {"error": {"code": 429, "status": "RESOURCE_EXHAUSTED", "message": "You exceeded your current quota.",
+                           "details": [{"@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                                        "violations": [{"quotaId": quota_id}]},
+                                       {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "37s"}]}}
+
+
+LITE = Provedor("gemini-lite", "http://g/v1beta", "gemini-lite-x", "chave-g", api="gemini")
+
+
+def test_limite_por_minuto_nos_dois_nao_e_cota_do_dia():
+    from agente.llm import LimitePorMinuto
+    http = _Http(_429_gemini("GenerateRequestsPerMinutePerProjectPerModel-FreeTier"),
+                 _429_gemini("GenerateRequestsPerMinutePerProjectPerModel-FreeTier"))
+    with pytest.raises(LimitePorMinuto):
+        ClienteLLM([G, LITE], enviar=http).completar(MSG)
+
+
+def test_cota_do_dia_nos_dois_continua_cota_esgotada():
+    from agente.llm import LimitePorMinuto
+    http = _Http(_429_gemini("GenerateRequestsPerDayPerProjectPerModel-FreeTier"),
+                 _429_gemini("GenerateRequestsPerDayPerProjectPerModel-FreeTier"))
+    with pytest.raises(CotaEsgotada) as erro:
+        ClienteLLM([G, LITE], enviar=http).completar(MSG)
+    assert not isinstance(erro.value, LimitePorMinuto)
+
+
+def test_dia_num_e_minuto_no_outro_vale_tentar_de_novo():
+    # a reserva so esta no limite do minuto: em instantes ela volta a responder
+    from agente.llm import LimitePorMinuto
+    http = _Http(_429_gemini("GenerateRequestsPerDayPerProjectPerModel-FreeTier"),
+                 _429_gemini("GenerateRequestsPerMinutePerProjectPerModel-FreeTier"))
+    with pytest.raises(LimitePorMinuto):
+        ClienteLLM([G, LITE], enviar=http).completar(MSG)
+
+
+def test_limite_por_minuto_do_groq():
+    from agente.llm import LimitePorMinuto
+    erro = _cota()
+    erro.body = {"message": "Rate limit reached for model on requests per minute (RPM): Limit 30. "
+                            "Please try again in 2s.", "code": "rate_limit_exceeded"}
+    erro.message = "Error code: 429"
+    fabrica = _Fabrica({"http://b": erro})
+    with pytest.raises(LimitePorMinuto):
+        ClienteLLM([B], fabrica=fabrica).completar(MSG)
+
+
+def test_cota_do_dia_do_groq():
+    from agente.llm import LimitePorMinuto
+    erro = _cota()
+    erro.body = {"message": "Rate limit reached for model on tokens per day (TPD): Limit 100000."}
+    erro.message = "Error code: 429"
+    with pytest.raises(CotaEsgotada) as capturado:
+        ClienteLLM([B], fabrica=_Fabrica({"http://b": erro})).completar(MSG)
+    assert not isinstance(capturado.value, LimitePorMinuto)
+
+
+@pytest.mark.parametrize("falha", [
+    urllib.error.URLError("getaddrinfo failed"),
+    TimeoutError("The read operation timed out"),
+    ConnectionResetError("conexao derrubada"),
+])
+def test_erro_de_rede_no_gemini_passa_para_o_proximo(falha):
+    def enviar(url, corpo, cabecalhos):
+        raise falha
+    fabrica = _Fabrica({"http://b": "resposta b"})
+    cliente = ClienteLLM([G, B], fabrica=fabrica, enviar=enviar)
+    assert cliente.completar(MSG) == "resposta b"
+    assert cliente.ultimo_provedor == "groq"
+
+
+def test_erro_de_rede_no_openai_passa_para_o_proximo():
+    sem_conexao = openai.APITimeoutError.__new__(openai.APITimeoutError)
+    fabrica = _Fabrica({"http://a": sem_conexao, "http://b": "resposta b"})
+    assert ClienteLLM([A, B], fabrica=fabrica).completar(MSG) == "resposta b"
+
+
+def test_rede_fora_em_todos_nao_vira_cota():
+    # sem rede em nenhum provedor, a mensagem e "tente de novo", nunca "volte amanha"
+    def enviar(url, corpo, cabecalhos):
+        raise TimeoutError("timed out")
+    with pytest.raises(Exception) as erro:
+        ClienteLLM([G, LITE], enviar=enviar).completar(MSG)
+    assert not isinstance(erro.value, (CotaEsgotada, TimeoutError))

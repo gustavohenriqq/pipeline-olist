@@ -28,6 +28,16 @@ def _funcao_negada(nome: str) -> bool:
             or nome.endswith(SUFIXOS_NEGADOS))
 
 
+def _nome(identificador) -> str:
+    """Nome como o Postgres enxerga: sem aspas e dobrado para minusculas; com aspas, como escrito.
+
+    MARTS.FATO_PEDIDOS e marts.fato_pedidos sao a mesma tabela; marts."FATO_PEDIDOS" e outra.
+    """
+    if not isinstance(identificador, exp.Identifier):
+        return ""
+    return identificador.name if identificador.quoted else identificador.name.lower()
+
+
 def _ctes_visiveis(tabela: exp.Table) -> set[str]:
     """CTEs que alcancam esta tabela: as do WITH da propria consulta e das que a envolvem.
 
@@ -39,7 +49,8 @@ def _ctes_visiveis(tabela: exp.Table) -> set[str]:
         # "with_" nas versoes novas do sqlglot, "with" nas antigas
         com = (no.args.get("with_") or no.args.get("with")) if isinstance(no, exp.Expression) else None
         if com is not None:
-            nomes |= {cte.alias_or_name for cte in com.expressions}
+            nomes |= {_nome(cte.args["alias"].this) if cte.args.get("alias") else cte.alias_or_name
+                      for cte in com.expressions}
         no = no.parent
     return nomes
 
@@ -85,7 +96,7 @@ def validar(sql: str) -> str:
             raise SQLRecusado("A consulta tenta escrever ou travar dados.")
 
     for tabela in raiz.find_all(exp.Table):
-        nome, schema = tabela.name, tabela.db
+        nome, schema = _nome(tabela.this), _nome(tabela.args.get("db"))
         if not nome:
             raise SQLRecusado("Fonte de dados não permitida.")
         if not schema and nome in _ctes_visiveis(tabela):

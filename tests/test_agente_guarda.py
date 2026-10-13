@@ -102,3 +102,29 @@ def test_funcoes_que_executam_sql_ou_leem_o_servidor_sao_recusadas():
                     "pg_advisory_lock(1)", "dblink_exec('x')"):
         with pytest.raises(SQLRecusado):
             validar(f"SELECT {chamada} FROM marts.fato_pedidos")
+
+
+@pytest.mark.parametrize("sql", [
+    "SELECT count(*) FROM MARTS.FATO_PEDIDOS",
+    "select * from Marts.Dim_Tempo",
+    "SELECT count(*) FROM FATO_PEDIDOS",
+    'SELECT count(*) FROM "marts"."fato_pedidos"',
+    "WITH M AS (SELECT 1 AS x FROM marts.fato_pedidos) SELECT x FROM m",
+])
+def test_identificador_sem_aspas_nao_diferencia_maiusculas(sql):
+    # no Postgres, nome sem aspas e dobrado para minusculas: MARTS.FATO_PEDIDOS e marts.fato_pedidos
+    assert _limite(validar(sql)) == 1000
+
+
+@pytest.mark.parametrize("sql", [
+    'SELECT * FROM marts."FATO_PEDIDOS"',
+    'SELECT * FROM "MARTS".fato_pedidos',
+    'SELECT * FROM "Fato_Pedidos"',
+    "SELECT * FROM PG_CATALOG.PG_USER",
+    "SELECT * FROM MARTS.SEGURANCA_BI",
+    'WITH "Pg_roles" AS (SELECT 1) SELECT * FROM pg_roles',
+])
+def test_nome_entre_aspas_continua_diferenciando_maiusculas(sql):
+    # entre aspas o Postgres respeita a caixa: "FATO_PEDIDOS" e outra tabela
+    with pytest.raises(SQLRecusado):
+        validar(sql)

@@ -84,3 +84,20 @@ def test_decimal_com_ponto_inventado_nao_passa():
     assert not confere("A taxa de atraso foi 12.5%.", [Decimal("0.0812")])
     assert confere("A taxa de atraso foi 8.12%.", [Decimal("0.0812")])
     assert confere("A nota média foi 4.09.", [Decimal("4.0868")])
+
+
+def test_sinal_inventado_reprova():
+    # "-5,2%" nao pode conferir com um resultado positivo de 5,23%
+    assert not confere("A receita variou -5,2% em agosto", [Decimal("0.0523")])
+    assert not confere("O saldo foi de -120 pedidos", [120])
+
+
+def test_sinal_omitido_reprova():
+    # o inverso: resultado negativo citado sem o sinal
+    assert not confere("A receita variou 5,2% em agosto", [Decimal("-0.0523")])
+    assert not confere("O saldo foi de 120 pedidos", [-120])
+
+
+def test_sinal_certo_continua_conferindo():
+    assert confere("A receita variou 5,2% em agosto", [Decimal("0.0523")])
+    assert confere("O saldo foi de -120 pedidos", [-120])

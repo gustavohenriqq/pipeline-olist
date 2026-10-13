@@ -68,3 +68,11 @@ dashboards/powerbi/publico/
 
 # Segredos do app do agente (Streamlit). Nunca no Git.
 .streamlit/secrets.toml
+
+# Saida de cada rodada da avaliacao do agente (python -m agente.avaliacao.avaliar).
+# Muda a cada execucao e depende do modelo do dia; o placar que vale fica na doc.
+agente/avaliacao/ultimo_resultado.md
+
+# Rascunhos locais de ferramentas de apoio ao desenvolvimento.
+.superpowers/
+.claude/

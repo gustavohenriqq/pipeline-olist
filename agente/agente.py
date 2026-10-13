@@ -15,16 +15,17 @@ from typing import Callable
 import pandas as pd
 
 from agente.banco import BancoIndisponivel, ErroBanco
-from agente.config import LINHAS_NA_RESPOSTA, TENTATIVAS_SQL, TURNOS_HISTORICO
+from agente.config import LIMITE_LINHAS, LINHAS_NA_RESPOSTA, TENTATIVAS_SQL, TURNOS_HISTORICO
 from agente.grafico import escolher_grafico
 from agente.guarda_sql import SQLRecusado, validar
-from agente.llm import CotaEsgotada, ModeloIndisponivel
+from agente.llm import CotaEsgotada, LimitePorMinuto, ModeloIndisponivel
 from agente.numeros import confere, extrair_numeros
 from agente.prompts import EXEMPLOS, SISTEMA_RESPOSTA, SISTEMA_SQL
 
 AVISO_NAO_CONFIRMADA = "Resposta automática não confirmada; confira a tabela."
 AVISO_SEM_RESPOSTA = "O modelo ficou indisponível antes da resposta escrita; confira a tabela."
 COTA = "A cota gratuita do dia acabou. Volte amanhã."
+LIMITE_MINUTO = "Muitas perguntas em pouco tempo para a cota gratuita; tente de novo em instantes."
 SOBRECARGA = "O modelo está sobrecarregado agora; tente de novo em instantes."
 FALHA_MODELO = "Não consegui falar com o modelo agora; tente de novo em instantes."
 VAZIO = "Nenhum registro encontrado para essa pergunta."
@@ -103,6 +104,8 @@ def responder(pergunta: str, historico: list[Turno], llm, executar: Callable[[st
             bruto = llm.completar(_mensagens_sql(pergunta, historico, esquema, erro, sql, contexto), json=True)
         except ModeloIndisponivel:
             return Resposta("cota", SOBRECARGA)
+        except LimitePorMinuto:
+            return Resposta("cota", LIMITE_MINUTO)
         except CotaEsgotada:
             return Resposta("cota", COTA)
         except Exception:  # noqa: BLE001 (erro do provedor nunca vira traceback na tela)
@@ -148,7 +151,13 @@ def responder(pergunta: str, historico: list[Turno], llm, executar: Callable[[st
         return base
 
     valores = [v for linha in linhas[:LINHAS_NA_RESPOSTA] for v in linha]
-    extras = extrair_numeros(pergunta) + _numeros_do_sql(sql)
+    # Numeros do SQL que o modelo escreveu, nao do validado: o LIMIT 1000 que a guarda
+    # injeta nao e dado, e "1.000" nao pode conferir por causa dele.
+    extras = extrair_numeros(pergunta) + _numeros_do_sql(str(dados.get("sql", "")))
+    # A quantidade de linhas ("23 UFs") e fato do resultado, salvo quando bate no LIMIT:
+    # ai pode ser o corte, nao o total.
+    if len(linhas) < LIMITE_LINHAS:
+        extras.append(len(linhas))
     if confere(texto, valores, extras):
         base.texto, base.confirmada = texto, True
     else:

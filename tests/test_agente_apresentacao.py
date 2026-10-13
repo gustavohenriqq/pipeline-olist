@@ -150,3 +150,14 @@ def test_data_na_tabela_no_formato_brasileiro():
     from agente.apresentacao import tabela_html
     html = tabela_html(pd.DataFrame({"compra": [date(2018, 7, 29)], "uf": ["RJ"]}))
     assert "<td>29/07/2018</td>" in html
+
+
+def test_linha_em_branco_na_celula_nao_quebra_o_bloco_html():
+    # no markdown, linha em branco encerra o bloco HTML e o resto da tabela vira texto solto
+    from agente.apresentacao import tabela_html
+    df = pd.DataFrame({"comentario": ["primeira linha\n\nsegunda\r\n  \r\nterceira"],
+                       "texto\nquebrado": ["ok"]})
+    html = tabela_html(df)
+    assert "\n" not in html and "\r" not in html
+    assert "<td>primeira linha segunda terceira</td>" in html
+    assert "<th>Texto quebrado</th>" in html

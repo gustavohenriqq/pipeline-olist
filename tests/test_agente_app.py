@@ -183,3 +183,49 @@ def test_banco_indisponivel_vira_aviso(ambiente):
     at = _app()
     at.chat_input[0].set_value("Quantos pedidos?").run()
     assert any("acordando" in w.value for w in at.warning)
+
+
+def _contagem(at):
+    return at.session_state["perguntas_feitas"], [i["pergunta"] for i in at.session_state["conversa"]]
+
+
+@pytest.mark.parametrize("resposta", [
+    Resposta("cota", "A cota gratuita do dia acabou. Volte amanhã."),
+    Resposta("cota", "O modelo está sobrecarregado agora; tente de novo em instantes."),
+    Resposta("banco", "O banco está acordando ou a conexão caiu; tente de novo.", sql="SELECT 1"),
+    Resposta("erro", "Não consegui falar com o modelo agora; tente de novo em instantes."),
+])
+def test_falha_do_sistema_nao_gasta_pergunta_nem_entra_na_conversa(ambiente, resposta):
+    """Cota, sobrecarga, banco ou modelo fora: a pessoa nao teve resposta e a falha nao e dela."""
+    ambiente.resposta = resposta
+    at = _app()
+    at.chat_input[0].set_value("Quantos pedidos?").run()
+    assert not at.exception
+    assert _contagem(at) == (0, [])
+    assert any(resposta.texto[:20] in a.value for a in [*at.warning, *at.error])
+    assert not any("Quantos pedidos?" in c.value for c in at.sidebar.caption)
+
+
+def test_erro_inesperado_nao_gasta_pergunta(ambiente, monkeypatch):
+    def quebra(*a, **k):
+        raise RuntimeError("bug")
+    monkeypatch.setattr("agente.agente.responder", quebra)
+    at = _app()
+    at.chat_input[0].set_value("Quantos pedidos?").run()
+    assert _contagem(at) == (0, [])
+
+
+@pytest.mark.parametrize("resposta", [
+    Resposta("ok", "Foram 99.441 pedidos.", sql="SELECT 1", colunas=["pedidos"], linhas=[(99441,)],
+             confirmada=True),
+    Resposta("vazio", "Nenhum registro encontrado para essa pergunta.", sql="SELECT 1"),
+    Resposta("fora_do_escopo", "a base não tem dados de estoque"),
+    Resposta("recusado", "só consultas de leitura", sql="DELETE FROM x"),
+    Resposta("erro", "Não consegui montar uma consulta válida (coluna x não existe).", sql="SELECT x"),
+])
+def test_resposta_do_modelo_conta_como_pergunta(ambiente, resposta):
+    """O modelo trabalhou na pergunta (gastou cota): conta no limite e fica na conversa."""
+    ambiente.resposta = resposta
+    at = _app()
+    at.chat_input[0].set_value("Quantos pedidos?").run()
+    assert _contagem(at) == (1, ["Quantos pedidos?"])

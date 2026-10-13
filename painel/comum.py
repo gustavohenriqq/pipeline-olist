@@ -1,7 +1,8 @@
 """Pecas comuns as paginas do painel: cabecalho, filtros e carga das consultas.
 
 Cada visual carrega separado: uma consulta que falha mostra aviso so naquele
-visual; banco dormindo (Neon) vira um aviso unico no topo com "Tentar de novo".
+visual; banco dormindo (Neon) vira um aviso unico no topo com "Tentar de novo", e
+depois da primeira falha de conexao os outros visuais da mesma execucao nem tentam.
 """
 from __future__ import annotations
 
@@ -13,7 +14,7 @@ import streamlit as st
 
 from agente import banco
 from painel import consultas
-from painel.filtros import MAXIMO, MINIMO, REGIOES, Filtros, da_selecao, da_url, mes_referencia, para_url
+from painel.filtros import MAXIMO, MINIMO, REGIOES, Filtros, da_selecao, da_url, para_url
 
 REPO = "https://github.com/gustavohenriqq/pipeline-olist"
 ICONE = ('<svg width="{t}" height="{t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
@@ -23,7 +24,9 @@ MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "
 # O que pertence a tela (espaco do aviso, coluna do agente) fica no estado da
 # sessao, nunca em variavel de modulo: o Streamlit roda cada visitante numa thread
 # do mesmo processo, e uma variavel de modulo seria compartilhada entre eles.
+# _ACORDANDO: houve falha de conexao nesta execucao (o aviso ja saiu e ninguem mais tenta).
 _AVISO, _ACORDANDO, _LATERAL = "_painel_aviso", "_painel_acordando", "_painel_lateral"
+_ROTULO = "_painel_rotulo"
 
 
 def mes_extenso(ano_mes: str) -> str:
@@ -62,7 +65,12 @@ def coluna_lateral():
 
 
 def filtros_da_pagina(regiao: bool) -> Filtros:
-    """Periodo (todas as paginas) e regiao (so a visao executiva); guarda no estado e na URL."""
+    """Periodo (todas as paginas) e regiao (so a visao executiva); guarda no estado e na URL.
+
+    Nas paginas sem regiao, ela continua no estado (volta ao abrir a visao executiva),
+    mas sai da URL e do filtro devolvido: um link da pagina nao promete um recorte
+    que ela nao aplica.
+    """
     atual = st.session_state.get("filtros") or da_url(st.query_params)
     colunas = st.columns([2.2, 1.6, 2.4] if regiao else [2.2, 4], vertical_alignment="bottom")
     periodo = colunas[0].date_input("Período", value=(atual.inicio, atual.fim), min_value=MINIMO,
@@ -73,10 +81,11 @@ def filtros_da_pagina(regiao: bool) -> Filtros:
         escolha = colunas[1].selectbox("Região do cliente", opcoes,
                                        index=opcoes.index(atual.regiao) if atual.regiao else 0, key="regiao")
         novo = replace(novo, regiao=None if escolha == "Todas" else escolha)
-    colunas[-1].markdown(f'<div class="bloco-sub" style="text-align:right">'
-                         f"{mes_extenso(mes_referencia(novo))} contra o mês anterior</div>",
-                         unsafe_allow_html=True)
+    # O mes de referencia vem dos cartoes (ultimo mes com venda): rotulo_do_destaque preenche.
+    st.session_state[_ROTULO] = colunas[-1].empty()
     st.session_state.filtros = novo
+    if not regiao:
+        novo = replace(novo, regiao=None)
     params = para_url(novo)
     for chave in ("inicio", "fim", "regiao"):
         if chave in params:
@@ -84,6 +93,15 @@ def filtros_da_pagina(regiao: bool) -> Filtros:
         elif chave in st.query_params:
             del st.query_params[chave]
     return novo
+
+
+def rotulo_do_destaque(cartoes: dict) -> None:
+    """"ago/2018 contra o mês anterior", com o mes de referencia que a consulta dos cartoes achou."""
+    lugar, mes = st.session_state.get(_ROTULO), cartoes.get("mes_referencia")
+    if lugar is None or not isinstance(mes, str):
+        return
+    lugar.markdown(f'<div class="bloco-sub" style="text-align:right">'
+                   f"{escape(mes_extenso(mes))} contra o mês anterior</div>", unsafe_allow_html=True)
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -99,17 +117,32 @@ def _rodar(nome: str, f: Filtros) -> pd.DataFrame:
         conexao.close()
 
 
+def nova_execucao() -> None:
+    """Cada execucao do script tenta o banco de novo (e o que faz o "Tentar de novo" valer)."""
+    st.session_state[_ACORDANDO] = False
+
+
+def banco_fora() -> bool:
+    return bool(st.session_state.get(_ACORDANDO))
+
+
 def _avisar_acordando() -> None:
     estado = st.session_state
-    if estado.get(_ACORDANDO) or estado.get(_AVISO) is None:
+    if estado.get(_ACORDANDO):
         return
     estado[_ACORDANDO] = True
+    if estado.get(_AVISO) is None:
+        return
     with estado[_AVISO].container():
         st.warning("O banco está acordando (ele dorme quando ninguém usa). Leva alguns segundos.")
         st.button("Tentar de novo", key="tentar_de_novo", icon=":material/refresh:")
 
 
 def carregar(funcao, f: Filtros) -> pd.DataFrame | None:
+    # Com o banco fora, cada tentativa espera o connect_timeout (15 s): depois da
+    # primeira falha nesta execucao, os outros visuais desistem na hora.
+    if banco_fora():
+        return None
     try:
         return _rodar(funcao.__name__, f)
     except banco.BancoIndisponivel:

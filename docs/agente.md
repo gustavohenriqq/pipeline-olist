@@ -36,10 +36,10 @@ flowchart LR
 | Peça | Arquivo | O que faz |
 |---|---|---|
 | Esquema | `agente/esquema.py` → `esquema_marts.md` | Descrição das 8 tabelas permitidas para o prompt (grão, colunas, significado), gerada dos `.yml` do dbt e versionada |
-| Modelo | `agente/llm.py` | Gemini Flash; se a cota acaba ou ele está sobrecarregado (429, 503), Gemini Flash-Lite (cota separada, mesma chave); Groq opcional por último |
-| Guarda | `agente/guarda_sql.py` | Análise sintática (`sqlglot`): um comando só, só leitura, só tabelas permitidas, sem funções perigosas, `LIMIT 1000` |
+| Modelo | `agente/llm.py` | Gemini Flash; se a cota acaba, ele está sobrecarregado (429, 503) ou a rede falha (conexão, tempo esgotado), Gemini Flash-Lite (cota separada, mesma chave); Groq opcional por último. Limite por minuto pede para tentar de novo em instantes; só a cota do dia diz "volte amanhã" |
+| Guarda | `agente/guarda_sql.py` | Análise sintática (`sqlglot`): um comando só, só leitura, só tabelas permitidas (nome sem aspas não diferencia maiúsculas, como no Postgres; entre aspas, sim), sem funções perigosas, `LIMIT 1000` |
 | Banco | `agente/banco.py` | Transação somente leitura e tempo máximo de 5 s |
-| Checagem | `agente/numeros.py` | Todo número da frase precisa estar no resultado, na precisão em que foi escrito |
+| Checagem | `agente/numeros.py` | Todo número da frase precisa estar no resultado, na precisão e com o sinal em que foi escrito. A quantidade de linhas do resultado também vale; o `LIMIT 1000` que a guarda injeta, não |
 | Gráfico | `agente/grafico.py` | Regra pela forma do resultado: série no tempo vira linha, ranking curto vira barras |
 | Fluxo | `agente/agente.py` | Junta tudo, com uma segunda tentativa quando o banco devolve erro |
 | App | `agente/app.py` | Chat em Streamlit, 20 perguntas por sessão, avisos de cota e de banco acordando |
@@ -87,7 +87,7 @@ aviso, nunca erro na tela. Cada pergunta abre e fecha a própria conexão: uma
 conexão guardada morre quando o Neon dorme e, compartilhada entre visitantes,
 misturaria transações.
 
-Tudo isso tem teste: 126 testes automáticos (guarda com casos de ataque, checagem
+Tudo isso tem teste: 197 testes automáticos (guarda com casos de ataque, checagem
 de números, gráfico, fluxo com modelo falso, tela com `AppTest`) e testes de
 integração que, no CI, criam o usuário com o mesmo código do Neon e confirmam que
 `DROP`, `INSERT`, leitura fora da lista e consulta longa falham.

@@ -7,11 +7,23 @@
                 que o rodape do dashboard le no Neon.
 
   Sem pacote do hub (dbt_artifacts): o projeto nao usa dependencias externas.
+
+  Os nomes "meta" e "marts" sao logicos: o schema real sai de schema_metadados(),
+  que passa pelo mesmo generate_schema_name dos models. Hoje da meta e marts; com
+  o padrao do dbt (<target.schema>_<custom>, o certo num warehouse compartilhado)
+  da dev_meta e dev_marts, e o rodape continua ao lado das marts daquele ambiente.
 #}
 
+{% macro schema_metadados(nome) -%}
+    {{- return(generate_schema_name(nome, none) | trim) -}}
+{%- endmacro %}
+
+
 {% macro cria_tabelas_metadados() %}
-    create schema if not exists meta;
-    create table if not exists meta.execucoes_dbt (
+    {%- set meta = schema_metadados('meta') -%}
+    {%- set marts = schema_metadados('marts') %}
+    create schema if not exists {{ meta }};
+    create table if not exists {{ meta }}.execucoes_dbt (
         invocation_id  text primary key,
         comando        text,
         iniciado_em    timestamptz,
@@ -24,7 +36,7 @@
         erro           integer,
         pulados        integer
     );
-    create table if not exists meta.resultados_dbt (
+    create table if not exists {{ meta }}.resultados_dbt (
         invocation_id  text,
         unique_id      text,
         tipo           text,
@@ -34,8 +46,8 @@
         segundos       numeric,
         mensagem       text
     );
-    create schema if not exists marts;
-    create table if not exists marts.atualizacao_dados (
+    create schema if not exists {{ marts }};
+    create table if not exists {{ marts }}.atualizacao_dados (
         processado_em  timestamptz,
         carga_raw_em   timestamptz,
         testes_ok      integer,
@@ -93,8 +105,10 @@
     {%- endfor -%}
     {#- erro e o resto: garante sucesso + aviso + erro + pulados = nos -#}
     {%- set erro = results | length - ns.sucesso - ns.aviso - ns.pulados -%}
+    {%- set meta = schema_metadados('meta') -%}
+    {%- set marts = schema_metadados('marts') %}
 
-    insert into meta.execucoes_dbt values (
+    insert into {{ meta }}.execucoes_dbt values (
         '{{ invocation_id }}', {{ texto_sql(flags.WHICH) }},
         '{{ run_started_at }}'::timestamptz, now(),
         {{ texto_sql(target.name) }}, {{ texto_sql(dbt_version) }},
@@ -102,7 +116,7 @@
     );
 
     {% if results | length > 0 %}
-    insert into meta.resultados_dbt values
+    insert into {{ meta }}.resultados_dbt values
     {%- for r in results %}
         ('{{ invocation_id }}', {{ texto_sql(r.node.unique_id) }}, {{ texto_sql(r.node.resource_type) }},
          {{ texto_sql(r.node.name) }}, {{ texto_sql(r.status | string) }},
@@ -119,8 +133,8 @@
     {%- set build_completo = flags.WHICH == 'build'
         and not args.get('select') and not args.get('exclude') and not args.get('selector') -%}
     {% if build_completo %}
-    truncate marts.atualizacao_dados;
-    insert into marts.atualizacao_dados
+    truncate {{ marts }}.atualizacao_dados;
+    insert into {{ marts }}.atualizacao_dados
     select
         now(),
         (

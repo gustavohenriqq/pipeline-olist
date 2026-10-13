@@ -21,7 +21,7 @@ _ESCALAS = (
 )
 _NUMERO = re.compile(
     r"(?<![\w/.,])(?<!\d-)"              # nao continua palavra, data ou outro numero
-    r"-?"                                 # sinal (o "-" de 2018-03 e barrado acima)
+    r"(-?)"                               # sinal (o "-" de 2018-03 e barrado acima)
     r"(\d{1,3}(?:\.\d{3})+(?!\d)|\d+)"   # inteiro, com ou sem ponto de milhar
     r"(?:,(\d+)|\.(\d{1,2}(?!\d)|\d{4,}))?"  # decimais com virgula, ou com ponto (12.5, 0.0812)
     r"(?![\d/\-]|,\d|\.\d)"               # nao e parte de data (2018-03, 01/08)
@@ -33,7 +33,7 @@ _NUMERO = re.compile(
 
 @dataclass
 class _Escrito:
-    valor: float       # como escrito, sem a escala (15.79 em "15,79 mi")
+    valor: float       # como escrito, com sinal e sem a escala (15.79 em "15,79 mi")
     casas: int         # casas decimais escritas
     escala: float      # 1, 1e3, 1e6 ou 1e9
     percentual: bool
@@ -43,9 +43,9 @@ def _ler(texto: str) -> list[_Escrito]:
     achados = []
     # O modelo le o resultado com ponto decimal e as vezes copia assim ("12.5%").
     # Ponto seguido de 3 digitos segue sendo milhar ("1.234").
-    for inteiro, virgula, ponto, pct, escala_txt in _NUMERO.findall(texto):
+    for sinal, inteiro, virgula, ponto, pct, escala_txt in _NUMERO.findall(texto):
         decimais = virgula or ponto or ""
-        valor = float(inteiro.replace(".", "") + ("." + decimais if decimais else ""))
+        valor = float(sinal + inteiro.replace(".", "") + ("." + decimais if decimais else ""))
         escala = 1.0
         if escala_txt:
             for padrao, fator in _ESCALAS:
@@ -76,7 +76,8 @@ def _casa(escrito: _Escrito, candidato: float) -> bool:
     opcoes = [candidato / escrito.escala]
     if escrito.percentual:
         opcoes.append(candidato * 100)
-    return any(abs(abs(o) - escrito.valor) <= folga for o in opcoes)
+    # O sinal conta: "-5,2%" nao confere com 5,23%, nem "5,2%" com -5,23%.
+    return any(abs(o - escrito.valor) <= folga for o in opcoes)
 
 
 def _digitos_de_textos(valores) -> list[float]:

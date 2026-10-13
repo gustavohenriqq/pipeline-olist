@@ -76,3 +76,25 @@ def test_todas_usam_parametro_e_nao_quebram_sem_linhas(funcao):
     sql, params = _executa(funcao, FILTRO)
     assert "2018-01-01" not in sql and date(2018, 1, 1) in params.values()
     assert funcao(_Conexao(), FILTRO).empty
+
+
+def test_delta_da_nota_e_diferenca_absoluta_como_no_power_bi():
+    # 'Δ Nota Média' no Power BI: atual - anterior (ex.: "▼ 0,01"), nao percentual.
+    assert delta(4.20, 4.21, taxa=False, absoluto=True) == pytest.approx(-0.01)
+    assert delta(4.2, None, taxa=False, absoluto=True) is None
+    assert delta(4.2, 0.0, taxa=False, absoluto=True) == pytest.approx(4.2)
+
+
+def test_pedidos_em_risco_desempatam_pelo_codigo_do_pedido():
+    """Como o TOPN do Power BI (prob DESC, pedido_codigo ASC): empate nao fica na ordem fisica."""
+    import re
+    sql, _ = _executa(consultas.pedidos_em_risco, FILTRO)
+    ordem = re.search(r"order by (.+?)\s+limit", sql, re.S).group(1)
+    assert [p.strip() for p in ordem.split(",")] == ["r.prob_atraso desc", "pedido"]
+
+
+@pytest.mark.parametrize("funcao", TODAS)
+def test_consultas_desligam_o_jit(funcao):
+    """O subplano por mes infla o custo estimado e o JIT gastava mais que a consulta (estourava 5 s)."""
+    sql, _ = _executa(funcao, FILTRO)
+    assert sql.lstrip().lower().startswith("set local jit = off;")

@@ -175,3 +175,48 @@ def test_sem_contexto_o_pedido_nao_muda():
     llm = _LLM(_sql("SELECT 1 AS x FROM marts.fato_pedidos"), "x")
     responder("Quantos pedidos?", [], llm, _Banco((["x"], [(1,)])), ESQUEMA)
     assert "Contexto do painel" not in llm.mensagens[0][-1]["content"]
+
+
+def test_limite_por_minuto_pede_para_tentar_em_instantes():
+    from agente.llm import LimitePorMinuto
+    r = responder("Quantos pedidos?", [], _LLM(LimitePorMinuto()), _Banco(), ESQUEMA)
+    assert r.tipo == "cota"
+    assert "instantes" in r.texto and "amanhã" not in r.texto
+
+
+def test_cota_do_dia_diz_volte_amanha():
+    r = responder("Quantos pedidos?", [], _LLM(CotaEsgotada()), _Banco(), ESQUEMA)
+    assert "amanhã" in r.texto
+
+
+def test_limite_injetado_pela_guarda_nao_confere_numero():
+    # o modelo nao escreveu LIMIT; o 1000 veio da guarda e nao e dado da resposta
+    llm = _LLM(_sql(CONTAGEM), "Foram 1.000 pedidos.")
+    r = responder("Quantos pedidos?", [], llm, _Banco((["pedidos"], [(99441,)])), ESQUEMA)
+    assert "LIMIT 1000" in r.sql
+    assert not r.confirmada
+
+
+def test_limite_escrito_pelo_modelo_continua_valendo():
+    sql = "SELECT uf, count(*) AS pedidos FROM dim_clientes GROUP BY uf ORDER BY pedidos DESC LIMIT 5"
+    llm = _LLM(_sql(sql), "As 5 UFs com mais pedidos começam por SP, com 41.746.")
+    linhas = [("SP", 41746), ("RJ", 12852), ("MG", 11635), ("RS", 5466), ("PR", 5045)]
+    r = responder("Top UFs por pedidos", [], llm, _Banco((["uf", "pedidos"], linhas)), ESQUEMA)
+    assert r.confirmada
+
+
+def test_quantidade_de_linhas_citada_confere():
+    sql = "SELECT uf, count(*) AS pedidos FROM dim_clientes WHERE regiao = 'Sul' GROUP BY uf"
+    llm = _LLM(_sql(sql), "O Sul tem 3 UFs; o RS lidera com 5.466 pedidos.")
+    linhas = [("RS", 5466), ("PR", 5045), ("SC", 3637)]
+    r = responder("Pedidos por UF do Sul", [], llm, _Banco((["uf", "pedidos"], linhas)), ESQUEMA)
+    assert r.confirmada
+
+
+def test_quantidade_de_linhas_cortada_pelo_limite_nao_confere():
+    # 1000 linhas pode ser o corte do LIMIT, nao o total: "1.000 clientes" seria invencao
+    sql = "SELECT cliente_sk FROM dim_clientes"
+    llm = _LLM(_sql(sql), "São 1.000 clientes.")
+    linhas = [(i + 5000,) for i in range(1000)]
+    r = responder("Liste os clientes", [], llm, _Banco((["cliente_sk"], linhas)), ESQUEMA)
+    assert not r.confirmada

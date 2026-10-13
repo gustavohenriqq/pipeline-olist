@@ -1,4 +1,4 @@
-# Atraso na entrega custa R$ 1,15 milhão ao ano
+# R$ 1,15 milhão em pedidos atrasados, e a nota cai de 4,29 para 1,65
 
 Pipeline de dados de ponta a ponta sobre o e-commerce brasileiro (dataset público
 da Olist, 99.441 pedidos reais), construído para responder uma pergunta de

@@ -74,3 +74,9 @@ def test_barras_horizontais_genericas():
     df = pd.DataFrame({"categoria_grupo": ["Casa", "Moda"], "receita_itens": [3.2e6, 1.7e6]})
     spec = barras_horizontais(df, "categoria_grupo", "receita_itens", PALETAS["claro"]).to_dict()
     assert spec["mark"]["type"] == "bar" and spec["encoding"]["y"]["field"] == "categoria_grupo"
+
+
+def test_destaque_absoluto_da_nota_media():
+    html = cartao("Nota média", "4,09", "star", "menta", -0.01, absoluto=True)
+    assert "▼ 0,01</b>" in html and "%" not in html and "pp" not in html
+    assert "piora" in html

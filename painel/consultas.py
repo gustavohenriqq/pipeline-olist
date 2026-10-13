@@ -11,7 +11,12 @@ from dataclasses import replace
 import pandas as pd
 
 from agente.banco import executar
-from painel.filtros import Filtros, janela_comparacao
+from painel.filtros import Filtros, janela_comparacao, mes_referencia
+
+# O subplano por mes (receita das janelas deslocadas) infla o custo estimado, e o
+# JIT do Postgres passava a compilar por mais tempo que a consulta levava (estourava
+# o statement_timeout de 5 s na base inteira). As consultas do painel sao pequenas.
+_SEM_JIT = "set local jit = off;\n"
 
 # Pedidos do periodo, com a regiao do cliente opcional. Base de quase tudo no painel.
 _PEDIDOS = """
@@ -30,6 +35,14 @@ _COMPARACAO = """
     from marts.fato_pedidos f
     left join marts.dim_clientes c on c.cliente_sk = f.cliente_sk
     where f.purchased_at::date between %(ant_ini)s and %(ref_fim)s
+      and (%(regiao)s::text is null or c.regiao = %(regiao)s)
+"""
+# Ultimo dia com venda no periodo: define o mes de referencia dos destaques.
+_ULTIMA_VENDA = """
+    select max(f.purchased_at::date)
+    from marts.fato_pedidos f
+    left join marts.dim_clientes c on c.cliente_sk = f.cliente_sk
+    where f.purchased_at::date between %(inicio)s and %(fim)s
       and (%(regiao)s::text is null or c.regiao = %(regiao)s)
 """
 _REF = "dia between %(ref_ini)s and %(ref_fim)s"
@@ -74,26 +87,38 @@ _JANELAS_POR_MES = """
 _PCT_NO_PRAZO = "avg(case when entregue_no_prazo then 1.0 else 0.0 end) filter (where entregue_no_prazo is not null)"
 
 
-def _parametros(f: Filtros) -> dict:
-    ref_ini, ref_fim, ant_ini, ant_fim = janela_comparacao(f)
+def _parametros(f: Filtros, ultima_venda=None) -> dict:
+    ref_ini, ref_fim, ant_ini, ant_fim = janela_comparacao(f, ultima_venda)
     return {"inicio": f.inicio, "fim": f.fim, "regiao": f.regiao,
             "ref_ini": ref_ini, "ref_fim": ref_fim, "ant_ini": ant_ini, "ant_fim": ant_fim}
 
 
-def _consulta(conexao, sql: str, f: Filtros) -> pd.DataFrame:
-    colunas, linhas = executar(conexao, sql, _parametros(f))
+def _ultima_venda(conexao, f: Filtros):
+    _, linhas = executar(conexao, _SEM_JIT + _ULTIMA_VENDA, _parametros(f))
+    return linhas[0][0] if linhas else None
+
+
+def _consulta(conexao, sql: str, f: Filtros, destaque: bool = False) -> pd.DataFrame:
+    """Roda a consulta; nos cartoes (destaque), antes acha o mes de referencia e o devolve junto."""
+    ultima = _ultima_venda(conexao, f) if destaque else None
+    colunas, linhas = executar(conexao, _SEM_JIT + sql, _parametros(f, ultima))
     df = pd.DataFrame(linhas, columns=colunas)
     # Decimal do psycopg2 vira float: as contas e os graficos esperam numero.
     for coluna in df.columns:
         if df[coluna].map(lambda v: v.__class__.__name__ == "Decimal").any():
             df[coluna] = df[coluna].astype(float)
+    if destaque and not df.empty:
+        df["mes_referencia"] = mes_referencia(f, ultima)
     return df
 
 
-def delta(ref, ant, *, taxa: bool) -> float | None:
-    """Destaque do cartao: valor em fracao (ref/ant - 1); taxa em pontos percentuais."""
+def delta(ref, ant, *, taxa: bool, absoluto: bool = False) -> float | None:
+    """Destaque do cartao: valor em fracao (ref/ant - 1); taxa em pontos percentuais;
+    absoluto (nota media) na diferenca simples, como o 'Δ Nota Média' do Power BI."""
     if ref is None or ant is None or pd.isna(ref) or pd.isna(ant):
         return None
+    if absoluto:
+        return float(ref) - float(ant)
     if taxa:
         return (float(ref) - float(ant)) * 100
     if float(ant) == 0:
@@ -133,7 +158,7 @@ def cartoes_executivo(conexao, f: Filtros) -> pd.DataFrame:
     )
     select * from total cross join destaque
     """
-    return _consulta(conexao, sql, f)
+    return _consulta(conexao, sql, f, destaque=True)
 
 
 def receita_mensal(conexao, f: Filtros) -> pd.DataFrame:
@@ -198,6 +223,8 @@ _ITENS = """
 
 
 def cartoes_entrega(conexao, f: Filtros) -> pd.DataFrame:
+    """Como o Power BI: com pedido no periodo, alertas e receita em risco saem 0 (nao em
+    branco) e a taxa pode faltar (nenhum entregue); sem pedido, nenhuma linha."""
     sql = f"""
     with base as ({_ENTREGUES}),
     comp as (
@@ -207,21 +234,21 @@ def cartoes_entrega(conexao, f: Filtros) -> pd.DataFrame:
           and f.entregue_no_prazo is not null
     ),
     risco as (
-        select count(*) as pedidos_alerta, sum(p2.valor_total) as receita_risco
+        select count(*) as pedidos_alerta, coalesce(sum(p2.valor_total), 0) as receita_risco
         from marts.previsao_atraso r
         join marts.fato_pedidos p2 on p2.pedido_sk = r.pedido_sk
         where r.alerta and r.conjunto in ('teste', 'em_andamento')
           and p2.purchased_at::date between %(inicio)s and %(fim)s
     )
-    select {_TAXA_ATRASO} as taxa_atraso,
+    select (select {_TAXA_ATRASO} from base) as taxa_atraso,
            (select {_TAXA_ATRASO} filter (where {_REF}) from comp) as taxa_ref,
            (select {_TAXA_ATRASO} filter (where {_ANT}) from comp) as taxa_ant,
-           (select pedidos_alerta from risco) as pedidos_alerta,
-           (select receita_risco from risco) as receita_risco
-    from base
-    having count(*) > 0
+           r.pedidos_alerta, r.receita_risco
+    from risco r
+    where exists (select 1 from marts.fato_pedidos p3
+                  where p3.purchased_at::date between %(inicio)s and %(fim)s)
     """
-    return _consulta(conexao, sql, _sem_regiao(f))
+    return _consulta(conexao, sql, _sem_regiao(f), destaque=True)
 
 
 def taxa_por_regiao(conexao, f: Filtros) -> pd.DataFrame:
@@ -253,6 +280,7 @@ def excesso_por_uf(conexao, f: Filtros) -> pd.DataFrame:
 
 
 def pedidos_em_risco(conexao, f: Filtros) -> pd.DataFrame:
+    """Os 50 em andamento de maior risco; empate pelo codigo do pedido, como o TOPN do Power BI."""
     sql = """
     select '#' || left(p.order_id, 10) as pedido,
            p.purchased_at::date as compra,
@@ -263,7 +291,7 @@ def pedidos_em_risco(conexao, f: Filtros) -> pd.DataFrame:
     join marts.dim_clientes c on c.cliente_sk = p.cliente_sk
     where r.conjunto = 'em_andamento'
       and p.purchased_at::date between %(inicio)s and %(fim)s
-    order by r.prob_atraso desc
+    order by r.prob_atraso desc, pedido
     limit 50
     """
     return _consulta(conexao, sql, _sem_regiao(f))
@@ -291,7 +319,7 @@ def cartoes_vendedores(conexao, f: Filtros) -> pd.DataFrame:
     from itens
     having count(*) > 0
     """
-    return _consulta(conexao, sql, _sem_regiao(f))
+    return _consulta(conexao, sql, _sem_regiao(f), destaque=True)
 
 
 def receita_por_grupo(conexao, f: Filtros) -> pd.DataFrame:

@@ -9,8 +9,8 @@ from agente.apresentacao import tabela_html
 from agente.tema import PALETAS
 from painel import consultas
 from painel.cartoes import cartao, linha_de_cartoes, valor_br
-from painel.comum import (bloco, cabecalho, carregar, corpo, filtros_da_pagina, linha_unica, sem_anterior,
-                          sem_dados)
+from painel.comum import (bloco, cabecalho, carregar, corpo, filtros_da_pagina, linha_unica, rotulo_do_destaque,
+                          sem_anterior, sem_dados)
 from painel.consultas import delta
 from painel.graficos import barras_horizontais
 from painel.lateral import coluna_do_agente
@@ -27,6 +27,7 @@ def pagina() -> None:
         cartoes = carregar(consultas.cartoes_vendedores, f)
         if cartoes is not None:
             c = linha_unica(cartoes)
+            rotulo_do_destaque(c)
             ant = c.get("receita_ant")
             st.markdown(linha_de_cartoes([
                 cartao("Receita de itens", valor_br(c.get("receita_itens"), "moeda_compacta"), "payments", "menta",

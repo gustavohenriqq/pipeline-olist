@@ -20,7 +20,7 @@ import streamlit as st  # noqa: E402
 from agente import banco  # noqa: E402
 from agente.apresentacao import escapar_markdown  # noqa: E402
 from agente.tema import css, tema_valido  # noqa: E402
-from painel.comum import REPO  # noqa: E402
+from painel.comum import REPO, banco_fora, nova_execucao  # noqa: E402
 from painel.filtros import da_url  # noqa: E402
 
 MARCA = str(Path(__file__).resolve().parent / "marca.svg")
@@ -68,6 +68,7 @@ def preparar() -> None:
         estado.setdefault(chave, inicial)
     estado.setdefault("tema", tema_valido(st.query_params.get("tema")))
     estado.setdefault("filtros", da_url(st.query_params))
+    nova_execucao()
     st.html(f"<style>{css(estado.tema)}</style>")
 
 
@@ -92,7 +93,8 @@ def barra_lateral() -> None:
                     f":material/code: [Código no GitHub]({REPO})")
         st.markdown('<div class="rotulo-secao">Dados</div>', unsafe_allow_html=True)
         try:
-            resumo = _resumo_dos_dados()
+            # banco fora nesta execucao: nao espera outro connect_timeout so pelo rodape
+            resumo = None if banco_fora() else _resumo_dos_dados()
         except Exception:  # noqa: BLE001
             resumo = None
         partes = [resumo, "Base pública Olist, pedidos de set/2016 a out/2018",

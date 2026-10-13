@@ -185,3 +185,64 @@ def test_inicio_no_meio_do_mes_anterior_compara_o_mes_inteiro(conexao):
     if agosto is None or julho is None:
         pytest.skip("sem pedidos nesses meses nesta base")
     assert delta(c.receita_ref, c.receita_ant, taxa=False) == pytest.approx(agosto / julho - 1, abs=1e-9)
+
+
+def test_mes_de_referencia_e_o_ultimo_com_venda(conexao, painel_esperado):
+    """Fim do periodo em nov/2016 (sem pedido): o destaque compara out/2016 com set/2016."""
+    from datetime import date
+    from painel.consultas import cartoes_executivo, delta
+    from painel.filtros import Filtros
+    c = cartoes_executivo(conexao, Filtros(date(2016, 9, 1), date(2016, 11, 30))).iloc[0]
+    assert c.mes_referencia == painel_esperado["mes_referencia_2016_09_a_11"]
+    assert delta(c.receita_ref, c.receita_ant, taxa=False) == pytest.approx(
+        _valor(painel_esperado, "delta_receita_2016_09_a_11"), abs=1e-9)
+
+
+def _alertas(conexao, inicio, fim):
+    with conexao.cursor() as cur:
+        cur.execute("""
+            select count(*), coalesce(sum(p.valor_total), 0)
+            from marts.previsao_atraso r join marts.fato_pedidos p on p.pedido_sk = r.pedido_sk
+            where r.alerta and r.conjunto in ('teste', 'em_andamento')
+              and p.purchased_at::date between %s and %s""", (inicio, fim))
+        n, receita = cur.fetchone()
+    conexao.rollback()
+    return int(n), float(receita)
+
+
+@pytest.mark.parametrize("inicio, fim", [
+    ("2016-10-01", "2016-10-31"),  # pedidos entregues, nenhum em alerta (fora do teste e do em andamento)
+    ("2018-09-01", "2018-10-31"),  # pedidos sem nenhum entregue e sem alerta
+])
+def test_periodo_com_pedidos_e_sem_alerta_mostra_zero(conexao, inicio, fim):
+    """Como o Power BI: com pedidos no periodo, alertas e receita em risco saem 0, nao "sem dados"."""
+    from datetime import date
+    from painel.consultas import cartoes_entrega
+    from painel.filtros import Filtros
+    if _receita(conexao, date.fromisoformat(inicio), date.fromisoformat(fim)) is None:
+        pytest.skip("sem pedidos nesse periodo nesta base")
+    df = cartoes_entrega(conexao, Filtros(date.fromisoformat(inicio), date.fromisoformat(fim)))
+    assert not df.empty
+    c = df.iloc[0]
+    n, receita = _alertas(conexao, inicio, fim)
+    assert c.pedidos_alerta == n
+    assert c.receita_risco == pytest.approx(receita, abs=0.01)
+
+
+def test_pedidos_em_risco_desempatam_pelo_codigo_do_pedido(conexao):
+    """Como o TOPN do Power BI: probabilidade DESC e codigo do pedido ASC."""
+    from datetime import date
+    from painel.consultas import pedidos_em_risco
+    from painel.filtros import Filtros
+    with conexao.cursor() as cur:
+        cur.execute("""
+            select '#' || left(p.order_id, 10) from marts.previsao_atraso r
+            join marts.fato_pedidos p on p.pedido_sk = r.pedido_sk
+            where r.conjunto = 'em_andamento' and p.purchased_at::date = '2017-03-23'
+            order by r.prob_atraso desc, 1 limit 50""")
+        esperado = [linha[0] for linha in cur.fetchall()]
+    conexao.rollback()
+    if len(esperado) < 2:
+        pytest.skip("sem empate nesta base")
+    r = pedidos_em_risco(conexao, Filtros(date(2017, 3, 23), date(2017, 3, 23)))
+    assert list(r.pedido) == esperado

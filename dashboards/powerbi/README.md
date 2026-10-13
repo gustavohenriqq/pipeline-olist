@@ -7,7 +7,10 @@ Na Etapa 8 o desenho inteiro passou a ser **HTML e CSS gerados por medidas DAX**
 nenhum número. Tudo versionado em texto: o modelo em **TMDL** e o relatório em
 **PBIR**, dentro de um projeto **PBIP**. O PDF e os prints estão em `docs/prints/`.
 
-![Visão executiva](../../docs/prints/powerbi-executivo.png)
+![Relatório no Power BI Service](../../docs/prints/powerbi.gif)
+
+*Gravado no Power BI Service: filtro de região, navegação pelo menu, o livro abrindo
+o dicionário e a busca de métricas.*
 
 | Página | O que mostra |
 |---|---|
@@ -215,7 +218,7 @@ por DAX e compara com o mesmo número calculado em SQL.
 |---|---|---|
 | Linhas de cada tabela | 8 | iguais ao banco |
 | Medidas (receita, ticket, % no prazo, nota, excesso do RJ, acumulado no ano até mar/2018, variações, destaques do último mês, risco) | 13 | diferença abaixo de 0,000001 |
-| HTML e dicionário (texto que a medida deve conter, não conter ou contar, na janela padrão) | 33 | todos ok |
+| HTML e dicionário (texto que a medida deve conter, não conter ou contar, na janela padrão) | 34 | todos ok |
 | Papéis (usuário fora do seed e OLS) | 8 | ok nos três papéis |
 | Usuários do seed e um e-mail fora dele, pelo "Exibir como" | 6 | iguais ao SQL |
 
@@ -226,7 +229,7 @@ pedido em cada uma das 10 medidas de bloco, zero alerta mostrado como 0 (out/201
 um mês só com o ponto no centro, eixo e grupos em mil com a região Norte (em milhões apareceria "0,0 Mi")
 e o dicionário sem seleção, com uma e com quatro métricas. Os valores esperados
 saem do SQL, mas a comparação é de texto. A execução padrão roda modelo, medidas
-e HTML (54 casos). O escape do texto do banco é checado por um teste em Python:
+e HTML (55 casos). O escape do texto do banco é checado por um teste em Python:
 nenhuma coluna entra no HTML sem o `SUBSTITUTE` de `&`, `<` e `>`.
 
 O motor local do Desktop não aceita personificar um e-mail que não é conta do
@@ -270,7 +273,11 @@ A tabela `seguranca_bi` vai junto: só tem e-mails fictícios.
 Cuidados: "Publicar na Web" deixa o relatório aberto para qualquer pessoa, sem
 login, e é indexável; aqui os dados são um dataset público, mas em empresa isso
 quase nunca é permitido. O administrador do ambiente de estudante precisa
-permitir o recurso; se estiver bloqueado, a Etapa 8 fica sem link público. O
+permitir o recurso. **Foi o que aconteceu (12/10/2026):** o relatório subiu para o
+workspace pessoal, mas o Service respondeu "Entre em contato com o administrador
+para habilitar a criação de código de inserção". A Etapa 8 fechou sem link público,
+com o GIF gravado no Service no lugar. Lá, os botões e indicadores funcionam com um
+clique (o livro abre o dicionário, o × fecha), o que o Desktop não deixa testar. O
 relatório publicado é um retrato: a base é estática e não há atualização
 agendada (o Service não alcança o Postgres local).
 

@@ -21,7 +21,7 @@ Serve para comparar o tamanho relativo das etapas, não para medir esforço.
 | 5. Power BI (PR #6) | 08/10 a 09/10/2026 | 14 | cerca de 15h, atravessando a noite |
 | 6. Agente de IA (PR #7) | 10/10/2026 | 23 | cerca de 2h15, 7 deles correções |
 | 7. Painel web com o agente (PR #8) | 10/10/2026 | 10 | cerca de 50 min |
-| 8. HTML e CSS no Power BI (PR #9) | 12/10/2026 | 16 | cerca de 3h |
+| 8. HTML e CSS no Power BI (PR #9) | 12/10/2026 | 18 | cerca de 9h, com revisão final, pendências e o GIF |
 
 A numeração das etapas segue o plano; a ordem de entrega foi outra (a 4 saiu antes
 da 3).
@@ -63,6 +63,7 @@ link público) antes do merge.
 | 8 | Com filtro de região, o eixo do gráfico de receita mostrava "0,0 Mi" em todas as linhas | revisão final independente | unidade escolhida pelo tamanho (mil ou Mi), com caso na conferência |
 | 8 | O script da cópia pública podia apagar o repositório com um `-Destino` errado | revisão final, provado num teste em pasta temporária | recusa destino acima da origem e só apaga pasta que ele mesmo gerou |
 | 8 | A lista de atraso em excesso por UF cortava no fim e escondia SP (-926), metade da história | conferência visual dos prints | lista com rolagem |
+| 8 | Com o Nordeste filtrado, o rótulo do eixo com três dígitos ("168,4 mil") saía cortado à esquerda | gravação do GIF no Power BI Service | rótulos inteiros em mil ("168 mil"), com caso na conferência |
 
 ## Armadilhas de ferramenta
 

@@ -76,5 +76,12 @@ Se o painel e o Power BI divergirem, o CI acusa.
   `esperado.sql` que impede que elas se separem.
 - **Sem segurança por usuário.** O app é público e os dados também; o RLS segue
   demonstrado no Power BI.
-- **Destaque da nota média em %.** O Power BI mostra a diferença absoluta (0,01);
-  o valor da nota é o mesmo.
+- **Cold start com o banco fora.** Depois da primeira falha de conexão, os outros
+  visuais da tela desistem na hora (em vez de cada um esperar 15 s), e "Tentar de
+  novo" faz uma tentativa nova.
+- **JIT do Postgres desligado nas consultas.** Com o subplano por mês, o
+  planejador estimava custo alto e o JIT gastava 15 s numa consulta de menos de
+  1 s; cada consulta do painel roda com `set local jit = off`.
+- **Mesmo comportamento do Power BI nos destaques:** mês de referência é o último
+  mês com venda no período, a nota média varia em diferença absoluta (0,01) e
+  um período com pedidos e sem alerta mostra 0, não "sem dados".

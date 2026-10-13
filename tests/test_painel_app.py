@@ -21,7 +21,7 @@ CARTOES_EXECUTIVO = pd.DataFrame([{
     "receita": 15786203.57, "pedidos": 99092, "ticket_medio": 159.31, "pct_no_prazo": 0.932,
     "nota_media": 4.09, "receita_ref": 1003308.47, "receita_ant": 1058728.03, "pedidos_ref": 6512,
     "pedidos_ant": 6292, "ticket_ref": 154.07, "ticket_ant": 168.27, "pct_ref": 0.938,
-    "pct_ant": 0.966, "nota_ref": 4.2, "nota_ant": 4.21}])
+    "pct_ant": 0.966, "nota_ref": 4.2, "nota_ant": 4.21, "mes_referencia": "2018-08"}])
 FIXOS = {
     "cartoes_executivo": CARTOES_EXECUTIVO,
     "receita_mensal": pd.DataFrame({"ano_mes": ["2018-07", "2018-08"], "receita": [1.05e6, 1.0e6],
@@ -29,7 +29,8 @@ FIXOS = {
     "placar_mensal": pd.DataFrame({"ano_mes": ["2018-08"], "receita": [1.0e6], "variacao_mensal": [-0.052],
                                    "pedidos": [6512], "ticket_medio": [154.07], "pct_no_prazo": [0.938]}),
     "cartoes_entrega": pd.DataFrame([{"taxa_atraso": 0.068, "taxa_ref": 0.062, "taxa_ant": 0.034,
-                                      "pedidos_alerta": 8468, "receita_risco": 1.57e6}]),
+                                      "pedidos_alerta": 8468, "receita_risco": 1.57e6,
+                                      "mes_referencia": "2018-08"}]),
     "taxa_por_regiao": pd.DataFrame({"regiao": ["Nordeste", "Sul"], "taxa_atraso": [0.127, 0.059],
                                      "taxa_nacional": [0.068, 0.068]}),
     "excesso_por_uf": pd.DataFrame({"uf": ["RJ", "SP"], "atraso_em_excesso": [659.0, -923.0]}),
@@ -37,7 +38,8 @@ FIXOS = {
                                       "entrega_prevista": ["2018-08-07"], "uf": ["RJ"], "valor": [193.36],
                                       "prob_atraso": [0.525]}),
     "cartoes_vendedores": pd.DataFrame([{"receita_itens": 15786203.57, "itens": 112279,
-                                         "taxa_atraso_itens": 0.068, "receita_ref": 1.0e6, "receita_ant": 1.05e6}]),
+                                         "taxa_atraso_itens": 0.068, "receita_ref": 1.0e6, "receita_ant": 1.05e6,
+                                         "mes_referencia": "2018-08"}]),
     "receita_por_grupo": pd.DataFrame({"categoria_grupo": ["Casa e Decoração"], "receita_itens": [3.2e6]}),
     "vendedores": pd.DataFrame({"vendedor": ["Guariba/SP · 4869f7"], "receita_itens": [249640.70],
                                 "itens": [1156], "taxa_atraso_itens": [0.105]}),
@@ -222,3 +224,94 @@ def test_duas_sessoes_ao_mesmo_tempo_nao_trocam_a_coluna_do_agente(ambiente):
         assert sum(c.key == "pergunta_lateral" for c in a.chat_input) == 1
         assert sum(c.key == "pergunta_lateral" for c in b.chat_input) == 0
         st.cache_data.clear()
+
+
+def test_nota_media_com_diferenca_absoluta(ambiente):
+    # nota_ref 4,20 contra nota_ant 4,21: o Power BI mostra "▼ 0,01", nao "0,2%".
+    assert "▼ 0,01</b>" in _html(_pagina("executivo"))
+
+
+def test_rotulo_usa_o_mes_de_referencia_dos_cartoes(ambiente):
+    df = CARTOES_EXECUTIVO.assign(mes_referencia="2018-07")
+    ambiente.setattr("painel.consultas.cartoes_executivo", _fixa("cartoes_executivo", df))
+    html = _html(_pagina("executivo"))
+    assert "jul/2018 contra o mês anterior" in html and "ago/2018 contra" not in html
+
+
+def test_entrega_sem_alerta_mostra_zero_e_taxa_sem_dados_sem_destaque(ambiente):
+    df = pd.DataFrame([{"taxa_atraso": None, "taxa_ref": None, "taxa_ant": None, "pedidos_alerta": 0,
+                        "receita_risco": 0.0, "mes_referencia": "2018-10"}])
+    ambiente.setattr("painel.consultas.cartoes_entrega", _fixa("cartoes_entrega", df))
+    html = _html(_pagina("entrega"))
+    assert "R$ 0,00" in html and '<div class="cartao-valor">0</div>' in html
+    assert "sem mês anterior" not in html
+
+
+def test_banco_fora_desiste_rapido_depois_da_primeira_falha(ambiente):
+    tentativas = []
+
+    def dormindo():
+        tentativas.append(1)
+        raise OSError("timeout")
+    ambiente.setattr("agente.banco.abrir_conexao", dormindo)
+    at = _pagina("executivo")
+    assert not at.exception
+    # 3 visuais e o rodape da barra lateral: so a primeira conexao espera o timeout
+    assert len(tentativas) == 1
+    assert sum("acordando" in w.value for w in at.warning) == 1
+    # "Tentar de novo" tenta de verdade na proxima execucao
+    at.button(key="tentar_de_novo").click().run()
+    assert len(tentativas) == 2
+    assert sum("acordando" in w.value for w in at.warning) == 1
+
+
+TROCA = """
+import importlib
+import streamlit as st
+from agente.app import barra_lateral, preparar
+preparar()
+importlib.import_module("painel.paginas." + st.session_state.get("_teste_pagina", "entrega")).pagina()
+barra_lateral()
+"""
+
+
+def test_regiao_sai_da_url_onde_e_ignorada_e_volta_na_visao_executiva(ambiente):
+    at = AppTest.from_string(TROCA, default_timeout=30)
+    at.query_params.update({"inicio": "2018-01-01", "fim": "2018-08-31", "regiao": "Nordeste"})
+    at.run()
+    assert not at.exception
+    assert "regiao" not in at.query_params
+    assert at.query_params["inicio"] == "2018-01-01"
+    assert at.session_state["filtros"].regiao == "Nordeste"
+    at.session_state["_teste_pagina"] = "vendedores"
+    at.run()
+    assert "regiao" not in at.query_params
+    at.session_state["_teste_pagina"] = "executivo"
+    at.run()
+    assert at.query_params["regiao"] == "Nordeste"
+    assert at.selectbox(key="regiao").value == "Nordeste"
+
+
+def _colunas_por_linha(bloco):
+    """Quantas colunas tem cada st.columns da arvore (para conferir a disposicao)."""
+    from streamlit.testing.v1.element_tree import Block, Column
+    contagens = []
+    filhos = list(getattr(bloco, "children", {}).values())
+    colunas = [f for f in filhos if isinstance(f, Column)]
+    if colunas:
+        contagens.append(len(colunas))
+    for filho in filhos:
+        if isinstance(filho, Block):
+            contagens.extend(_colunas_por_linha(filho))
+    return contagens
+
+
+def test_entrega_com_agente_aberto_nao_aperta_tres_colunas(ambiente):
+    fechado = _pagina("entrega")
+    assert 3 in _colunas_por_linha(fechado.main)
+    at = AppTest.from_string(PAGINA.format(modulo="entrega"), default_timeout=30)
+    at.session_state["agente_aberto"] = True
+    at.run()
+    assert not at.exception
+    assert 3 not in _colunas_por_linha(at.main)
+    assert '<tr class="risco-alto">' in _html(at)

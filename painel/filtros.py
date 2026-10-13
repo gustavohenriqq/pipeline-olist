@@ -25,8 +25,9 @@ class Filtros:
 PADRAO = Filtros(date(2017, 1, 1), date(2018, 8, 31), None)
 
 
-def mes_referencia(f: Filtros) -> str:
-    return f.fim.strftime("%Y-%m")
+def mes_referencia(f: Filtros, ultima_venda: date | None = None) -> str:
+    """Mes dos destaques: o da ultima venda no periodo (como o Power BI); sem venda, o do fim."""
+    return (ultima_venda or f.fim).strftime("%Y-%m")
 
 
 def mes_anterior(ano_mes: str) -> str:
@@ -46,15 +47,19 @@ def _um_mes_antes(d: date, fim: bool) -> date:
     return anterior.replace(day=min(d.day, anterior.day))
 
 
-def janela_comparacao(f: Filtros) -> tuple[date, date, date, date]:
+def janela_comparacao(f: Filtros, ultima_venda: date | None = None) -> tuple[date, date, date, date]:
     """(ref_ini, ref_fim, ant_ini, ant_fim) do destaque "contra o mes anterior".
 
-    Como o DATEADD do Power BI: o mes de referencia usa os dias selecionados dele, e o
-    anterior sao esses mesmos dias um mes antes. Fim em 15/08 compara 1 a 15 de
-    agosto com 1 a 15 de julho; inicio em 20/07 nao corta o julho da comparacao.
+    O mes de referencia e o da ultima venda dentro do periodo ('Mes de Referencia' do
+    Power BI); sem ela, o mes do fim. Como o DATEADD: a referencia usa os dias do
+    periodo dentro desse mes, e o anterior sao esses mesmos dias um mes antes. Fim em
+    15/08 compara 1 a 15 de agosto com 1 a 15 de julho; inicio em 20/07 nao corta o
+    julho da comparacao; fim em 30/11/2016 (sem venda em novembro) compara outubro
+    inteiro com setembro inteiro.
     """
-    ref_ini = max(f.inicio, f.fim.replace(day=1))
-    return ref_ini, f.fim, _um_mes_antes(ref_ini, fim=False), _um_mes_antes(f.fim, fim=True)
+    mes = ultima_venda if ultima_venda and f.inicio <= ultima_venda <= f.fim else f.fim
+    ref_ini, ref_fim = max(f.inicio, mes.replace(day=1)), min(f.fim, _fim_do_mes(mes))
+    return ref_ini, ref_fim, _um_mes_antes(ref_ini, fim=False), _um_mes_antes(ref_fim, fim=True)
 
 
 def _no_intervalo(d: date) -> date:

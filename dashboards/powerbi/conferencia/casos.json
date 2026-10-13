@@ -25,6 +25,7 @@
     {"caso": "receita_risco", "dax": "EVALUATE ROW(\"v\", [Receita em Risco])"}
   ],
   "html": [
+    {"caso": "html_receita_eixo_tres_digitos", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Receita Mensal], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31)), dim_clientes[regiao] = \"Nordeste\"))", "contem": [">168 mil<", ">112 mil<"], "nao_contem": [",4 mil<"]},
     {"caso": "html_cartoes_entrega_zero_alertas", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Entrega], DATESBETWEEN(dim_tempo[data], DATE(2016,10,1), DATE(2016,10,31))))", "contem": ["'>0</div>", "R$ 0,00"], "nao_contem": ["sem dados"]},
     {"caso": "html_receita_um_mes", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Receita Mensal], DATESBETWEEN(dim_tempo[data], DATE(2018,3,1), DATE(2018,3,31))))", "contem": ["cx='393.0'"], "nao_contem": ["L738,300 Z"], "contagem": {"<circle": 1}},
     {"caso": "html_cartoes_entrega_anel", "dax": "EVALUATE ROW(\"v\", CALCULATE([HTML Cartões Entrega], DATESBETWEEN(dim_tempo[data], DATE(2017,1,1), DATE(2018,8,31))))", "contem": ["6,8%", "2,8 pp"], "contagem": {"<circle": 2}},

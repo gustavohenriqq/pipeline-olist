@@ -58,8 +58,8 @@ descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 
 > Status: **Etapas 1 a 8 concluídas** no dataset completo, com o dashboard
 > publicado, o painel web com o agente no ar e o relatório do Power BI
-> versionado e redesenhado em HTML (o link público do Power BI ainda está
-> pendente). `dbt build` com 0 erro (22
+> versionado e redesenhado em HTML (sem link público: a instituição da conta de
+> estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (22
 > models, 1 seed e 93 testes, 3 deles avisos propositais), e cada execução fica
 > registrada no próprio banco. No CI,
 > cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
@@ -142,8 +142,9 @@ Como funciona, defesas, avaliação e limites: [docs/agente.md](docs/agente.md).
 
 ### Painel web com o agente (Etapa 7)
 
-O Power BI ainda não tem link público (publicar pede uma conta corporativa ou
-de estudante), então as três páginas dele foram para o mesmo app público do agente:
+O Power BI não tem link público ("Publicar na Web" depende do administrador da
+conta, e a instituição da conta de estudante bloqueia o recurso), então as três
+páginas dele foram para o mesmo app público do agente:
 **[Painel Olist](https://painel-olist.streamlit.app/)**, em HTML e CSS, tema escuro
 ou claro, com o agente abrindo ao lado do painel ("Tire sua dúvida") e já sabendo
 a página e os filtros da tela.
@@ -165,19 +166,22 @@ cada bloco é HTML e CSS (com gráficos em SVG) **gerado por uma medida DAX** e
 desenhado pelo visual HTML Content. Filtros, navegação e o painel do dicionário
 continuam nativos.
 
-![Entrega e risco com o dicionário de métricas aberto](docs/prints/powerbi-dicionario.png)
+![Relatório no Power BI Service: filtro de região, navegação pelo menu, dicionário de métricas e vendedores](docs/prints/powerbi.gif)
 
-- **Nenhum número novo:** o HTML só formata as medidas que já existiam, e 33 casos
+*Gravado no Power BI Service, no workspace pessoal da conta de estudante.*
+
+- **Nenhum número novo:** o HTML só formata as medidas que já existiam, e 34 casos
   novos na conferência checam o texto que a pessoa lê ("R$ 15,79 Mi", +660 no RJ,
   50 linhas na tabela de risco, "sem dados" num ano vazio, eixo em mil com filtro
-  de região, zero alerta mostrado como 0), com os valores tirados do SQL. Ao todo, 54 casos.
+  de região, zero alerta mostrado como 0), com os valores tirados do SQL. Ao todo, 55 casos.
 - **Dicionário de métricas** em todas as páginas: tabela calculada em TMDL, busca
   nativa e indicadores que abrem o painel sem desfazer o período escolhido.
 - **Gerado e testado:** as 19 medidas saem de um script versionado, e um teste
   falha se alguém editar o TMDL à mão e divergir do gerador.
 - **Publicação na web por uma cópia sem RLS:** "Publicar na Web" não aceita papéis,
   então um script gera a cópia pública fora do Git; o relatório versionado
-  continua com RLS e OLS. A publicação, pela conta de estudante, está pendente.
+  continua com RLS e OLS. O relatório está publicado no workspace pessoal da conta
+  de estudante, mas o link aberto ficou bloqueado pelo administrador da instituição.
 
 Como o HTML é montado, limites do visual, publicação e armadilhas: [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 
@@ -473,7 +477,7 @@ uma, está no [ROADMAP.md](ROADMAP.md). Resumo:
 5. **Power BI avançado** (concluída): DAX de inteligência de tempo, RLS dinâmico por região e vendedor e OLS, conferidos contra o SQL. Detalhes em [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 6. **Agente de IA** (concluída): pergunta em português vira SQL nas marts, num usuário só de leitura, com checagem dos números da resposta. App público em [painel-olist.streamlit.app](https://painel-olist.streamlit.app/); detalhes em [docs/agente.md](docs/agente.md).
 7. **Painel web com o agente** (concluída): as três páginas do Power BI no app público, com os números conferidos contra o mesmo SQL do Power BI e o agente ao lado. Detalhes em [docs/painel-web.md](docs/painel-web.md).
-8. **HTML e CSS dentro do Power BI** (concluída; link público pendente): o relatório desenhado em HTML e SVG por medidas DAX, com dicionário de métricas e conferência do texto contra o SQL. Detalhes em [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
+8. **HTML e CSS dentro do Power BI** (concluída; sem link público, bloqueado pela instituição): o relatório desenhado em HTML e SVG por medidas DAX, com dicionário de métricas e conferência do texto contra o SQL. Detalhes em [dashboards/powerbi/README.md](dashboards/powerbi/README.md).
 
 Três mudanças de rota, todas por evidência nos dados:
 

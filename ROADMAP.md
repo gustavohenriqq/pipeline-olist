@@ -1,8 +1,10 @@
 # Roadmap do projeto
 
-Este documento explica o que o projeto quer responder, como as frentes se
-encaixam, e o que foi descartado com a justificativa. Cada etapa termina com um
-commit e o README atualizado.
+O plano do projeto, já cumprido: as oito etapas estão concluídas (out/2026). O
+documento explica o que o projeto responde, como as frentes se encaixam e o que
+foi descartado, com a justificativa. Cada etapa terminou com um PR e o README
+atualizado; os erros do caminho e o tempo de cada etapa estão no
+[diário de bordo](docs/diario-de-bordo.md).
 
 ---
 

@@ -4,6 +4,8 @@ Pipeline de dados de ponta a ponta sobre o e-commerce brasileiro (dataset públi
 da Olist, 99.441 pedidos reais), construído para responder uma pergunta de
 negócio específica e agir sobre ela.
 
+**Veja funcionando:** [Painel e agente de IA](https://painel-olist.streamlit.app/) · [Dashboard no Looker Studio](https://datastudio.google.com/reporting/f66379d8-5fd9-4d0c-8e9c-4cd7019db7c7) · [Power BI em GIF](docs/prints/powerbi.gif)
+
 ## O achado
 
 Atrasar a entrega em uma semana derruba a nota do cliente de **4,29 para 2,72**.

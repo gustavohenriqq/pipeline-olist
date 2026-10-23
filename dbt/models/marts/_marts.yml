@@ -252,3 +252,66 @@ models:
           - valor_minimo:
               arguments:
                 min_value: 0
+
+  - name: prazo_vs_entrega
+    description: >
+      Diagnostico do atraso no grao de pedido, so pedidos entregues com data de
+      entrega. Separa o atraso por prazo prometido curto para a rota do atraso
+      por entrega fora do padrao da rota. Diagnostico ex post: o tempo tipico
+      usa a base inteira, entao nao serve de feature para o modelo de
+      previsao. Regra e numeros em docs/analise-atraso.md, secao 7.
+    columns:
+      - name: pedido_sk
+        description: Chave substituta do pedido. Subconjunto de fato_pedidos.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fato_pedidos')
+                field: pedido_sk
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: cliente_regiao
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
+      - name: rota
+        description: >
+          UF do vendedor > UF do cliente (ex.: SP>RJ). Nula quando o pedido tem
+          vendedores em mais de uma UF.
+      - name: folga_dias
+        description: Prazo prometido menos tempo real de entrega. Negativa = atraso.
+        data_tests: [not_null]
+      - name: referencia_tipico
+        description: >
+          De onde veio o tempo tipico: 'rota' (rota com pelo menos
+          min_pedidos_rota pedidos, 30 por padrao) ou 'uf_cliente' (rota
+          pequena ou vendedores em mais de uma UF).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["rota", "uf_cliente"]
+      - name: tempo_tipico_dias
+        description: Mediana do tempo real de entrega da referencia (rota ou UF do cliente).
+        data_tests:
+          - not_null
+          - valor_minimo:
+              arguments:
+                min_value: 0
+      - name: razao_prazo_padrao
+        description: >
+          Mediana nacional de prazo prometido sobre tempo tipico. Igual em
+          todas as linhas; fica na tabela para a regra ser reproduzivel.
+        data_tests: [not_null]
+      - name: causa_atraso
+        description: >
+          'prazo curto' quando o pedido atrasou mas chegou dentro do prazo
+          padrao (tempo tipico vezes razao_prazo_padrao); 'entrega lenta' quando
+          passou dele. Nula para pedido entregue no prazo.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["prazo curto", "entrega lenta"]

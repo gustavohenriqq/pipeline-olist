@@ -19,6 +19,32 @@ models:
       - name: prazo_prometido_dias
         description: Dias entre a compra e a data prometida, que o cliente ve no checkout.
         data_tests: [not_null]
+      - name: vendedor_entregas_hist
+        description: >
+          Pedidos do vendedor principal comprados e entregues antes do dia da
+          compra (0 para vendedor sem historico).
+        data_tests: [not_null]
+      - name: vendedor_taxa_atraso_hist
+        description: >
+          Taxa de atraso do vendedor principal na data da compra, suavizada em
+          direcao a taxa geral da mesma data com peso de 10 entregas.
+        data_tests: [not_null]
+
+  - name: ml_historico_vendedor
+    description: >
+      Historico de entrega de cada vendedor como era na data da compra, um par
+      (pedido, vendedor) por linha. So conta pedido comprado e entregue antes do
+      dia da compra; o teste assert_historico_vendedor_sem_futuro recalcula por
+      juncao direta e falha se algum pedido posterior entrar.
+    data_tests:
+      - combinacao_unica:
+          arguments:
+            combination_of_columns: [order_id, vendedor_sk]
+    columns:
+      - name: hist_entregues
+        data_tests: [not_null]
+      - name: hist_ultima_entrega
+        description: Ultima entrega considerada. Controle do teste, nao e feature.
 
 sources:
   - name: ml_saida

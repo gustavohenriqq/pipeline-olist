@@ -6,6 +6,9 @@ probabilidade de ele chegar depois da data prometida, e grava essa estimativa em
 [`ml/artefatos/metricas.json`](../ml/artefatos/metricas.json) (versão
 `20261008-0b8827c0`) e da primeira execução, guardada em
 [`metricas_execucao1_com_mes_compra.json`](../ml/artefatos/metricas_execucao1_com_mes_compra.json).
+A seção 12 (histórico do vendedor) usa
+[`metricas_execucao3_com_historico_vendedor.json`](../ml/artefatos/metricas_execucao3_com_historico_vendedor.json)
+e [`ablacao_historico_vendedor_validacao.json`](../ml/artefatos/ablacao_historico_vendedor_validacao.json).
 A especificação está em [docs/specs](specs/2026-10-08-previsao-atraso-design.md).
 
 ---
@@ -40,6 +43,14 @@ aconteceu em cada mês de 2017; não ensina sazonalidade. A coluna saiu, e a se�
 "Primeira execução" conta o que mudou, inclusive que o teste foi olhado duas
 vezes.
 
+**O histórico do vendedor não ajudou, e ficou fora do modelo.** A taxa de
+atraso de cada vendedor, calculada só com pedidos entregues antes do dia da
+compra, era a feature com mais chance de melhorar o modelo. Ela não vaza (um
+teste dbt recalcula tudo e falha se entrar pedido posterior), mas derrubou a
+PR-AUC da validação de 0,235 para 0,213, e nenhuma das cinco variantes
+testadas ficou acima da versão sem histórico. Sozinha, ela quase não ordena o
+risco (ROC-AUC 0,526 na validação). Detalhes na seção 12.
+
 ---
 
 ## 1. A pergunta e o uso
@@ -67,6 +78,11 @@ os CEPs, valor dos itens e do frete, frete sobre valor, quantidade de itens, de
 vendedores e de produtos, peso e volume, grupo de categoria do item de maior
 valor, forma de pagamento de maior valor, parcelas, dia da semana e hora da
 compra.
+
+**Calculadas, mas fora por desempenho:** `vendedor_entregas_hist` e
+`vendedor_taxa_atraso_hist` (histórico do vendedor na data da compra). Não
+vazam, mas pioraram a validação; ficam na lista `FORA_POR_DESEMPENHO` de
+`ml/features.py`, e `matriz()` as descarta (seção 12).
 
 **Proibidas, e por quê:**
 
@@ -336,9 +352,10 @@ número de linhas.
 
 ## 11. Limites e próximos passos
 
-- **Taxa histórica por vendedor.** Provavelmente a feature mais forte que falta.
-  Exige calcular "como era na data da compra", só com pedidos já entregues
-  naquela data; feito errado, vira vazamento.
+- **Histórico do vendedor em janela recente.** A taxa acumulada foi testada e
+  piorou o modelo (seção 12). Ainda não testados: a taxa só dos últimos 90 dias,
+  que esquece crises antigas, e o tempo histórico de despacho do vendedor (dias
+  até a transportadora), que é a parte do atraso que ele controla.
 - **Limiar adaptativo ou por capacidade** (seção 5).
 - **Mais de um ano de dados** antes de qualquer feature de calendário anual.
 - **Recalibrar as probabilidades** numa janela recente.
@@ -348,6 +365,120 @@ número de linhas.
 - **Censura:** pedidos sem entrega ficam fora do treino. São cerca de 2% por mês,
   então o viés é pequeno, mas existe.
 
+## 12. Histórico do vendedor (issue 18)
+
+A pergunta: saber como o vendedor vinha entregando melhora a previsão? É a
+feature que mais parecia faltar, e a mais fácil de vazar: a taxa de atraso do
+vendedor calculada com a base inteira inclui os atrasos que ainda iam acontecer.
+
+**Como é calculada.** O model `ml.ml_historico_vendedor` guarda, para cada par
+(pedido, vendedor), quantos pedidos daquele vendedor tinham sido **comprados e
+entregues antes do dia da compra**, quantos desses atrasaram e a mesma conta para
+a plataforma inteira. Entrega no próprio dia da compra fica de fora, porque o
+modelo roda no ato da compra e não sabe a hora da entrega. Pedido em trânsito
+não conta, mesmo vencido: só pedido entregue tem desfecho fechado. Em
+`ml_features_atraso` entram duas colunas, do vendedor principal:
+
+- `vendedor_entregas_hist`: o número de entregas anteriores (0 para vendedor
+  novo; 5,4% dos pedidos da janela);
+- `vendedor_taxa_atraso_hist`: (atrasos + 10 × taxa geral do dia) / (entregas +
+  10). Vendedor sem histórico recebe a taxa geral daquela data; com 10 entregas,
+  pesa meio a meio. O peso 10 foi fixado antes de treinar, sem busca.
+
+**O teste contra o futuro.** `assert_historico_vendedor_sem_futuro` recalcula as
+contagens por junção direta, com a regra escrita por extenso (entrega anterior
+ao dia da compra e compra anterior ao dia da compra), sem a soma acumulada que o
+model usa, e falha se algum número divergir ou se a última entrega usada não for
+anterior ao dia da compra. Prova de que ele pega o erro: com a ordem dos eventos
+invertida no model, de modo que a entrega do próprio dia passasse a contar, o
+teste devolveu 77.214 linhas com problema (38.607 pares). O model também se
+protege de pedido entregue antes da própria compra, mas a base não tem nenhum,
+então essa proteção não muda nada hoje.
+
+**Resultado no mesmo split** (treino 2017, validação jan a abr/2018, teste mai a
+ago/2018), a execução completa de `ml.treinar` com as duas colunas, contra a
+versão atual:
+
+| Conjunto | Modelo | PR-AUC atual | PR-AUC com histórico | ROC-AUC atual | ROC-AUC com histórico | Brier atual | Brier com histórico |
+|---|---|---|---|---|---|---|---|
+| Validação | Baseline | 0,179 | 0,179 | 0,648 | 0,648 | 0,0965 | 0,0965 |
+| Validação | Logística | 0,244 | 0,218 | 0,705 | 0,687 | 0,0945 | 0,0928 |
+| Validação | Principal | 0,235 | 0,213 | 0,705 | 0,688 | 0,0943 | 0,0936 |
+| Teste | Baseline | 0,049 | 0,049 | 0,529 | 0,529 | 0,0427 | 0,0427 |
+| Teste | Logística | 0,083 | 0,073 | 0,689 | 0,659 | 0,0420 | 0,0469 |
+| Teste | Principal | 0,085 | 0,076 | 0,680 | 0,657 | 0,0421 | 0,0482 |
+
+A baseline idêntica confirma que as duas execuções viram os mesmos pedidos. Com
+o histórico, a grade escolheu outra combinação (profundidade livre em vez de 3)
+e o limiar subiu de 0,11 para 0,21. O custo no teste caiu de R$ 99.510 para
+R$ 86.985, mas só porque o modelo passou a alertar menos (83 por mil em vez de
+137,5); continua acima dos R$ 66.900 de não fazer nada, e a precisão caiu (9,4%
+para 9,2%). No backtest mensal, a PR-AUC piorou em 6 dos 8 meses de 2018.
+
+**Calibração no teste**, por decil (probabilidade média / atraso real):
+
+| Decil | Atual | Com histórico |
+|---|---|---|
+| 1 | 1,9% / 1,0% | 1,8% / 1,4% |
+| 2 | 2,7% / 1,5% | 2,7% / 1,9% |
+| 3 | 3,2% / 2,2% | 3,4% / 2,6% |
+| 4 | 3,8% / 2,7% | 4,1% / 2,8% |
+| 5 | 4,4% / 3,4% | 5,0% / 3,6% |
+| 6 | 5,2% / 4,7% | 6,3% / 4,3% |
+| 7 | 6,3% / 5,3% | 8,1% / 4,9% |
+| 8 | 8,0% / 6,1% | 10,7% / 6,7% |
+| 9 | 10,7% / 7,2% | 15,3% / 7,2% |
+| 10 | 16,9% / 10,0% | 30,4% / 8,6% |
+
+A calibração piora onde importa: os 10% mais arriscados recebem 30,4% de
+probabilidade e atrasam 8,6%, menos que os 10,0% do modelo atual. O topo da
+lista ficou pior, não melhor.
+
+**Ablação, só na validação** (hiperparâmetros do modelo atual fixos, para
+isolar o efeito das colunas; o teste não foi calculado). PR-AUC:
+
+| Variante | Principal | Logística |
+|---|---|---|
+| Sem histórico (atual) | 0,236 | 0,244 |
+| Só a contagem | 0,229 | 0,230 |
+| Só a taxa | 0,217 | 0,226 |
+| Contagem e taxa | 0,205 | 0,218 |
+| Contagem e taxa relativa à taxa geral | 0,228 | 0,231 |
+
+Nenhuma variante passa a versão sem histórico. (A linha "sem histórico" dá 0,236
+contra os 0,235 registrados: o banco usado aqui devolve os pedidos em outra
+ordem, e a parada antecipada do gradient boosting sorteia outra fatia interna.
+A logística, sem sorteio, repete 0,244.)
+
+**Por que não funcionou.** Três leituras, da mais para a menos sustentada:
+
+1. **O sinal é fraco.** Sozinha, a taxa do vendedor tem ROC-AUC de 0,557 no
+   treino e 0,526 na validação, quase o acaso. É coerente com a Etapa 2: só 13%
+   do atraso nasce no vendedor, o resto é transporte ([análise](analise-atraso.md)).
+2. **A taxa acumulada carrega o regime.** O PSI da taxa entre treino e teste é
+   2,82, o maior de todas as features. Em 2017 o histórico era curto e calmo; no
+   teste, todo vendedor carrega os atrasos da crise de fev e mar/2018 num período
+   com 4,4% de atraso. O modelo lê isso como risco, e é daí que vem o topo
+   superestimado da calibração. A taxa relativa à taxa geral do dia corrige o
+   nível e recupera parte da perda, mas não passa a versão sem histórico.
+3. **Censura.** Pedido atrasado demora mais para entrar no histórico, porque só
+   conta depois de entregue. A taxa média da feature é 2,5% no treino, contra
+   5,6% de atraso real. Isso não é vazamento (é o que existiria em produção
+   naquele dia), mas achata a diferença entre vendedores.
+
+**Decisão.** As colunas continuam calculadas e testadas no dbt, prontas para
+uma versão melhor (janela recente, tempo de despacho), mas ficam fora da lista
+permitida. O modelo salvo, `metricas.json` e `marts.previsao_atraso` não mudam,
+e por isso nada muda no Power BI nem no painel. Se um dia as colunas entrarem,
+a previsão muda inteira: a página de risco, a contagem de alertas, a receita em
+risco e o caso de conferência `html_risco_linhas` (que espera o pedido do topo
+com 52,5%) precisam ser refeitos.
+
+**Transparência sobre o teste.** A execução completa calcula o teste junto, e
+ele foi olhado pela terceira vez. A decisão de deixar as colunas de fora se
+sustenta só com a validação (as duas famílias de modelo pioram lá), e a ablação
+foi feita depois, sem tocar no teste.
+
 ## Como reproduzir
 
 ```bash
@@ -355,7 +486,11 @@ cd dbt && dbt build --profiles-dir . && cd ..
 python -m ml.treinar      # grava ml/artefatos/modelo.joblib e metricas.json
 python -m ml.inferir      # grava marts.previsao_atraso
 cd dbt && dbt test --profiles-dir . --select source:ml_saida
+python -m ml.ablacao_historico_vendedor   # seção 12, só validação
 ```
+
+Para repetir a execução com o histórico do vendedor, mova as duas colunas de
+`FORA_POR_DESEMPENHO` para `NUMERICAS` em `ml/features.py` e rode o treino.
 
 Dependências em `requirements-ml.txt`. O CI roda os testes Python (`pytest
 tests`), mas não o treino: os 800 pedidos da amostra não dão métrica que

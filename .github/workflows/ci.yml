@@ -131,10 +131,15 @@ jobs:
             echo "completo=sim" >> "$GITHUB_OUTPUT"
           fi
 
+      # "--indirect-selection cautious": teste so entra se todos os pais dele
+      # foram selecionados. Sem isso, um model novo que le fato_pedidos (como
+      # distancia_pedido) puxa o fato como ancestral e, com ele, os testes de
+      # relationships do fato com dim_clientes, dim_tempo etc., que nao estao na
+      # selecao e nao existem no banco vazio do CI ("relation does not exist").
       - name: dbt build so do que mudou (PR)
         if: github.event_name == 'pull_request' && steps.arquivos.outputs.completo != 'sim'
         working-directory: dbt
-        run: dbt build --profiles-dir . --select @state:modified --state "$RUNNER_TEMP/estado_base"
+        run: dbt build --profiles-dir . --select @state:modified --state "$RUNNER_TEMP/estado_base" --indirect-selection cautious
 
       - name: dbt build completo (PR que mexe no painel ou na infra)
         if: github.event_name == 'pull_request' && steps.arquivos.outputs.completo == 'sim'

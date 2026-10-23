@@ -116,6 +116,13 @@ def test_build_completo_no_pr_usa_a_saida_completo(passos):
     assert "steps.arquivos.outputs.completo == 'sim'" in _condicao(completo)
 
 
+def test_build_seletivo_so_roda_teste_com_todos_os_pais_construidos(passos):
+    # Sem o cautious, o PR da distancia_pedido quebrou: o fato entrou como
+    # ancestral e levou junto testes de relacao com dimensoes nao construidas.
+    run = _passo(passos, "dbt build so do que mudou (PR)")["run"]
+    assert "--indirect-selection cautious" in run
+
+
 def test_validacao_roda_quando_infra_muda(passos):
     validar = _passo(passos, "Validar incrementalidade")
     condicao = _condicao(validar)

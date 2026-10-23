@@ -71,8 +71,8 @@ descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 > Status: **Etapas 1 a 8 concluídas** no dataset completo, com o dashboard
 > publicado, o painel web com o agente no ar e o relatório do Power BI
 > versionado e redesenhado em HTML (sem link público: a instituição da conta de
-> estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (22
-> models, 1 seed e 93 testes, 3 deles avisos propositais), e cada execução fica
+> estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (23
+> models, 1 seed e 108 testes, 3 deles avisos propositais), e cada execução fica
 > registrada no próprio banco. No CI,
 > cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
 > validação de idempotência, janela e metadados.

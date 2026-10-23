@@ -22,7 +22,9 @@
 -- Historico do vendedor (issue 18): vendedor_entregas_hist e
 -- vendedor_taxa_atraso_hist contam so pedidos comprados e entregues antes do
 -- dia da compra. Feito sem esse corte, seria vazamento (o vendedor "saberia"
--- dos atrasos que ainda iam acontecer).
+-- dos atrasos que ainda iam acontecer). Avaliadas e deixadas FORA do modelo:
+-- pioraram a validacao (ml/features.py, FORA_POR_DESEMPENHO; resultado em
+-- docs/modelo-atraso.md, secao 12).
 --
 -- Colunas de controle (nao sao features): pedido_sk, order_id, purchased_at
 -- (separacao temporal) e atrasou (alvo; nulo quando ainda nao houve entrega).

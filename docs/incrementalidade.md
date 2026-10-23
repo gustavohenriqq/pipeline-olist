@@ -42,7 +42,9 @@ o reprocessamento por janela do período afetado.
 Na prática, isso pesa em toda coluna nova nos fatos. Se os fatos já fossem
 incrementais, `dias_ate_transportadora`, `dias_em_transporte` e `situacao_pedido`
 teriam passado por isso, e o mesmo vale para a Etapa 4 se a previsão de atraso
-entrar no `fato_pedidos`.
+entrar no `fato_pedidos`. O primeiro caso real foi `coleta_fora_de_ordem`
+(issue #15, 23/10/2026): num banco que já tem o fato, rode uma vez
+`dbt build --profiles-dir . --full-refresh --select fato_pedidos+`.
 Com `fail`, o build normal para com erro em vez de seguir com a coluna faltando,
 e a correção é rodar `--full-refresh` uma vez. Por isso a previsão deve ir para
 uma tabela própria, ligada ao fato pela chave, e não para uma coluna do fato:

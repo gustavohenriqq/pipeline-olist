@@ -29,8 +29,9 @@ Grão: um pedido.
 - `estimated_delivery_at` (timestamp without time zone)
 - `tempo_entrega_dias` (integer): Dias da compra até a entrega ao cliente.
 - `atraso_dias` (integer): Entrega menos data estimada, em dias: positivo é atraso, negativo é adiantado; nulo se não entregue.
-- `dias_ate_transportadora` (integer): Dias entre a compra e a entrega do pacote a transportadora. E a parte do tempo sob responsabilidade do vendedor. Teste em aviso: 2 pedidos tem valor negativo na base do Olist (transportadora recebendo antes da compra), o que e impossivel e indica erro de origem.
-- `dias_em_transporte` (integer): Dias entre a coleta pela transportadora e a entrega ao cliente. E a parte do tempo sob responsabilidade da logistica. Teste em aviso: 20 pedidos tem valor negativo (cliente recebendo antes da coleta).
+- `dias_ate_transportadora` (integer): Dias entre a compra e a entrega do pacote a transportadora. E a parte do tempo sob responsabilidade do vendedor. Nulo quando coleta_fora_de_ordem e verdadeiro; fora isso, nunca negativo.
+- `dias_em_transporte` (integer): Dias entre a coleta pela transportadora e a entrega ao cliente. E a parte do tempo sob responsabilidade da logistica. Nulo quando coleta_fora_de_ordem e verdadeiro; fora isso, nunca negativo.
+- `coleta_fora_de_ordem` (boolean): Verdadeiro quando a data de coleta pela transportadora e anterior a compra (2 pedidos) ou posterior a entrega ao cliente (20 pedidos), erro de origem do Olist. Nesses 22 pedidos dias_ate_transportadora e dias_em_transporte ficam nulos; tempo_entrega_dias, atraso_dias e entregue_no_prazo continuam validos. O teste em aviso assert_coleta_fora_de_ordem_conhecida lista os casos.
 - `foi_entregue` (boolean)
 - `entregue_no_prazo` (boolean): true/false; nulo se o pedido não foi entregue. Taxa de atraso e % no prazo contam só os não nulos.
 

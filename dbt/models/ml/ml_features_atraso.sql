@@ -19,6 +19,11 @@
 --                                      ensinar sazonalidade; a 1a execucao
 --                                      teve PSI 4,9 nela (docs/modelo-atraso.md)
 --
+-- Historico do vendedor (issue 18): vendedor_entregas_hist e
+-- vendedor_taxa_atraso_hist contam so pedidos comprados e entregues antes do
+-- dia da compra. Feito sem esse corte, seria vazamento (o vendedor "saberia"
+-- dos atrasos que ainda iam acontecer).
+--
 -- Colunas de controle (nao sao features): pedido_sk, order_id, purchased_at
 -- (separacao temporal) e atrasou (alvo; nulo quando ainda nao houve entrega).
 with pedidos as (
@@ -41,6 +46,7 @@ itens as (
         i.order_id,
         i.order_item_id,
         i.valor_item,
+        i.vendedor_sk,
         v.zip_code_prefix as vendedor_cep,
         v.uf              as vendedor_uf,
         v.regiao          as vendedor_regiao,
@@ -93,6 +99,20 @@ pagamento_principal as (
     where rn = 1
 ),
 
+-- Historico do vendedor principal como era na data da compra: so pedidos
+-- comprados e entregues antes do dia da compra (ml_historico_vendedor, testado
+-- por assert_historico_vendedor_sem_futuro).
+historico as (
+    select * from {{ ref('ml_historico_vendedor') }}
+),
+
+-- Taxa geral por dia da compra, a parte: pedido sem item (sem vendedor)
+-- tambem recebe a taxa geral, como o vendedor sem historico.
+historico_geral as (
+    select distinct compra_dia, geral_entregues, geral_atrasos
+    from historico
+),
+
 -- 11 prefixos de CEP da origem tem coordenada media fora do Brasil (um CEP do
 -- PR cai na Espanha). Ponto fora da caixa do pais e descartado aqui, e a
 -- distancia desse pedido fica nula, como a de CEP sem coordenada. A dimensao
@@ -137,6 +157,10 @@ base as (
         pg.payment_type as tipo_pagamento,
         p.max_parcelas,
 
+        coalesce(hv.hist_entregues, 0) as vendedor_entregas_hist,
+        hv.hist_atrasos                as vendedor_atrasos_hist,
+        hg.geral_atrasos::float8 / nullif(hg.geral_entregues, 0) as taxa_atraso_geral_hist,
+
         extract(isodow from p.purchased_at)::int as dia_semana_compra,
         extract(hour   from p.purchased_at)::int as hora_compra,
 
@@ -152,6 +176,9 @@ base as (
     left join item_principal ip      on p.order_id = ip.order_id
     left join carga cg               on p.order_id = cg.order_id
     left join pagamento_principal pg on p.order_id = pg.order_id
+    left join historico hv           on p.order_id = hv.order_id
+                                    and ip.vendedor_sk = hv.vendedor_sk
+    left join historico_geral hg     on p.purchased_at::date = hg.compra_dia
     left join geo gc                 on c.zip_code_prefix = gc.zip_code_prefix
     left join geo gv                 on ip.vendedor_cep = gv.zip_code_prefix
 )
@@ -188,6 +215,14 @@ select
     categoria_grupo,
     tipo_pagamento,
     max_parcelas,
+    vendedor_entregas_hist,
+    -- Taxa de atraso do vendedor suavizada em direcao a taxa geral da mesma
+    -- data: (atrasos + 10 x taxa geral) / (entregas + 10). Vendedor sem
+    -- historico recebe a taxa geral do dia; com 10 entregas, meio a meio. O 10
+    -- foi fixado antes de treinar, sem busca. Nula so se a plataforma inteira
+    -- nao tiver entrega anterior (nao acontece na janela de 2017 em diante).
+    (coalesce(vendedor_atrasos_hist, 0) + 10 * taxa_atraso_geral_hist)
+        / (vendedor_entregas_hist + 10) as vendedor_taxa_atraso_hist,
     dia_semana_compra,
     hora_compra
 from base

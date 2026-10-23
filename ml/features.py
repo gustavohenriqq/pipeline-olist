@@ -24,6 +24,9 @@ NUMERICAS = (
     "frete_sobre_valor", "qtd_itens", "qtd_vendedores_distintos",
     "qtd_produtos_distintos", "peso_total_g", "volume_total_cm3", "max_parcelas",
     "dia_semana_compra", "hora_compra",
+    # Historico do vendedor principal, so com pedidos comprados e entregues
+    # antes do dia da compra (dbt: ml_historico_vendedor, issue 18).
+    "vendedor_entregas_hist", "vendedor_taxa_atraso_hist",
 )
 CATEGORICAS = (
     "cliente_uf", "cliente_regiao", "vendedor_uf", "vendedor_regiao",

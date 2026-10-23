@@ -152,26 +152,31 @@ models:
       - name: dias_ate_transportadora
         description: >
           Dias entre a compra e a entrega do pacote a transportadora. E a parte
-          do tempo sob responsabilidade do vendedor. Teste em aviso: 2 pedidos
-          tem valor negativo na base do Olist (transportadora recebendo antes da
-          compra), o que e impossivel e indica erro de origem.
+          do tempo sob responsabilidade do vendedor. Nulo quando
+          coleta_fora_de_ordem e verdadeiro; fora isso, nunca negativo.
         data_tests:
           - valor_minimo:
               arguments:
                 min_value: 0
-              config:
-                severity: warn
       - name: dias_em_transporte
         description: >
           Dias entre a coleta pela transportadora e a entrega ao cliente. E a
-          parte do tempo sob responsabilidade da logistica. Teste em aviso: 20
-          pedidos tem valor negativo (cliente recebendo antes da coleta).
+          parte do tempo sob responsabilidade da logistica. Nulo quando
+          coleta_fora_de_ordem e verdadeiro; fora isso, nunca negativo.
         data_tests:
           - valor_minimo:
               arguments:
                 min_value: 0
-              config:
-                severity: warn
+      - name: coleta_fora_de_ordem
+        description: >
+          Verdadeiro quando a data de coleta pela transportadora e anterior a
+          compra (2 pedidos) ou posterior a entrega ao cliente (20 pedidos),
+          erro de origem do Olist. Nesses 22 pedidos dias_ate_transportadora e
+          dias_em_transporte ficam nulos; tempo_entrega_dias, atraso_dias e
+          entregue_no_prazo continuam validos. O teste em aviso
+          assert_coleta_fora_de_ordem_conhecida lista os casos.
+        data_tests:
+          - not_null
 
   - name: fato_itens_pedido
     description: Fato no grao de item do pedido; conecta produto e vendedor.
@@ -222,11 +227,18 @@ models:
               arguments:
                 min_value: 0
       - name: dias_ate_transportadora
-        description: Parte do tempo de entrega sob responsabilidade do vendedor.
+        description: >
+          Parte do tempo de entrega sob responsabilidade do vendedor. Nula nos
+          22 pedidos com coleta_fora_de_ordem.
       - name: dias_em_transporte
         description: >
           Parte do tempo de entrega sob responsabilidade da transportadora.
-          Concentra 87% do atraso. Ver docs/analise-atraso.md.
+          Concentra 87% do atraso. Ver docs/analise-atraso.md. Nula nos 22
+          pedidos com coleta_fora_de_ordem.
+      - name: coleta_fora_de_ordem
+        description: >
+          Verdadeiro nos 22 pedidos com data de coleta impossivel (antes da
+          compra ou depois da entrega). Mesma regra de fato_pedidos.
 
   - name: obt_itens
     description: >

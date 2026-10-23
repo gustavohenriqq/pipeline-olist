@@ -104,6 +104,9 @@ As que mais influenciaram o resto do projeto, com o motivo:
   [incrementalidade.md](incrementalidade.md).
 - **Problema conhecido vira teste em aviso.** 278 CEPs sem geolocalização e 22
   pedidos com data impossível são avisos documentados, não erros escondidos.
+  Nos 22, o aviso depois virou decisão (23/10/2026): só a data de coleta está
+  errada, então os dois campos de tempo que dependem dela ficam nulos e a flag
+  `coleta_fora_de_ordem` marca o caso; o pedido continua na mart.
 - **Neon recebe só as marts.** A tabela crua de geolocalização tem 1 milhão de
   linhas e o free tier tem 0,5 GB; BI nunca lê a camada crua.
 

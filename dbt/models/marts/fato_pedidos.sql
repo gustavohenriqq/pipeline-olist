@@ -14,8 +14,21 @@
 -- ter varios produtos/vendedores (grao diferente). Essa ligacao esta em
 -- fato_itens_pedido, no grao de item. Ter os dois fatos e o padrao correto de
 -- star schema quando existem graos diferentes.
+-- Data de coleta fora de ordem: a transportadora "recebe" antes da compra ou
+-- depois do cliente. Sao 22 pedidos na base, ate -171 dias. Nos 22, compra,
+-- entrega e prazo sao coerentes; o carimbo errado e o delivered_carrier_at,
+-- entao so as duas metricas que dependem dele ficam nulas (ver
+-- docs/analise-atraso.md, secao 5). Comparado em dias, como as metricas: pelo
+-- horario seriam 189, mas 167 caem no mesmo dia e dao 0, sem distorcer media.
 with orders as (
-    select * from {{ ref('stg_olist__orders') }}
+    select
+        *,
+        coalesce(
+            delivered_carrier_at::date < purchased_at::date
+            or delivered_carrier_at::date > delivered_customer_at::date,
+            false
+        ) as coleta_fora_de_ordem
+    from {{ ref('stg_olist__orders') }}
 ),
 
 customers as (
@@ -83,10 +96,17 @@ select
     --
     -- Foi a analise que pediu estes campos, nao o contrario. Ver
     -- docs/analise-atraso.md, secao "de quem e o atraso".
-    (o.delivered_carrier_at::date  - o.purchased_at::date)      as dias_ate_transportadora,
-    (o.delivered_customer_at::date - o.delivered_carrier_at::date) as dias_em_transporte,
+    -- Nulas quando a coleta esta fora de ordem: um -171 com um 178 ao lado
+    -- puxaria a media de um vendedor ou de uma rota pequena.
+    case when not o.coleta_fora_de_ordem
+        then o.delivered_carrier_at::date  - o.purchased_at::date
+    end                                               as dias_ate_transportadora,
+    case when not o.coleta_fora_de_ordem
+        then o.delivered_customer_at::date - o.delivered_carrier_at::date
+    end                                               as dias_em_transporte,
 
     -- Flags
+    o.coleta_fora_de_ordem,
     (o.order_status = 'delivered')                    as foi_entregue,
     case
         when o.delivered_customer_at is null then null

@@ -49,6 +49,14 @@ vendedores da região com pior indicador. Os dados mostram que isso atacaria
 justamente a parte que já funciona melhor que a média, gastando esforço sem mover
 o resultado.
 
+> **Atualização (23/10/2026).** A recomendação acima vale inteira para o RJ e
+> só em parte para o Nordeste. Separando prazo prometido curto de entrega lenta
+> (seção 7), 88% do excesso do RJ (577 de 659) é entrega lenta, mas 88% do
+> excesso do Nordeste (475 de 537) é prazo curto: a entrega é normal para a
+> distância, e a promessa cobre menos do tempo típico da rota do que no resto do
+> país. Para o Nordeste, a primeira alavanca é a estimativa de prazo; encurtar o
+> tempo típico com malha logística é a outra saída. O texto original foi mantido.
+
 ---
 
 ## 1. O achado: atraso destrói a nota
@@ -285,6 +293,12 @@ Isso também corrige a leitura do prazo prometido: se o transporte para o Norte
 leva 16,9 dias mesmo quando dá certo, parte do "atraso" pode ser prazo estimado
 mal calibrado para a região, e não falha de execução. Separar essas duas causas é
 o próximo recorte natural.
+
+> **Atualização (23/10/2026).** O recorte foi feito na seção 7. O que esta seção
+> mostra se mantém (o vendedor não é o gargalo, o tempo a mais está no
+> transporte), e a recomendação de malha logística se mantém para o RJ. Para o
+> Nordeste ela estava incompleta: 88% do excesso da região é prazo prometido
+> curto para a rota, não entrega fora do padrão da rota.
 
 > **Nota de método.** Esta seção é um caso de pergunta de negócio dirigindo a
 > modelagem, e não o contrário. Os campos `approved_at` e `delivered_carrier_at`

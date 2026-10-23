@@ -57,8 +57,15 @@ exclusões na origem, passe a janela pela data da compra (fim exclusivo):
 
 ```sh
 dbt build --profiles-dir . --select fato_pedidos fato_itens_pedido \
-  --vars '{janela_inicio: 2018-03-01, janela_fim: 2018-04-01}'
+  --vars '{janela_inicio: 2018-03-01, janela_fim: 2018-04-01}' \
+  --indirect-selection cautious
 ```
+
+O `--indirect-selection cautious` limita os testes aos dos dois fatos. Sem ele, o
+dbt roda também os testes que leem um fato e um model abaixo dele (como
+`assert_historico_vendedor_sem_futuro`), e esses comparam o fato novo com um
+model que o build parcial não reconstruiu. Os models abaixo dos fatos ficam
+como estavam até o próximo build completo.
 
 Um `pre_hook` apaga do fato as linhas da janela e o model insere as atuais, na
 mesma transação. Fora da janela nada muda. Detalhes, proteções e o que a

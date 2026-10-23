@@ -49,6 +49,14 @@ vendedores da região com pior indicador. Os dados mostram que isso atacaria
 justamente a parte que já funciona melhor que a média, gastando esforço sem mover
 o resultado.
 
+> **Atualização (23/10/2026).** A recomendação acima vale inteira para o RJ e
+> só em parte para o Nordeste. Separando prazo prometido curto de entrega lenta
+> (seção 7), 88% do excesso do RJ (577 de 659) é entrega lenta, mas 88% do
+> excesso do Nordeste (475 de 537) é prazo curto: a entrega é normal para a
+> distância, e a promessa cobre menos do tempo típico da rota do que no resto do
+> país. Para o Nordeste, a primeira alavanca é a estimativa de prazo; encurtar o
+> tempo típico com malha logística é a outra saída. O texto original foi mantido.
+
 ---
 
 ## 1. O achado: atraso destrói a nota
@@ -437,6 +445,12 @@ leva 16,9 dias mesmo quando dá certo, parte do "atraso" pode ser prazo estimado
 mal calibrado para a região, e não falha de execução. Separar essas duas causas é
 o próximo recorte natural.
 
+> **Atualização (23/10/2026).** O recorte foi feito na seção 7. O que esta seção
+> mostra se mantém (o vendedor não é o gargalo, o tempo a mais está no
+> transporte), e a recomendação de malha logística se mantém para o RJ. Para o
+> Nordeste ela estava incompleta: 88% do excesso da região é prazo prometido
+> curto para a rota, não entrega fora do padrão da rota.
+
 > **Nota de método.** Esta seção é um caso de pergunta de negócio dirigindo a
 > modelagem, e não o contrário. Os campos `approved_at` e `delivered_carrier_at`
 > existiam no staging desde o início, mas não haviam sido promovidos ao
@@ -504,6 +518,461 @@ continua 89.936, mas a decomposição no prazo passa a usar 89.914 pedidos.
   desses 491 pedidos (0,48% da receita) vem do centroide do município ou do
   prefixo de 3 dígitos, com erro mediano estimado de 4 a 5 km (seção 1.1). Quem
   precisar da distância exata filtra `distancia_por_cep`.
+
+---
+
+## 7. Prazo curto ou entrega lenta
+
+A seção 5 terminou com uma pergunta aberta: se o transporte para o Norte leva
+16,9 dias mesmo quando dá certo, parte do atraso pode ser promessa errada, e não
+falha de execução. A ação muda com a causa. Prazo curto se resolve recalibrando a
+estimativa; entrega lenta, na malha logística.
+
+**Resposta curta: os dois focos têm causas diferentes.** No **Rio de Janeiro**,
+**88% do excesso** (577 de 659 atrasos) é **entrega lenta**: a promessa segue a
+régua do país, e o que falha é uma cauda de pedidos que demoram mais de 2,21 vezes
+o tempo típico da rota. No **Nordeste**, **88% do excesso** (475 de 537) é
+**prazo curto**: as entregas se comportam como as de qualquer rota longa, mas a
+promessa cobre menos do tempo típico da rota (1,4 a 2,0 vezes, contra 2,21 no
+país).
+
+> **O que isso corrige.** A seção 5 e o resumo executivo recomendam malha
+> logística para o RJ e para o Nordeste. Para o RJ, a recomendação se mantém.
+> Para o Nordeste, ela estava incompleta: a alavanca principal é a estimativa de
+> prazo, não a execução da entrega. Os números das seções anteriores não mudam.
+
+### 7.1 Folga por UF: folga parecida, taxas muito diferentes
+
+Folga é o prazo prometido menos o tempo real de entrega (o `atraso_dias` com o
+sinal trocado). Base: 96.470 pedidos entregues com data de entrega.
+
+| UF | Entregues | Prazo médio | Tempo médio | Folga média | Prazo / tempo típico | Acima do padrão | Taxa de atraso |
+|---|---|---|---|---|---|---|---|
+| AL | 397 | 33,2 | 24,5 | 8,7 | 1,39 | 2,0% | **21,4%** |
+| MA | 716 | 31,1 | 21,5 | 9,6 | 1,55 | 4,2% | 17,5% |
+| SE | 338 | 31,5 | 21,4 | 10,1 | 1,71 | 7,1% | 15,1% |
+| PI | 476 | 30,7 | 19,4 | 11,3 | 1,82 | 5,0% | 13,9% |
+| CE | 1.281 | 32,0 | 21,2 | 10,8 | 1,76 | 7,6% | 13,7% |
+| BA | 3.256 | 30,1 | 19,3 | 10,8 | 1,72 | 4,6% | 12,2% |
+| **RJ** | 12.344 | 27,0 | 15,2 | **11,8** | 2,08 | **11,3%** | **12,1%** |
+| PB | 515 | 33,7 | 20,4 | 13,3 | 1,79 | 4,5% | 10,3% |
+| PE | 1.596 | 31,7 | 18,4 | 13,3 | 2,00 | 7,2% | 9,6% |
+| RN | 474 | 32,9 | 19,2 | 13,6 | 1,88 | 6,5% | 9,3% |
+| RS | 5.346 | 29,2 | 15,2 | 13,9 | 2,14 | 6,8% | 6,1% |
+| MG | 11.352 | 25,2 | 11,9 | 13,2 | 2,27 | 5,9% | 4,6% |
+| **SP** | 40.493 | 19,8 | 8,7 | **11,1** | 2,57 | 7,7% | **4,5%** |
+| PR | 4.923 | 25,3 | 11,9 | 13,3 | 2,36 | 6,2% | 4,0% |
+| **Brasil** | 96.470 | | | | 2,21 | 7,3% | 6,8% |
+
+Prazo e tempo em dias. "Prazo / tempo típico" é a mediana, por pedido, do prazo
+prometido dividido pelo tempo típico da rota (7.3). "Acima do padrão" é a parcela
+dos pedidos que levou mais de 2,21 vezes o tempo típico da rota. A tabela completa,
+com as 27 UFs, sai da primeira query de 7.8.
+
+O que a issue pedia para ver aparece na primeira linha que se compara: **o RJ tem
+folga média maior que São Paulo** (11,8 contra 11,1 dias) e **atrasa 2,7 vezes
+mais** (12,1% contra 4,5%). Folga média não explica a taxa. Duas coisas
+explicam, e cada foco tem uma delas:
+
+- **Nordeste: a promessa é curta para a rota.** Em Alagoas o prazo prometido é
+  1,39 vez o tempo típico da rota; no país, 2,21. Mas a parcela de entregas fora
+  do padrão é baixa (2,0% em AL, 4,2% no MA, contra 7,3% no país).
+- **RJ: a promessa é normal e a cauda é longa.** O prazo é 2,08 vezes o tempo
+  típico, perto do país, mas 11,3% das entregas passam de 2,21 vezes o tempo
+  típico, a maior parcela entre as UFs com volume.
+
+Uma comparação que costuma aparecer, "o RJ recebe prazo 2,2 dias menor que o RS"
+(27,0 contra 29,2), é verdadeira e não aponta a causa: o RJ está mais perto dos
+vendedores (SP>RJ tem tempo típico de 13 dias, SP>RS de 14), e a promessa relativa
+é quase a mesma (2,08 contra 2,14). O que separa os dois é a cauda: 11,3% acima
+do padrão no RJ, 6,8% no RS.
+
+### 7.2 Por rota: a régua precisa ser proporcional
+
+Rota é a UF do vendedor seguida da UF do cliente. Rotas com 250 pedidos ou mais,
+selecionadas (a lista completa, com 44 rotas, sai da segunda query de 7.8):
+
+| Rota | Entregues | Prazo médio | Tempo típico | p90 do tempo | Prazo / típico | p90 / típico | Folga média | Taxa de atraso |
+|---|---|---|---|---|---|---|---|---|
+| SP>SP | 30.644 | 17,9 | 7 | 14 | 2,56 | 2,00 | 10,1 | 4,7% |
+| SP>MG | 7.414 | 25,0 | 11 | 21 | 2,27 | 1,91 | 12,7 | 5,3% |
+| SP>PR | 3.110 | 25,8 | 11 | 21 | 2,34 | 1,91 | 13,0 | 4,4% |
+| SP>RS | 3.581 | 30,3 | 14 | 27 | 2,16 | 1,93 | 14,2 | 6,6% |
+| **SP>RJ** | 8.124 | 27,0 | 13 | **31** | 2,08 | **2,38** | 10,8 | **14,2%** |
+| MG>RJ | 1.126 | 27,5 | 11 | 25 | 2,50 | 2,27 | 13,3 | 8,3% |
+| PR>RJ | 956 | 30,3 | 14 | 33,5 | 2,17 | 2,39 | 13,0 | 12,2% |
+| SP>PE | 1.132 | 32,5 | 16 | 31 | 2,03 | 1,94 | 13,6 | 9,8% |
+| SP>CE | 967 | 32,1 | 18 | 34 | **1,78** | 1,89 | 10,9 | 13,8% |
+| SP>BA | 2.303 | 30,5 | 18 | 32 | **1,69** | 1,78 | 10,7 | 12,9% |
+| SP>MA | 489 | 31,3 | 20 | 35 | **1,57** | 1,75 | 9,3 | 19,0% |
+| SP>AL | 255 | 32,9 | 23 | 41 | **1,43** | 1,78 | 7,9 | **23,9%** |
+
+Tempo típico é a mediana do tempo real de entrega da rota, em dias. Aqui,
+"prazo / típico" é o prazo médio da rota dividido pelo tempo típico. O par que resume
+a seção: **SP>RJ e SP>MG** têm tempo típico parecido (13 e 11 dias) e prazo
+parecido (27 e 25 dias), mas o p90 do RJ é 31 dias contra 21. **SP>AL** tem a
+cauda de uma rota normal (p90 de 1,78 vez o típico) e uma promessa de só 1,43 vez
+o típico.
+
+**Por que proporcional, e não em dias.** A primeira versão desta regra usou uma
+régua em dias (prazo padrão = tempo típico + 13 dias, a mediana nacional da
+diferença). Ela dava ao Nordeste só 26% de prazo curto. Mas a dispersão do tempo
+de entrega cresce com o tempo típico da rota, então uma folga fixa em dias é mais
+apertada para rota longa e acaba contando como "entrega lenta" a variação normal
+de quem mora longe. Entre as 63 rotas com 100 pedidos ou mais (fora as que vão
+para o RJ):
+
+| Tempo típico da rota | Rotas | Entregues | p90 menos típico | p90 / típico |
+|---|---|---|---|---|
+| Até 8 dias | 9 | 34.408 | 7,2 dias | 1,99 |
+| 9 a 12 dias | 23 | 24.627 | 9,2 dias | 1,86 |
+| 13 a 16 dias | 20 | 13.632 | 11,8 dias | 1,82 |
+| 17 dias ou mais | 11 | 6.208 | 16,0 dias | 1,85 |
+| *Rotas para o RJ, 9 a 16 dias* | 5 | 10.914 | 14,5 a 17,5 dias | **2,31 a 2,32** |
+
+Em dias, a dispersão acompanha o tempo típico (correlação de **0,88**; cada dia
+de tempo típico traz 0,74 dia a mais de cauda). Em razão, ela fica estável em
+torno de 1,85 (correlação de -0,34). A régua proporcional é a que trata rota
+curta e rota longa do mesmo jeito. E as rotas para o RJ são as únicas fora do
+padrão: na mesma faixa de tempo típico, a cauda é 2,3 vezes o típico, contra 1,8
+a 1,9 nas demais.
+
+### 7.3 A regra
+
+Para cada pedido entregue com data de entrega:
+
+1. **Tempo típico da rota:** mediana do tempo real de entrega dos pedidos da
+   mesma rota. Rota com menos de 30 pedidos, ou pedido com vendedores em mais de
+   uma UF, usa a mediana da UF do cliente (2.678 pedidos, 2,8%, dos quais 509
+   com vendedores em mais de uma UF).
+2. **Prazo padrão:** tempo típico vezes **2,21**, a mediana nacional de prazo
+   prometido sobre tempo típico, arredondada em duas casas. É a promessa que o
+   pedido teria se a rota seguisse a régua das outras.
+3. **Classificação do pedido atrasado:**
+   - **prazo curto:** chegou dentro do prazo padrão. Com a promessa padrão, ele
+     estaria no prazo; a promessa que recebeu era menor que a régua do país.
+   - **entrega lenta:** passou do prazo padrão. Atrasaria mesmo com a promessa
+     padrão; a entrega demorou mais de 2,21 vezes o que a rota costuma demorar.
+
+A regra virou o model `marts.prazo_vs_entrega` (uma linha por pedido entregue com
+data), com a coluna `causa_atraso` e as colunas intermediárias (`rota`,
+`tempo_tipico_dias`, `prazo_padrao_dias`, `folga_dias`), para o BI e o agente
+usarem a mesma classificação. Testes: chave única e ligada ao `fato_pedidos`,
+valores aceitos de `causa_atraso` e `referencia_tipico`, e dois testes
+singulares. Um confere que a tabela tem exatamente os pedidos entregues com data
+do fato. O outro, que a causa bate com a regra, só existe em pedido atrasado e
+que a folga é o `atraso_dias` com sinal trocado.
+
+**Um erro que a conferência pegou.** Na primeira versão do model, a razão padrão
+era a mediana sem arredondar: 31/14 em ponto flutuante. A query independente
+(de `obt_pedidos`, sem passar pelo model) discordou em 39 pedidos, todos na
+fronteira, com tempo exatamente igual ao prazo padrão (14 × 31/14 = 31 dias):
+a classe dependia da 15ª casa decimal. Com a razão arredondada em 2,21, as duas
+contas concordam nos 96.470 pedidos.
+
+### 7.4 Quanto do excesso vem de cada causa
+
+No país, os 6.534 atrasos se dividem em **2.220 por prazo curto** (2,30% dos
+entregues) e **4.314 por entrega lenta** (4,47%). O excesso de cada causa é
+calculado como na seção 2: atrasos daquela causa menos os que se esperariam com a
+taxa nacional da mesma causa, por UF, e só depois somados. Como as duas taxas
+somam a taxa nacional, os dois excessos somam o excesso da seção 2.1.
+
+| Foco | Entregues | Atrasos | Prazo curto | Entrega lenta | Excesso | Excesso por prazo curto | Excesso por entrega lenta |
+|---|---|---|---|---|---|---|---|
+| **RJ** | 12.344 | 1.495 | 366 | 1.129 | **+659** | +82 (12%) | **+577 (88%)** |
+| **Nordeste** (9 UFs) | 9.049 | 1.150 | 683 | 467 | **+537** | **+475 (88%)** | +62 (12%) |
+| BA | 3.256 | 396 | 256 | 140 | +175 | +181 | -6 |
+| CE | 1.281 | 176 | 81 | 95 | +89 | +52 | +38 |
+| MA | 716 | 125 | 96 | 29 | +77 | +80 | -3 |
+| AL | 397 | 85 | 77 | 8 | +58 | +68 | -10 |
+| PE | 1.596 | 154 | 51 | 103 | +46 | +14 | +32 |
+| PI | 476 | 66 | 43 | 23 | +34 | +32 | +2 |
+| SE | 338 | 51 | 28 | 23 | +28 | +20 | +8 |
+| PB | 515 | 53 | 33 | 20 | +18 | +21 | -3 |
+| RN | 474 | 44 | 18 | 26 | +12 | +7 | +5 |
+
+Entregues como na seção 2.1 (inclui os 8 pedidos entregues sem data, que não
+contam como atraso). Excesso arredondado por linha; a linha do Nordeste soma as
+UFs antes de arredondar.
+
+Dentro do Nordeste o padrão não é uniforme. Bahia, Maranhão e Alagoas, que somam
+310 dos 537, são quase só prazo curto (a entrega lenta fica abaixo do esperado).
+Pernambuco é o contrário: dos +46, +32 vêm de entrega lenta. Ceará fica no meio.
+
+E no RJ a entrega lenta é transporte, como a seção 5 mostrou para o atraso todo:
+nos 1.129 pedidos de entrega lenta, o vendedor leva 5,5 dias (3,0 nos pedidos no
+prazo) e o transporte **36,9 dias** (9,1 no prazo). Dos 30,3 dias a mais, 27,8
+(92%) estão no transporte.
+
+### 7.5 Sensibilidade à régua
+
+A divisão depende da régua. A mesma conta com os quartis da razão nacional (1,83
+e 2,73) e com a régua em dias que 7.2 descartou:
+
+| Régua | RJ: prazo curto | RJ: entrega lenta | Nordeste: prazo curto | Nordeste: entrega lenta |
+|---|---|---|---|---|
+| Razão 1,83 (1º quartil) | -16 | +675 | +288 (54%) | +249 |
+| **Razão 2,21 (mediana, a regra)** | **+82** | **+577 (88%)** | **+475 (88%)** | **+62** |
+| Razão 2,73 (3º quartil) | +246 | +413 (63%) | +591 | -54 |
+| Dias: típico + 13 (descartada) | +35 | +624 (95%) | +142 (26%) | +395 |
+
+O que não muda com a régua: **no RJ, entrega lenta é a maior parte do excesso
+em todas as quatro** (63% a mais de 100%). No Nordeste, **prazo curto é a maior
+parte em todas as réguas proporcionais** (54% a mais de 100%) e só perde na
+régua em dias, que trata como lenta a variação normal de rota longa. Valor
+negativo quer dizer que o foco tem menos atrasos daquela causa do que a taxa
+nacional preveria.
+
+### 7.6 O que muda na recomendação
+
+- **RJ: malha logística, mantida e mais precisa.** O problema não é o tempo
+  típico (13 dias de SP, parecido com MG), é a cauda: pedidos que levam mais de
+  2,21 vezes o típico, quase tudo em transporte. Recalibrar o prazo esconderia a
+  falha: para o RJ atrasar na taxa nacional sem mudar a entrega, a promessa
+  precisaria de **8 dias a mais** (de 27,0 para cerca de 35), e os pedidos da
+  cauda continuariam chegando com mais de três vezes o tempo típico (42,4 dias
+  em média, contra 12,7).
+- **Nordeste: estimativa de prazo primeiro.** As entregas para o Nordeste não
+  são irregulares para a distância; a promessa é que cobre menos da variação
+  normal da rota do que no resto do país. Para o Nordeste atrasar na taxa
+  nacional, a promessa precisaria de **7 dias a mais** (de 31,3 para cerca de
+  38). A outra saída é encurtar o tempo típico das rotas, que é projeto de malha.
+  O dataset não diz quanto venda um prazo maior custaria, então a escolha entre
+  as duas fica com quem conhece a conversão.
+- **Vendedor continua fora do foco** (seção 5): em nenhum dos dois focos a
+  causa é despacho.
+
+### 7.7 Limitações desta seção
+
+- **A régua é uma escolha.** A mediana nacional define o que é "promessa
+  padrão". A sensibilidade (7.5) mostra que a direção se mantém, mas a proporção
+  exata muda com ela.
+- **"Prazo curto" não quer dizer que o tempo típico seja aceitável.** A regra
+  compara cada rota com ela mesma. Se o Nordeste deveria ser atendido mais rápido
+  é outra pergunta, que pede referência externa (distância, custo de frete,
+  concorrência).
+- **Diagnóstico depois do fato.** O tempo típico usa a base inteira, inclusive
+  pedidos posteriores a cada compra. Serve para explicar, não para prever: não
+  pode virar feature do modelo de atraso.
+- **Não se sabe como a Olist calcula o prazo.** A estimativa pode usar produto,
+  vendedor ou época, que a régua por rota não enxerga.
+- **Pedido com mais de um vendedor** em UFs diferentes (509) não tem rota e usa a
+  referência da UF do cliente, assim como rotas com menos de 30 pedidos.
+- **Datas impossíveis** (seção 5, 22 pedidos) entram como estão: a regra só usa
+  compra, prazo estimado e entrega ao cliente.
+- **Os 7 e 8 dias de 7.6** são deslocamentos uniformes da promessa para a taxa
+  nacional, não uma proposta de nova estimativa por rota.
+
+### 7.8 Queries de reprodução
+
+Números conferidos por duas contas: o model `marts.prazo_vs_entrega` e uma query
+independente sobre `obt_pedidos`, `fato_itens_pedido` e `dim_vendedores`
+concordam na classificação dos 96.470 pedidos, e os excessos totais (+659 no RJ,
++537 no Nordeste) são os mesmos da seção 2.1.
+
+```sql
+-- 7.1 Folga por UF do cliente (pedidos entregues com data).
+select
+  cliente_uf,
+  count(*)                                                       as entregues,
+  round(avg(prazo_prometido_dias), 1)                            as prazo_medio,
+  round(avg(tempo_entrega_dias), 1)                              as tempo_medio,
+  round(avg(folga_dias), 1)                                      as folga_media,
+  percentile_cont(0.5) within group (order by prazo_sobre_tipico) as prazo_sobre_tipico_mediana,
+  round(100.0 * avg(case when tempo_sobre_tipico > razao_prazo_padrao then 1 else 0 end), 1) as pct_acima_padrao,
+  round(100.0 * avg(case when not entregue_no_prazo then 1 else 0 end), 1) as taxa_atraso
+from marts.prazo_vs_entrega
+group by cliente_uf
+order by taxa_atraso desc;
+
+-- 7.2 Folga por rota (UF do vendedor > UF do cliente), rotas com 250 pedidos ou mais.
+select
+  rota,
+  count(*)                                                       as entregues,
+  round(avg(prazo_prometido_dias), 1)                            as prazo_medio,
+  max(tempo_tipico_dias)                                         as tempo_tipico,
+  percentile_cont(0.9) within group (order by tempo_entrega_dias) as tempo_p90,
+  round(avg(prazo_prometido_dias) / max(tempo_tipico_dias), 2)   as prazo_sobre_tipico,
+  round((percentile_cont(0.9) within group (order by tempo_entrega_dias)
+         / max(tempo_tipico_dias))::numeric, 2)                  as p90_sobre_tipico,
+  round(avg(folga_dias), 1)                                      as folga_media,
+  round(100.0 * avg(case when not entregue_no_prazo then 1 else 0 end), 1) as taxa_atraso
+from marts.prazo_vs_entrega
+where referencia_tipico = 'rota'
+group by rota
+having count(*) >= 250
+order by entregues desc;
+
+-- 7.2 Escala da regua: a dispersao cresce com o tempo tipico da rota?
+-- Rotas com 100 pedidos ou mais; RJ como destino fica de fora da correlacao.
+with rotas as (
+  select
+    rota,
+    right(rota, 2)                                                  as uf_destino,
+    count(*)                                                        as entregues,
+    max(tempo_tipico_dias)                                          as tipico,
+    percentile_cont(0.9) within group (order by tempo_entrega_dias) as p90
+  from marts.prazo_vs_entrega
+  where referencia_tipico = 'rota'
+  group by rota
+  having count(*) >= 100
+)
+select
+  count(*)                                                          as rotas,
+  round(corr(tipico, p90 - tipico)::numeric, 2)                     as corr_em_dias,
+  round(corr(tipico, p90 / tipico)::numeric, 2)                     as corr_em_razao,
+  round(regr_slope(p90 - tipico, tipico)::numeric, 2)               as dias_extras_por_dia_tipico
+from rotas
+where uf_destino <> 'RJ';
+
+-- 7.2 Mesma conta por faixa de tempo tipico, com as rotas para o RJ separadas.
+with rotas as (
+  select
+    rota,
+    right(rota, 2) = 'RJ'                                           as destino_rj,
+    count(*)                                                        as entregues,
+    max(tempo_tipico_dias)                                          as tipico,
+    percentile_cont(0.9) within group (order by tempo_entrega_dias) as p90
+  from marts.prazo_vs_entrega
+  where referencia_tipico = 'rota'
+  group by rota
+  having count(*) >= 100
+)
+select
+  case when tipico <= 8 then 'ate 8 dias' when tipico <= 12 then '9 a 12'
+       when tipico <= 16 then '13 a 16' else '17 ou mais' end        as faixa_tipico,
+  destino_rj,
+  count(*)                                                          as rotas,
+  sum(entregues)                                                    as entregues,
+  round(avg(p90 - tipico)::numeric, 1)                              as p90_menos_tipico,
+  round(avg(p90 / tipico)::numeric, 2)                              as p90_sobre_tipico
+from rotas
+group by 1, 2
+order by 2, min(tipico);
+
+-- 7.4 Excesso de atraso de cada foco, separado por causa.
+-- Mesmo denominador da secao 2.1: todos os entregues de obt_pedidos (96.478),
+-- inclusive os 8 sem data de entrega, que nao contam como atraso.
+with base as (
+  select o.cliente_uf, o.cliente_regiao, v.causa_atraso
+  from marts.obt_pedidos o
+  left join marts.prazo_vs_entrega v using (pedido_sk)
+  where o.foi_entregue
+),
+taxa as (
+  select
+    avg(case when causa_atraso is not null then 1.0 else 0 end)        as t_total,
+    avg(case when causa_atraso = 'prazo curto' then 1.0 else 0 end)    as t_prazo,
+    avg(case when causa_atraso = 'entrega lenta' then 1.0 else 0 end)  as t_lenta
+  from base
+),
+por_uf as (
+  select
+    b.cliente_uf,
+    b.cliente_regiao,
+    count(*)                                                         as entregues,
+    count(b.causa_atraso)                                            as atrasos,
+    count(*) filter (where b.causa_atraso = 'prazo curto')           as prazo_curto,
+    count(*) filter (where b.causa_atraso = 'entrega lenta')         as entrega_lenta,
+    count(b.causa_atraso) - count(*) * t.t_total                     as excesso,
+    count(*) filter (where b.causa_atraso = 'prazo curto')   - count(*) * t.t_prazo as excesso_prazo,
+    count(*) filter (where b.causa_atraso = 'entrega lenta') - count(*) * t.t_lenta as excesso_lenta
+  from base b
+  cross join taxa t
+  group by b.cliente_uf, b.cliente_regiao, t.t_total, t.t_prazo, t.t_lenta
+)
+-- Excesso calculado por UF e so depois somado (secao 2.1).
+select
+  case when cliente_uf = 'RJ' then 'RJ'
+       when cliente_regiao = 'Nordeste' then 'Nordeste' else 'demais' end as foco,
+  cliente_uf,
+  sum(entregues) as entregues, sum(atrasos) as atrasos,
+  sum(prazo_curto) as prazo_curto, sum(entrega_lenta) as entrega_lenta,
+  round(sum(excesso)) as excesso,
+  round(sum(excesso_prazo)) as excesso_prazo_curto,
+  round(sum(excesso_lenta)) as excesso_entrega_lenta
+from por_uf
+group by grouping sets ((1), (1, 2))
+order by 1, excesso desc;
+
+-- 7.5 Sensibilidade: a mesma divisao com outras reguas. Razao 1,83 e 2,73 sao
+-- os quartis de prazo/tipico; 'dias +13' e a escala aditiva descartada em 7.2.
+with base as (
+  select
+    o.cliente_uf, o.cliente_regiao,
+    v.entregue_no_prazo, v.tempo_entrega_dias, v.tempo_tipico_dias
+  from marts.obt_pedidos o
+  left join marts.prazo_vs_entrega v using (pedido_sk)
+  where o.foi_entregue
+),
+reguas(regua, k, dias) as (
+  values ('razao 1,83', 1.83, null::numeric), ('razao 2,21', 2.21, null),
+         ('razao 2,73', 2.73, null), ('dias +13', null, 13)
+),
+classif as (
+  select
+    r.regua,
+    case when b.cliente_uf = 'RJ' then 'RJ'
+         when b.cliente_regiao = 'Nordeste' then 'Nordeste' else 'demais' end as foco,
+    case when b.entregue_no_prazo is not false then null
+         when b.tempo_entrega_dias <= coalesce(b.tempo_tipico_dias * r.k,
+                                               b.tempo_tipico_dias + r.dias)
+              then 'prazo curto' else 'entrega lenta' end as causa
+  from base b cross join reguas r
+),
+taxa as (
+  select regua,
+    avg(case when causa = 'prazo curto' then 1.0 else 0 end)   as t_prazo,
+    avg(case when causa = 'entrega lenta' then 1.0 else 0 end) as t_lenta
+  from classif group by regua
+)
+select c.regua, c.foco,
+  round(count(*) filter (where causa = 'prazo curto')   - count(*) * t.t_prazo) as excesso_prazo_curto,
+  round(count(*) filter (where causa = 'entrega lenta') - count(*) * t.t_lenta) as excesso_entrega_lenta
+from classif c join taxa t using (regua)
+where c.foco <> 'demais'
+group by c.regua, c.foco, t.t_prazo, t.t_lenta
+order by c.foco desc, c.regua;
+
+-- 7.6 Quantos dias a mais de promessa cada foco precisaria para atrasar na
+-- taxa nacional (6,77% dos entregues), sem mudar nada na entrega.
+with base as (
+  select
+    case when o.cliente_uf = 'RJ' then 'RJ'
+         when o.cliente_regiao = 'Nordeste' then 'Nordeste' end as foco,
+    o.atraso_dias
+  from marts.obt_pedidos o
+  where o.foi_entregue
+),
+nacional as (
+  select avg(case when atraso_dias > 0 then 1.0 else 0 end) as taxa from base
+),
+cenarios as (
+  select b.foco, s.dias_a_mais,
+    avg(case when b.atraso_dias > s.dias_a_mais then 1.0 else 0 end) as taxa
+  from base b cross join generate_series(0, 30) s(dias_a_mais)
+  where b.foco is not null
+  group by b.foco, s.dias_a_mais
+)
+select c.foco, min(c.dias_a_mais) as dias_a_mais
+from cenarios c cross join nacional n
+where c.taxa <= n.taxa
+group by c.foco;
+
+-- 7.4 Vendedor contra transporte nos pedidos do RJ, por causa.
+select
+  coalesce(v.causa_atraso, 'no prazo')        as causa,
+  count(*)                                    as pedidos,
+  round(avg(f.dias_ate_transportadora), 1)    as dias_vendedor,
+  round(avg(f.dias_em_transporte), 1)         as dias_transporte,
+  round(avg(v.tempo_entrega_dias), 1)         as dias_total
+from marts.prazo_vs_entrega v
+join marts.fato_pedidos f using (pedido_sk)
+where v.cliente_uf = 'RJ'
+group by 1
+order by 1;
+```
 
 ---
 

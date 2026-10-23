@@ -76,6 +76,7 @@ análise usou para achar o problema.
 - O Sudeste concentra 62% dos atrasos e, como região, opera abaixo da média nacional (6,1% contra 6,8%). Mas por estado o foco aparece: o **Rio de Janeiro sozinho gera 659 atrasos em excesso, mais que o Nordeste inteiro (537)**. RJ e Nordeste respondem por 86% do excesso. *Correção: a primeira versão atribuía 94% ao Nordeste, porque a conta por região deixava São Paulo (-923) compensar o RJ dentro do Sudeste.*
 - **87% do atraso nasce no transporte, 13% no vendedor.** Nos pedidos atrasados do Nordeste o vendedor é o mais rápido do país (4,8 dias contra 6,5 do Sudeste). A ação é logística, não cobrança de SLA de vendedor.
 - O efeito do atraso sobre a nota persiste dentro das cinco regiões (queda de 2,55 a 2,74 pontos): não é composição regional.
+- **Prazo curto ou entrega lenta** (issue #14, 23/10/2026): 88% do excesso do RJ é entrega lenta (uma cauda de pedidos acima de 2,21 vezes o tempo típico da rota) e 88% do excesso do Nordeste é prazo curto (promessa de 1,4 a 2,0 vezes o tempo típico, contra 2,21 no país). *Correção: a ação logística da conclusão anterior vale para o RJ; para o Nordeste, a primeira alavanca é a estimativa de prazo.* A regra está no model `marts.prazo_vs_entrega`.
 
 **A anomalia da cauda, investigada.** A curva não é monótona: acima de 30 dias a
 nota sobe para 2,06 contra 1,65 da faixa de 8 a 30. Viés de resposta foi

@@ -299,10 +299,41 @@ Ao promover os campos, 22 pedidos se revelaram impossíveis: 2 com a
 transportadora recebendo o pacote **antes** da compra e 20 com o cliente
 recebendo **antes** da transportadora coletar. O extremo chega a -171 dias.
 
-São 0,02% da base e não afetam as conclusões acima, mas foram registrados como
-teste em **aviso** no `_marts.yml`, junto do gap de geolocalização. Esconder o
-problema seria mais fácil; documentá-lo é o que permite decidir depois se vale
-tratar na origem.
+São 0,02% da base e não afetam as conclusões acima. Na primeira versão ficaram
+só registrados como dois testes em **aviso** no `_marts.yml`, junto do gap de
+geolocalização, com a decisão de tratamento adiada.
+
+**Decisão (23/10/2026): anular só os dois campos de tempo, com flag.** Nos 22
+pedidos, compra, entrega ao cliente e prazo prometido são coerentes entre si
+(todos foram entregues, e no prazo); o carimbo errado é sempre a data de coleta
+(`delivered_carrier_at`). As três opções comparadas:
+
+| Opção | O que acontece | Por que sim ou não |
+|---|---|---|
+| Manter com flag | Valores negativos seguem na mart, com uma coluna marcando o caso | Cada consumidor (Power BI, painel, agente, Looker) precisaria lembrar de filtrar. Uma média de vendedor ou de rota pequena sai puxada por um -171 ao lado de um 178 |
+| **Anular só os campos de tempo** | `dias_ate_transportadora` e `dias_em_transporte` ficam nulos nos 22; a flag `coleta_fora_de_ordem` marca o caso | Média ignora nulo, então nenhum consumidor precisa saber da regra. Receita, nota, prazo e atraso dos 22 pedidos continuam contando, porque estão certos |
+| Excluir da mart | Os 22 pedidos somem do `fato_pedidos` | Joga fora venda, nota e entrega que estão corretas. Muda a contagem de pedidos (99.441) e a receita usadas no Power BI, no painel e no modelo de previsão, por causa de um carimbo só |
+
+A data de coleta original continua no fato (`delivered_carrier_at`) para
+auditoria. A regra compara em **dias**, como as métricas: pelo horário seriam
+189 casos, mas 167 deles caem no mesmo dia (coleta em média 0,7 h "antes" da
+compra, cara de fuso ou carimbo em lote) e dão 0 dia, sem distorcer média.
+
+Testes: os dois `valor_minimo` passaram de aviso para **erro** (valor negativo
+agora é bug, não dado conhecido); a flag tem `not_null`; o teste em aviso
+`assert_coleta_fora_de_ordem_conhecida` lista os 22 pedidos a cada build; e o
+teste singular `assert_coleta_fora_de_ordem_anulada` garante que flag e campos
+nulos andam juntos, nos dois sentidos.
+
+**Números desta seção conferidos depois da mudança: nenhum valor publicado
+mudou.** Os 22 pedidos estão todos em "no prazo", diluídos em 89.936. Na base
+desta seção (pedidos `delivered` com coleta e entrega registradas), a média do
+vendedor no prazo fica em 3,009 dias antes e depois, a do transporte vai de
+7,932 para 7,933, e os 87% do atraso no transporte (86,83%) não se movem. Por
+região, só Sudeste (19 casos) e Sul (3) mexem, na terceira casa (Sul,
+transporte no prazo: 9,586 para 9,588). Os pedidos atrasados, o Rio de Janeiro
+e o resto do país não têm nenhum dos 22. A coluna "Pedidos" da primeira tabela
+continua 89.936, mas a decomposição no prazo passa a usar 89.914 pedidos.
 
 ---
 

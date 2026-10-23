@@ -39,9 +39,19 @@ RJ, o vendedor despacha **mais rápido** que a média nos pedidos atrasados, e o
 transporte é que demora. Cobrar SLA desses vendedores atacaria a parte que já
 funciona melhor que a média. A ação é logística, não comercial.
 
+Mas o problema não é o mesmo nos dois focos. Separando promessa curta de entrega
+lenta, **88% do excesso do RJ é entrega lenta**: o prazo segue a régua do país e
+uma cauda de pedidos leva mais de 2,2 vezes o tempo típico da rota. Já **88% do
+excesso do Nordeste é prazo curto**: a entrega é normal para a distância, e a
+promessa cobre menos do tempo típico da rota do que no resto do país. Para o
+Nordeste, a primeira alavanca é a estimativa de prazo, não a malha. Regra,
+sensibilidade e limites na
+[seção 7 da análise](docs/analise-atraso.md#7-prazo-curto-ou-entrega-lenta).
+
 > Análise completa, com o controle por região, a decomposição vendedor contra
-> transportadora, a investigação da anomalia da cauda e as queries de
-> reprodução: **[docs/analise-atraso.md](docs/analise-atraso.md)**.
+> transportadora, a separação entre prazo curto e entrega lenta, a investigação
+> da anomalia da cauda e as queries de reprodução:
+> **[docs/analise-atraso.md](docs/analise-atraso.md)**.
 
 ## O que o projeto faz com isso
 
@@ -61,8 +71,8 @@ descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 > Status: **Etapas 1 a 8 concluídas** no dataset completo, com o dashboard
 > publicado, o painel web com o agente no ar e o relatório do Power BI
 > versionado e redesenhado em HTML (sem link público: a instituição da conta de
-> estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (26
-> models, 1 seed e 115 testes, 2 deles avisos propositais), e cada execução fica
+> estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (27
+> models, 1 seed e 130 testes, 2 deles avisos propositais), e cada execução fica
 > registrada no próprio banco. No CI,
 > cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
 > validação de idempotência, janela e metadados.

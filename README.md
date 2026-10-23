@@ -62,7 +62,7 @@ descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 > publicado, o painel web com o agente no ar e o relatório do Power BI
 > versionado e redesenhado em HTML (sem link público: a instituição da conta de
 > estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (22
-> models, 1 seed e 93 testes, 3 deles avisos propositais), e cada execução fica
+> models, 1 seed e 96 testes, 2 deles avisos propositais), e cada execução fica
 > registrada no próprio banco. No CI,
 > cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
 > validação de idempotência, janela e metadados.

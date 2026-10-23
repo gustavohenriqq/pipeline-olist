@@ -131,13 +131,11 @@ jobs:
             echo "completo=sim" >> "$GITHUB_OUTPUT"
           fi
 
-      # --indirect-selection cautious: so roda o teste cujos pais foram todos
-      # construidos nesta execucao. No padrao (eager), um model novo que le
-      # fato_pedidos e fato_itens_pedido (prazo_vs_entrega, PR #20) puxava os
-      # testes de relacionamento dos fatos com dim_produtos, dim_tempo,
-      # dim_geolocalizacao e o seed, que nao estavam na selecao nem existem no
-      # banco vazio do CI: "relation does not exist". A main roda tudo e cobre
-      # esses testes.
+      # --indirect-selection cautious: so roda teste com todos os pais no build.
+      # No padrao (eager), o relationships de fato_pedidos para dim_clientes
+      # entrava porque o fato foi selecionado, mas dim_clientes nao, e o teste
+      # quebrava com "relation does not exist" (PRs 20, 21 e 22). Os testes
+      # entre models selecionados continuam rodando; o resto roda na main.
       - name: dbt build so do que mudou (PR)
         if: github.event_name == 'pull_request' && steps.arquivos.outputs.completo != 'sim'
         working-directory: dbt

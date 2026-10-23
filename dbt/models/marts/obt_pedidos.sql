@@ -94,6 +94,7 @@ select
     -- 87% do atraso nasce no transporte. Ver docs/analise-atraso.md.
     p.dias_ate_transportadora,
     p.dias_em_transporte,
+    p.coleta_fora_de_ordem,
 
     p.foi_entregue,
     p.entregue_no_prazo

@@ -102,6 +102,10 @@ registrar isso vale mais do que produzir uma coorte sem significado.
 **Riscos:** confundir correlação com causa. O atraso acompanha a nota baixa, mas
 parte do efeito pode vir de outra coisa (categoria, vendedor, distância). A
 análise precisa controlar por esses fatores antes de afirmar causalidade.
+Feito depois (issues #16 e #17): com região, categoria, distância e efeito fixo
+de vendedor, a queda de 1 a 7 dias de atraso vai de 1,57 para 1,53 ponto (IC
+95% de 1,47 a 1,60). Os controles explicam menos de 3% dela; continua sendo
+associação ajustada, não prova de causa ([análise, seção 1.2](docs/analise-atraso.md)).
 
 ---
 

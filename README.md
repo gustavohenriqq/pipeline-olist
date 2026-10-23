@@ -71,8 +71,8 @@ descartado e por quê, está no [ROADMAP.md](ROADMAP.md).
 > Status: **Etapas 1 a 8 concluídas** no dataset completo, com o dashboard
 > publicado, o painel web com o agente no ar e o relatório do Power BI
 > versionado e redesenhado em HTML (sem link público: a instituição da conta de
-> estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (24
-> models, 1 seed e 116 testes, 2 deles avisos propositais), e cada execução fica
+> estudante bloqueia "Publicar na Web"). `dbt build` com 0 erro (27
+> models, 1 seed e 130 testes, 2 deles avisos propositais), e cada execução fica
 > registrada no próprio banco. No CI,
 > cada PR roda uma vez e constrói só o que mudou; a `main` roda tudo, com a
 > validação de idempotência, janela e metadados.
@@ -386,7 +386,7 @@ dbt docs serve    --profiles-dir . --port 8081
 
 - Schema `raw`: 9 tabelas cruas.
 - Schema `staging` e `intermediate`: views de limpeza e agregação.
-- Schema `marts`: 5 dimensões + 2 fatos + 2 tabelas largas (OBT), prontos para BI.
+- Schema `marts`: 5 dimensões + 2 fatos + 2 tabelas largas (OBT), prontos para BI, e a `distancia_pedido` (distância vendedor para cliente por pedido).
 - Testes de qualidade dbt (unicidade, não nulo, valores aceitos, integridade referencial e range): 74 na fundação, mais os do modelo de atraso.
 - Rótulos em português gerados no dbt: status do pedido, situação (entregue, em andamento, não concluído) e categoria em 14 grupos comerciais.
 - Schema `meta`: histórico de cada execução do dbt e do resultado de cada model e teste.
@@ -445,7 +445,7 @@ pipeline-olist/
 ### O que pode dar problema em produção real
 
 - **Schemas fixos (`staging`, `marts`).** Ótimo local, mas num warehouse compartilhado por vários devs isso causa colisão. Em produção, o padrão `<ambiente>_<schema>` (comportamento default do dbt) é mais seguro.
-- **Geolocalização incompleta.** 278 CEPs de cliente não existem na base de geolocalização. O teste de integridade está como **aviso**, não erro, de propósito. Em produção, decidir: enriquecer com outra fonte de CEP ou aceitar o gap.
+- **Geolocalização incompleta.** 157 CEPs de cliente (278 pedidos) e 7 de vendedor não existem na base de geolocalização. O teste de integridade da dimensão continua como **aviso**, de propósito. Para a distância vendedor para cliente (`marts.distancia_pedido`), esses pedidos usam o centroide do município ou do prefixo de 3 dígitos, com erro mediano estimado de 4 a 5 km, e uma coluna diz qual método foi usado ([análise, seção 1.1](docs/analise-atraso.md)). Em produção, enriquecer com outra fonte de CEP ainda seria melhor que o fallback.
 - **Incrementalidade parcial.** Os dois fatos escrevem apenas linhas novas ou alteradas, com idempotência validada no CI. A ingestão raw, dimensões e OBTs continuam full; os fatos ainda leem o resultado inteiro para detectar correções antigas sem `updated_at`. Exclusões da origem pedem `--full-refresh` ou o reprocessamento da janela afetada. Ver [incrementalidade](docs/incrementalidade.md) e [confiabilidade](docs/confiabilidade.md).
 - **Segredos.** O `.env` nunca vai para o Git. Em produção, usar um cofre de segredos (Azure Key Vault, AWS Secrets Manager).
 

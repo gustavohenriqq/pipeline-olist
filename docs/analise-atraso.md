@@ -85,6 +85,157 @@ composição, ele desapareceria ou variaria muito dentro dos grupos. Não é o c
 relação pode ainda ser confundida por vendedor, categoria ou distância. O que se
 pode afirmar é que a associação é forte, consistente e não explicada por região.
 
+> Os três confundidores dessa ressalva foram testados nas seções 1.1 e 1.2. O
+> resultado: juntos, explicam menos de 3% da queda.
+
+### 1.1 Distância vendedor para cliente: o buraco da geolocalização
+
+Controlar por distância exige a distância de todo pedido, e a base de
+geolocalização do Olist não cobre todos os CEPs.
+
+**O tamanho do buraco.** As limitações falavam em "278 CEPs". São **157 CEPs de
+cliente, que somam 278 pedidos**: o teste em aviso do `_marts.yml` conta
+pedidos, não CEPs. Mais um pedido perde a coordenada porque todos os pontos do
+CEP dele (83252, no Paraná) caem fora do país, o que dá 279. Do lado do
+vendedor, 7 vendedores não estão na base e são o vendedor principal de 217
+pedidos.
+
+| Sem coordenada | Pedidos | % dos pedidos | Receita | % da receita |
+|---|---|---|---|---|
+| Cliente | 279 | 0,28% | R$ 44.613 | 0,28% |
+| Vendedor | 217 | 0,22% | R$ 31.135 | 0,20% |
+| **Pelo menos um dos dois** | **491** | **0,49%** | **R$ 75.590** | **0,48%** |
+
+Receita aqui é a mesma conta do resumo (itens mais frete, todos os 99.441
+pedidos, set/2016 a out/2018, total de R$ 15,8 milhões). O buraco é pequeno
+demais para mudar uma conclusão sozinho, mas um join que descartasse esses
+pedidos tiraria da análise justamente os CEPs novos ou raros, sem aviso.
+
+**O fallback testado.** Dois candidatos: o centroide do município (média dos
+CEPs da mesma cidade e UF) e o do prefixo de 3 dígitos do CEP. Para escolher,
+a mesma pergunta para os dois: apagando um CEP conhecido e estimando pelo resto,
+quanto se erra? O teste roda sobre os 99.162 pedidos cujo CEP de cliente tem
+coordenada.
+
+| Fallback | Recupera (dos 279) | Pedidos no teste | Erro mediano | Erro p90 |
+|---|---|---|---|---|
+| Município | 220 | 79.854 | 4,7 km | 16,2 km |
+| Prefixo de 3 dígitos | 276 | 98.722 | 4,2 km | 43,2 km |
+| **Município, e sem ele o prefixo** | **279** | | | |
+
+O município vem primeiro: o erro mediano é parecido, mas a cauda do prefixo é
+quase três vezes maior, porque no interior três dígitos cobrem várias cidades.
+Ressalva: o teste do município só existe onde ele tem mais de um CEP, ou seja,
+em cidades maiores; o erro em cidade pequena não está medido. Para escala, a
+distância mediana entre vendedor e cliente é de 435 km, então um erro de 5 a
+40 km raramente troca o pedido de faixa. Os 7 vendedores se resolvem todos pelo
+município.
+
+**O que ficou na mart.** `marts.distancia_pedido`, uma linha por pedido:
+
+| Método | Pedidos |
+|---|---|
+| Os dois pontos pelo próprio CEP | 98.175 |
+| Pelo menos um ponto por fallback | 491 |
+| Sem distância (pedido sem item, logo sem vendedor) | 775 |
+
+Cobertura de **100% dos pedidos com vendedor**. Método: haversine (linha reta,
+não estrada); vendedor do item de maior valor, a mesma regra do modelo de
+previsão (98% dos pedidos têm vendedor único); ponto fora da caixa do Brasil
+descartado um a um, antes da média do CEP. As colunas `metodo_geo_cliente` e
+`metodo_geo_vendedor` dizem de onde veio cada ponto, e `distancia_por_cep`
+separa quem precisa da distância exata. Testes no dbt: chave única ligada ao
+`fato_pedidos`, valores aceitos, distância entre 0 e 4.500 km e um teste de
+cobertura que falha se um pedido com vendedor ficar sem distância, ou se nenhum
+pedido tiver vendedor (para não passar com zero casos).
+
+O modelo de previsão continua calculando a própria distância, sem o fallback.
+Usar a mart como feature fica para depois.
+
+### 1.2 O efeito sobrevive a categoria, distância e vendedor
+
+A mesma tabela da região, refeita por grupo de categoria (os 14 grupos das
+macros, mais "Sem categoria") e por faixa de distância. Categoria e vendedor são
+os do item de maior valor do pedido. "Pedidos" são os entregues e avaliados;
+"Atrasados" são os avaliados com 1 a 30 dias de atraso, para mostrar quando uma
+célula é pequena demais para ler.
+
+| Categoria | Pedidos | Atrasados | No prazo | 1 a 7 dias | 8 a 30 dias | Queda até 1 a 7 | Queda até 8 a 30 |
+|---|---|---|---|---|---|---|---|
+| Casa e Decoração | 22.314 | 1.418 | 4,21 | 2,71 | 1,65 | 1,50 | 2,56 |
+| Eletrônicos e Informática | 14.886 | 967 | 4,22 | 2,80 | 1,62 | 1,42 | 2,59 |
+| Beleza e Saúde | 11.651 | 790 | 4,39 | 2,78 | 1,68 | 1,61 | 2,71 |
+| Moda e Acessórios | 8.763 | 548 | 4,31 | 2,60 | 1,66 | 1,71 | 2,65 |
+| Esporte e Lazer | 7.448 | 460 | 4,38 | 2,60 | 1,66 | 1,78 | 2,72 |
+| Bebês e Brinquedos | 6.495 | 424 | 4,35 | 2,48 | 1,61 | 1,87 | 2,73 |
+| Ferramentas e Construção | 5.365 | 327 | 4,30 | 2,76 | 1,83 | 1,55 | 2,47 |
+| Automotivo | 3.776 | 254 | 4,29 | 2,81 | 1,52 | 1,49 | 2,77 |
+| Diversos | 3.766 | 200 | 4,34 | 2,71 | 1,58 | 1,63 | 2,76 |
+| Escritório e Papelaria | 3.475 | 226 | 4,20 | 2,81 | 1,66 | 1,39 | 2,54 |
+| Eletrodomésticos | 1.813 | 79 | 4,30 | 2,80 | 1,52 | 1,50 | 2,79 |
+| Livros, Mídia e Arte | 1.710 | 118 | 4,49 | 2,84 | 1,69 | 1,65 | 2,80 |
+| Pet Shop | 1.673 | 83 | 4,38 | 2,65 | 1,68 | 1,73 | 2,70 |
+| Sem categoria | 1.352 | 92 | 4,19 | 2,50 | 1,58 | 1,69 | 2,61 |
+| Alimentos e Bebidas | 931 | 45 | 4,45 | 2,81 | 1,67 | 1,65 | 2,79 |
+| Indústria e Serviços | 406 | 21 | 4,28 | 3,14 | 1,14 | 1,14 | 3,14 |
+
+| Distância | Pedidos | Atrasados | No prazo | 1 a 7 dias | 8 a 30 dias | Queda até 1 a 7 | Queda até 8 a 30 |
+|---|---|---|---|---|---|---|---|
+| Até 100 km | 17.826 | 760 | 4,34 | 2,98 | 1,84 | 1,36 | 2,50 |
+| 100 a 500 km | 36.882 | 2.107 | 4,31 | 2,69 | 1,62 | 1,61 | 2,69 |
+| 500 a 1.000 km | 25.819 | 1.715 | 4,26 | 2,61 | 1,65 | 1,65 | 2,61 |
+| 1.000 a 2.000 km | 9.718 | 854 | 4,24 | 2,73 | 1,75 | 1,51 | 2,49 |
+| Acima de 2.000 km | 5.579 | 616 | 4,24 | 2,61 | 1,48 | 1,62 | 2,76 |
+
+A queda até 8 a 30 dias fica entre 2,47 e 2,80 em 14 dos 15 grupos de
+categoria e entre 2,49 e 2,76 nas cinco faixas de distância, perto do intervalo
+das regiões (2,55 a 2,74). A exceção, Indústria e Serviços, tem 21 pedidos
+atrasados e não sustenta leitura. A queda até 1 a 7 dias varia mais (1,36 a
+1,87), e a menor é a das entregas até 100 km; não investiguei por quê.
+
+**Um modelo com tudo junto.** Tabela por fator controla um fator de cada vez.
+Para controlar todos ao mesmo tempo, uma regressão linear da nota (1 a 5) sobre
+a faixa de atraso, com região do cliente, grupo de categoria e faixa de
+distância como controles. A última linha acrescenta efeito fixo de vendedor:
+compara só pedidos do mesmo vendedor, o que tira da conta tudo que é fixo nele
+(qualidade do produto, embalagem, cidade de origem). Erro-padrão agrupado por
+vendedor, porque pedidos do mesmo vendedor não são independentes. Base: 95.824
+pedidos entregues e avaliados, 2.952 vendedores.
+
+| Especificação | 1 a 7 dias | IC 95% | 8 a 30 dias | IC 95% | Acima de 30 | IC 95% |
+|---|---|---|---|---|---|---|
+| Só atraso | -1,58 | [-1,63; -1,52] | -2,64 | [-2,69; -2,59] | -2,23 | [-2,41; -2,06] |
+| + região | -1,57 | [-1,63; -1,51] | -2,63 | [-2,68; -2,58] | -2,22 | [-2,40; -2,05] |
+| + região, categoria e distância | -1,57 | [-1,63; -1,51] | -2,62 | [-2,68; -2,57] | -2,21 | [-2,38; -2,03] |
+| **+ efeito fixo de vendedor** | **-1,53** | **[-1,60; -1,47]** | **-2,58** | **[-2,63; -2,52]** | **-2,17** | **[-2,35; -1,99]** |
+
+Os coeficientes são pontos de nota em relação a um pedido no prazo. A primeira
+linha é a queda bruta (-1,575; a diferença entre as médias já arredondadas,
+4,29 e 2,72, dá 1,57). Com todos os
+controles e comparando dentro do mesmo vendedor, a queda de 1 a 7 dias vai a
+**1,53 ponto, com intervalo de confiança de 95% entre 1,47 e 1,60**: os
+controles explicam 2,6% dela. Os controles em si mexem pouco na nota: a maior
+diferença de categoria é +0,26 (Livros, Mídia e Arte contra Casa e Decoração),
+a maior entre faixas de distância é de 0,10 e a maior entre regiões, de 0,09. Restringindo aos 95.347 pedidos com distância pelo próprio CEP, sem
+fallback, o resultado é o mesmo (-1,53, IC de -1,59 a -1,47).
+
+**O que isso muda e o que não muda na conclusão.**
+
+- **Muda:** categoria, distância e vendedor deixam de ser confundidores
+  plausíveis. A queda não é composição de nenhum deles, nem de todos juntos.
+- **Não muda:** continua sendo associação ajustada pelo que o dataset mede, não
+  prova de causa. Ficam de fora o que gera atraso e insatisfação ao mesmo tempo
+  (extravio, item errado, reenvio), o prazo prometido, a expectativa do cliente e
+  o produto específico dentro do vendedor. E o modelo trata a nota de 1 a 5 como
+  número: o coeficiente é diferença de médias, não probabilidade de nota baixa.
+- **A frase do resumo:** "o atraso derruba a nota de 4,29 para 2,72" continua
+  correta como descrição. Como estimativa controlada, a queda de 1 a 7 dias de
+  atraso é de 1,53 ponto (IC 95% de 1,47 a 1,60).
+
+Reprodução: `python -m scripts.controle_atraso`, da raiz, depois do `dbt
+build`. As funções do estimador têm testes de resposta conhecida em
+`tests/test_controle_atraso.py`.
+
 ---
 
 ## 2. Onde agir: excesso, não volume
@@ -343,10 +494,16 @@ continua 89.936, mas a decomposição no prazo passa a usar 89.914 pedidos.
 
 - Dataset histórico e fechado (2016 a 2018). Não há como validar se as conclusões
   se sustentam hoje.
-- A associação entre atraso e nota é forte e robusta a região, mas não é prova
-  causal. Vendedor, categoria e distância continuam como confundidores possíveis.
-- 278 CEPs de cliente não existem na base de geolocalização, o que limita
-  análises de distância.
+- A associação entre atraso e nota resiste a região, categoria, distância e
+  vendedor (seção 1.2): com tudo controlado, a queda de 1 a 7 dias é de 1,53
+  ponto (IC 95% de 1,47 a 1,60), contra 1,57 sem controle. Continua não sendo
+  prova causal: problema no pedido que gera atraso e insatisfação ao mesmo
+  tempo, prazo prometido e expectativa do cliente não estão controlados.
+- 157 CEPs de cliente (278 pedidos, não "278 CEPs" como dizia uma versão
+  anterior) e 7 de vendedor não existem na base de geolocalização. A distância
+  desses 491 pedidos (0,48% da receita) vem do centroide do município ou do
+  prefixo de 3 dígitos, com erro mediano estimado de 4 a 5 km (seção 1.1). Quem
+  precisar da distância exata filtra `distancia_por_cep`.
 
 ---
 
@@ -416,4 +573,68 @@ cross join base b
 where p.foi_entregue
 group by p.cliente_uf, p.cliente_regiao, b.taxa_nacional
 order by excesso desc;
+
+-- Secao 1.1: cobertura da distancia por metodo (marts.distancia_pedido).
+select metodo_geo_cliente, metodo_geo_vendedor, count(*) as pedidos,
+       count(distancia_km) as com_distancia
+from marts.distancia_pedido
+group by 1, 2
+order by 3 desc;
+
+-- Secao 1.1: pedidos e receita que dependem do fallback.
+select
+  count(*) filter (where d.metodo_geo_cliente <> 'cep')          as pedidos_cliente,
+  sum(f.valor_total) filter (where d.metodo_geo_cliente <> 'cep') as receita_cliente,
+  count(*) filter (where not d.distancia_por_cep and d.distancia_km is not null)          as pedidos_fallback,
+  sum(f.valor_total) filter (where not d.distancia_por_cep and d.distancia_km is not null) as receita_fallback,
+  sum(f.valor_total)                                              as receita_total
+from marts.distancia_pedido d
+join marts.fato_pedidos f using (pedido_sk);
+
+-- Secao 1.1: erro do fallback, deixando um CEP conhecido de fora.
+-- Para cada pedido com CEP conhecido, estima o ponto pela media dos OUTROS
+-- CEPs do municipio (ou do prefixo de 3 digitos) e mede a distancia ao real.
+with pontos as (
+  select * from staging.stg_olist__geolocation_pontos
+  where latitude between -33.8 and 5.3 and longitude between -74.0 and -34.7
+), por_cep as (
+  select zip_code_prefix, avg(latitude) as lat, avg(longitude) as lng,
+         mode() within group (order by cidade_chave) as cidade_chave,
+         mode() within group (order by state)        as uf
+  from pontos group by 1
+), mun as (
+  select cidade_chave, uf, sum(lat) as slat, sum(lng) as slng, count(*) as n from por_cep group by 1, 2
+), p3 as (
+  select zip_code_prefix / 100 as p, sum(lat) as slat, sum(lng) as slng, count(*) as n from por_cep group by 1
+), estimado as (
+  select c.lat, c.lng,
+    (m.slat - c.lat) / nullif(m.n - 1, 0) as mlat, (m.slng - c.lng) / nullif(m.n - 1, 0) as mlng,
+    (p.slat - c.lat) / nullif(p.n - 1, 0) as plat, (p.slng - c.lng) / nullif(p.n - 1, 0) as plng
+  from staging.stg_olist__customers cli
+  join por_cep c on c.zip_code_prefix = cli.zip_code_prefix
+  -- mesma chave da macro chave_municipio
+  left join mun m on m.uf = cli.state and m.cidade_chave = regexp_replace(
+      translate(lower(trim(cli.city)), 'áàâãäéèêëíìîïóòôõöúùûüç''-', 'aaaaaeeeeiiiiooooouuuuc  '),
+      '\s+', ' ', 'g')
+  left join p3 p on p.p = cli.zip_code_prefix / 100
+), erro as (
+  select
+    case when mlat is not null then 2 * 6371 * asin(least(1.0, sqrt(power(sin(radians(mlat - lat) / 2), 2)
+      + cos(radians(lat)) * cos(radians(mlat)) * power(sin(radians(mlng - lng) / 2), 2)))) end as km_municipio,
+    case when plat is not null then 2 * 6371 * asin(least(1.0, sqrt(power(sin(radians(plat - lat) / 2), 2)
+      + cos(radians(lat)) * cos(radians(plat)) * power(sin(radians(plng - lng) / 2), 2)))) end as km_prefixo_3
+  from estimado
+)
+select
+  count(km_municipio)                                          as pedidos_municipio,
+  percentile_cont(0.5) within group (order by km_municipio)    as mediana_municipio,
+  percentile_cont(0.9) within group (order by km_municipio)    as p90_municipio,
+  count(km_prefixo_3)                                          as pedidos_prefixo_3,
+  percentile_cont(0.5) within group (order by km_prefixo_3)    as mediana_prefixo_3,
+  percentile_cont(0.9) within group (order by km_prefixo_3)    as p90_prefixo_3
+from erro;
 ```
+
+As tabelas por categoria e por distância e a regressão da seção 1.2 saem de
+`python -m scripts.controle_atraso`, que imprime também a tabela por região
+para conferência contra a seção 1.

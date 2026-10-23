@@ -3,6 +3,7 @@
 1. Os passos de integracao carregam o plugin que transforma "banco fora" em falha.
 2. PR que mexe em ingestao, validacao, hooks do dbt ou no proprio CI faz build
    completo e roda a validacao incremental (o state:modified nao enxerga isso).
+3. O build parcial do PR so roda teste com todos os pais construidos.
 """
 import re
 from pathlib import Path
@@ -128,3 +129,12 @@ def test_saidas_do_passo_arquivos(passos):
     run = _passo_por_id(passos, "arquivos")["run"]
     for saida in ("painel=sim", "infra=sim", "completo=sim"):
         assert saida in run, saida
+
+
+# ---- 3. build parcial do PR nao roda teste de pai que nao foi construido ----
+
+def test_build_parcial_do_pr_usa_selecao_indireta_cautelosa(passos):
+    # Sem isso, um relationships cujo outro lado ficou fora da selecao quebra
+    # com "relation does not exist" num banco novo (PRs 20, 21 e 22).
+    passo = _passo(passos, "dbt build so do que mudou (PR)")
+    assert "--indirect-selection cautious" in passo["run"]

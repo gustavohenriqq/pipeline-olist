@@ -1,0 +1,62 @@
+{
+  "sem_historico": {
+    "principal": {
+      "pr_auc": 0.2361,
+      "roc_auc": 0.7061,
+      "brier": 0.094
+    },
+    "logistica": {
+      "pr_auc": 0.2442,
+      "roc_auc": 0.7046,
+      "brier": 0.0945
+    }
+  },
+  "so_contagem": {
+    "principal": {
+      "pr_auc": 0.2286,
+      "roc_auc": 0.7048,
+      "brier": 0.0935
+    },
+    "logistica": {
+      "pr_auc": 0.2304,
+      "roc_auc": 0.6947,
+      "brier": 0.0939
+    }
+  },
+  "so_taxa": {
+    "principal": {
+      "pr_auc": 0.2174,
+      "roc_auc": 0.6972,
+      "brier": 0.0934
+    },
+    "logistica": {
+      "pr_auc": 0.2256,
+      "roc_auc": 0.696,
+      "brier": 0.0931
+    }
+  },
+  "contagem_e_taxa": {
+    "principal": {
+      "pr_auc": 0.2049,
+      "roc_auc": 0.6889,
+      "brier": 0.0934
+    },
+    "logistica": {
+      "pr_auc": 0.2176,
+      "roc_auc": 0.6873,
+      "brier": 0.0928
+    }
+  },
+  "contagem_e_taxa_relativa": {
+    "principal": {
+      "pr_auc": 0.2284,
+      "roc_auc": 0.7012,
+      "brier": 0.0934
+    },
+    "logistica": {
+      "pr_auc": 0.2313,
+      "roc_auc": 0.6957,
+      "brier": 0.0938
+    }
+  }
+}

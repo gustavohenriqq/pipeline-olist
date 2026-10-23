@@ -244,7 +244,13 @@ def check_janela(database, env, build):
     with closing(connect(database)) as conn, conn.cursor() as cur:
         cur.execute("select processado_em, resumo from marts.atualizacao_dados")
         rodape_antes = cur.fetchone()
-    build("--select", "fato_pedidos", "fato_itens_pedido", "--vars", JANELA)
+    # cautious: so os testes dos dois fatos. No padrao (eager) entrariam tambem
+    # os testes que leem um fato e um model abaixo dele, como
+    # assert_historico_vendedor_sem_futuro, e eles comparariam o fato novo com
+    # o model antigo, que este build parcial nao reconstroi. O build() completo
+    # logo abaixo roda todos.
+    build("--select", "fato_pedidos", "fato_itens_pedido", "--vars", JANELA,
+          "--indirect-selection", "cautious")
     with closing(connect(database)) as conn, conn.cursor() as cur:
         cur.execute("select processado_em, resumo from marts.atualizacao_dados")
         assert cur.fetchone() == rodape_antes, "Build parcial (--select) reescreveu o rodape do dashboard"

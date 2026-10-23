@@ -89,7 +89,9 @@ tem atendimento nem reembolso.
 os exigia. Para responder "de quem é o atraso" foram promovidos ao
 `fato_pedidos` como `dias_ate_transportadora` e `dias_em_transporte`. Ao
 promovê-los, 22 pedidos impossíveis apareceram (transportadora recebendo antes da
-compra, cliente antes da transportadora), agora cobertos por teste em aviso.
+compra, cliente antes da transportadora). Primeiro ficaram em teste de aviso;
+em 23/10/2026 os dois campos de tempo passaram a ser nulos nesses pedidos, com a
+flag `coleta_fora_de_ordem` (issue #15, decisão na seção 5 da análise).
 
 **O que foi testado e não é viável.** Análise de coorte e retenção, o reflexo
 automático em e-commerce: apenas **3,1% dos clientes compraram mais de uma vez**

@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from ml.features import (
-    CATEGORICAS, NUMERICAS, PERMITIDAS, PROIBIDAS,
+    CATEGORICAS, FORA_POR_DESEMPENHO, NUMERICAS, PERMITIDAS, PROIBIDAS,
     matriz, modelo_logistica, modelo_principal,
 )
 
@@ -57,10 +57,12 @@ def test_calendario_anual_fora_do_modelo():
         assert campo in PROIBIDAS
 
 
-def test_historico_do_vendedor_so_na_versao_da_data_da_compra():
-    # A taxa do vendedor entra so na versao calculada ate o dia anterior a
-    # compra (dbt: ml_historico_vendedor; o teste assert_historico_vendedor_sem_futuro
-    # falha se algum pedido posterior entrar). A data da ultima entrega usada e
-    # controle do teste, nunca feature.
-    assert {"vendedor_entregas_hist", "vendedor_taxa_atraso_hist"} <= set(NUMERICAS)
-    assert "hist_ultima_entrega" not in PERMITIDAS
+def test_historico_do_vendedor_fica_fora_ate_nova_avaliacao():
+    # Sem vazamento (o dbt testa o corte na data da compra), mas piorou a
+    # validacao (issue 18). A matriz descarta as colunas mesmo se vierem do
+    # banco; a data da ultima entrega usada e controle do teste dbt.
+    df = _sintetico()
+    for c in FORA_POR_DESEMPENHO + ("hist_ultima_entrega",):
+        assert c not in PERMITIDAS
+        df[c] = 1.0
+    assert list(matriz(df).columns) == list(PERMITIDAS)

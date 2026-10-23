@@ -1,0 +1,86 @@
+version: 2
+
+# Distancia vendedor -> cliente (issue #16). Os tres models da cadeia ficam
+# documentados juntos aqui, em vez de espalhados pelos yml de cada camada,
+# porque so fazem sentido lidos em sequencia. Metodo e cobertura em
+# docs/analise-atraso.md, secao 1.1.
+
+models:
+  - name: stg_olist__geolocation_pontos
+    description: >
+      Geolocalizacao no grao da origem (um ponto por linha, cerca de 1 milhao),
+      com a chave de municipio sem acento. Alimenta o fallback de distancia.
+    columns:
+      - name: zip_code_prefix
+        data_tests: [not_null]
+
+  - name: int_coordenadas_cep
+    description: >
+      Uma coordenada por endereco de cliente ou vendedor (CEP + municipio + UF).
+      CEP fora da base de geolocalizacao recebe o centroide do municipio ou do
+      prefixo de 3 digitos, nessa ordem.
+    data_tests:
+      - combinacao_unica:
+          arguments:
+            combination_of_columns: [zip_code_prefix, cidade_chave, uf]
+    columns:
+      - name: metodo_geo
+        description: De onde veio a coordenada. Nulo quando nenhum metodo achou ponto.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["cep", "municipio", "prefixo_3"]
+
+  - name: distancia_pedido
+    description: >
+      Distancia em linha reta (haversine) entre o vendedor principal (item de
+      maior valor) e o cliente, uma linha por pedido. Cobre todos os pedidos
+      com item: 98.175 pelo proprio CEP e 491 por fallback de municipio ou
+      prefixo. Os 775 pedidos sem item nao tem vendedor e ficam sem distancia.
+    columns:
+      - name: pedido_sk
+        description: Chave do pedido. Mesmo grao de fato_pedidos.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fato_pedidos')
+                field: pedido_sk
+      - name: metodo_geo_cliente
+        description: cep, municipio ou prefixo_3. Ver int_coordenadas_cep.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["cep", "municipio", "prefixo_3"]
+      - name: metodo_geo_vendedor
+        description: cep, municipio ou prefixo_3. Nulo quando o pedido nao tem item.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["cep", "municipio", "prefixo_3"]
+      - name: distancia_km
+        description: >
+          Km em linha reta, nao em estrada. Nulo so quando o pedido nao tem
+          vendedor. Teste de plausibilidade em assert_distancia_pedido_plausivel
+          e de cobertura em assert_distancia_pedido_cobertura.
+        data_tests:
+          - valor_minimo:
+              arguments:
+                min_value: 0
+      - name: distancia_por_cep
+        description: Verdadeiro quando os dois pontos vem do proprio CEP, sem fallback.
+        data_tests: [not_null]
+      - name: faixa_distancia
+        description: Faixa de distancia usada na tabela de controle do efeito do atraso.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - "Até 100 km"
+                  - "100 a 500 km"
+                  - "500 a 1.000 km"
+                  - "1.000 a 2.000 km"
+                  - "Acima de 2.000 km"
+                  - "Sem distância"

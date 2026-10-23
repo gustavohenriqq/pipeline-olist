@@ -55,3 +55,12 @@ def test_calendario_anual_fora_do_modelo():
     for campo in ("ano_compra", "mes_compra"):
         assert campo not in PERMITIDAS
         assert campo in PROIBIDAS
+
+
+def test_historico_do_vendedor_so_na_versao_da_data_da_compra():
+    # A taxa do vendedor entra so na versao calculada ate o dia anterior a
+    # compra (dbt: ml_historico_vendedor; o teste assert_historico_vendedor_sem_futuro
+    # falha se algum pedido posterior entrar). A data da ultima entrega usada e
+    # controle do teste, nunca feature.
+    assert {"vendedor_entregas_hist", "vendedor_taxa_atraso_hist"} <= set(NUMERICAS)
+    assert "hist_ultima_entrega" not in PERMITIDAS

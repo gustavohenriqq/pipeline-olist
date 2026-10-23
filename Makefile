@@ -43,8 +43,10 @@ freshness:
 	cd dbt && $(DBT) source freshness --profiles-dir .
 
 # Substitui nos fatos as linhas com compra entre INICIO (inclusivo) e FIM (exclusivo).
+# cautious: so os testes dos fatos; os models abaixo deles (marts e ml) ficam
+# como estavam ate o proximo build completo, e seus testes rodam la.
 reprocessar:
-	cd dbt && $(DBT) build --profiles-dir . --select fato_pedidos fato_itens_pedido --vars "{janela_inicio: '$(INICIO)', janela_fim: '$(FIM)'}"
+	cd dbt && $(DBT) build --profiles-dir . --select fato_pedidos fato_itens_pedido --vars "{janela_inicio: '$(INICIO)', janela_fim: '$(FIM)'}" --indirect-selection cautious
 
 dbt-run:
 	cd dbt && $(DBT) run --profiles-dir .

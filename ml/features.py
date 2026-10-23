@@ -32,6 +32,13 @@ CATEGORICAS = (
 PERMITIDAS = NUMERICAS + CATEGORICAS
 ALVO = "atrasou"
 
+# Existem no ato da compra (historico do vendedor principal so com pedidos
+# comprados e entregues antes do dia da compra, dbt: ml_historico_vendedor) e
+# nao vazam, mas pioraram a PR-AUC da validacao em todas as combinacoes
+# testadas (issue 18, docs/modelo-atraso.md, secao 12). Ficam calculadas em
+# ml_features_atraso; entrar no modelo exige nova avaliacao.
+FORA_POR_DESEMPENHO = ("vendedor_entregas_hist", "vendedor_taxa_atraso_hist")
+
 # Campos que existem no warehouse mas so depois da compra (ou sao o alvo).
 # ano_compra e mes_compra existem na compra, mas com um so ano de treino
 # identificam eventos de 2017 (Black Friday), nao sazonalidade.
